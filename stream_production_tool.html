@@ -1,78 +1,100 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Stream Production Tool</title>
-  <link rel="stylesheet" href="styles.css">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Stream Production Tool</title>
+    <link rel="stylesheet" href="styles/styles.css?ver=4">
+    <link rel="stylesheet" href="https://code.jquery.com/ui/1.13.1/themes/smoothness/jquery-ui.css">
+
+    <!-- spider chart -->
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="js/jquery-ui.min.js"></script>
+    <script src="js/popper.min.js"></script>
+    <script src="js/chart.js"></script>
+    <script src="js/player_ratings.js?ver=5"></script>
+    <script src="https://code.jquery.com/ui/1.13.1/jquery-ui.min.js"></script>
 </head>
-<body bgcolor="#00FF00">
-  <div class="container">
-    <div class="left-column">
-      <h2>Player Intros, Memes & Effects</h2>
-      <form class="media-form" id="media-form-1">
-        <input type="text" class="player-name-input" placeholder="Enter player name" value = "DarkMenace" required>
-        <button type="submit">Submit</button>
-      </form>
-      <form class="media-form" id="media-form-2">
-        <input type="text" class="player-name-input" placeholder="Enter player name" value = "littlereaper" required>
-        <button type="submit">Submit</button>
-      </form>
-      <form class="media-form" id="media-form-3">
-        <input type="text" class="player-name-input" placeholder="Enter player name" value = "Neutrophil" required>
-        <button type="submit">Submit</button>
-      </form>
-      <form class="media-form" id="media-form-4">
-        <input type="text" class="player-name-input" placeholder="Enter player name" value = "HyperTurtle" required>
-        <button type="submit">Submit</button>
-      </form>
-      <form class="media-form" id="media-form-5">
-        <input type="text" class="player-name-input" placeholder="Enter player name" value = "Random Music" required>
-        <button type="submit">Submit</button>
-      </form>
-      <form class="media-form" id="media-form-6">
-        <input type="text" class="player-name-input" placeholder="Enter player name" value = "FSL intro" required>
-        <button type="submit">Submit</button>
-      </form>
-      <form class="media-form" id="media-form-7">
-        <input type="text" class="player-name-input" placeholder="Enter player name" value = "GG" required>
-        <button type="submit">Submit</button>
-      </form>
-      <form class="media-form" id="media-form-8">
-        <input type="text" class="player-name-input" placeholder="Enter player name" value = "Match GG" required>
-        <button type="submit">Submit</button>
-      </form>
-      <form class="media-form" id="media-form-9">
-        <input type="text" class="player-name-input" placeholder="Enter player name" value = "meme - rocky" required>
-        <button type="submit">Submit</button>
-      </form>
-      <form class="media-form" id="media-form-10">
-        <input type="text" class="player-name-input" placeholder="Enter player name" value = "meme - high ground" required>
-        <button type="submit">Submit</button>
-      </form>
-      <div id="error-message" style="color: red;"></div>
-    </div>
-    <div class="right-column">
-      <div class="video-wrapper">
-        <div id="video-container" style="display:none;">
-          <video id="video-player" width="640" height="480">
-            Your browser does not support the video tag.
-          </video>
+
+<body onload="hideChart()">
+    <div class="container">
+        <div class="left-column">
+            <h2>Player Intros, Memes & Effects</h2>
+            <form class="media-form" id="media-form-1">
+                <input type="text" class="player-name-input" placeholder="Enter player name" value="DarkMenace" required>
+                <button type="submit">Submit</button>
+            </form>
+            <form class="media-form" id="media-form-2">
+                <input type="text" class="player-name-input" placeholder="Enter player name" value="LittleReaper" required>
+                <button type="submit">Submit</button>
+            </form>
+            <form class="media-form" id="media-form-3">
+                <input type="text" class="player-name-input" placeholder="Enter player name" value="Neutrophil" required>
+                <button type="submit">Submit</button>
+            </form>
+            <form class="media-form" id="media-form-4">
+                <input type="text" class="player-name-input" placeholder="Enter player name" value="HyperTurtle" required>
+                <button type="submit">Submit</button>
+            </form>
+            <form class="media-form" id="media-form-5">
+                <input type="text" class="player-name-input" placeholder="Enter player name" value="Random Music" required>
+                <button type="submit">Submit</button>
+            </form>
+            <form class="media-form" id="media-form-6">
+                <input type="text" class="player-name-input" placeholder="Enter player name" value="FSL intro" required>
+                <button type="submit">Submit</button>
+            </form>
+            <form class="media-form" id="media-form-7">
+                <input type="text" class="player-name-input" placeholder="Enter player name" value="GG" required>
+                <button type="submit">Submit</button>
+            </form>
+            <form class="media-form" id="media-form-8">
+                <input type="text" class="player-name-input" placeholder="Enter player name" value="Match GG" required>
+                <button type="submit">Submit</button>
+            </form>
+            <form class="media-form" id="media-form-9">
+                <input type="text" class="player-name-input" placeholder="Enter player name" value="meme - rocky" required>
+                <button type="submit">Submit</button>
+            </form>
+            <form class="media-form" id="media-form-10">
+                <input type="text" class="player-name-input" placeholder="Enter player name" value="meme - high ground" required>
+                <button type="submit">Submit</button>
+            </form>
+
+            <h1>Player Ratings</h1>
+
+            <p>Spider Chart</p>
+            <input id="player-input" type="text" oninput="searchPlayers(this.value)" value="grey">
+            <div id="player-list"></div>
+            <button onclick="loadSpiderChart()">Load Spider Chart</button>
+            <button onclick="hideChart()">HIDE Chart</button>
+
+            <div id="error-message" style="color: red;"></div>
         </div>
-		<div id="gif-container" style="display:none;">
-		<img id="gif-image" src="" alt="GIF">
-		</div>
-      </div>
-      <div class="player-name-box"></div>
+        <div class="right-column">
+            <div class="video-wrapper">
+                <div id="video-container">
+                    <video id="video-player" width="640" height="480">
+                        Your browser does not support the video tag.
+                    </video>
+                </div>
+                <div id="gif-container">
+                    <img id="gif-image" src="production_files/images/transparent_greenscreen.gif" alt="GIF">
+                </div>
+                <div id="chart-container">
+                    <canvas id="spider-chart"></canvas>
+                </div>
+            </div>
+           	<div class="player-name-box"></div>
+        </div>
     </div>
-  </div>
 </body>
 
-  <audio id="audio-player" style="display:none;">
+<audio id="audio-player" style="display:none;">
     Your browser does not support the audio element.
-  </audio>
+</audio>
 
-  <script src="stream_production.js"></script>
+<script src="js/stream_production.js"></script>
 
-</body>
 </html>

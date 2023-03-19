@@ -7,7 +7,7 @@ const playerList = [
 	['AxD', 'AxD.mp4', 'axd1987.wav'],
 	['Azure', 'Azure.mp4', ''],
 	['Azzin', 'PSL_Azzin.mp4', 'freeden.wav'],
-	['BENZEL_logo', 'BENZEL_logo.mp4', 'benzel.wav'],
+	['BENZEL', 'BENZEL_logo.mp4', 'benzel.wav'],
 	['Bayagster', 'PSL_Bayagster.mp4', 'freeden.wav'],
 	['Bistork', 'Bistork.mp4', ''],
 	['CYAN', 'CYAN.mp4', 'CYAN.wav'],
@@ -15,13 +15,15 @@ const playerList = [
 	['Casper631', 'Casper631.mp4', 'Casper631.wav'],
 	['Cham', 'PSL_Cham.mp4', ''],
 	['ChienPwn', 'ChienPwn.mp4', 'ChienPwn.wav'],
+	['Cloak', 'LuckyTiger.mp4', 'cloak.wav'],
 	['Coheeder', 'PSL_Coheeder.mp4', ''],
 	['Cypem', 'PSL_Cypem.mp4', 'freeden.wav'],
 	['DB', 'DB_20200820_191155_1.mp4', 'db.wav'],
-	['DLSMIZEL2', 'DLSMIZEL2.mp4', 'DLSMIZEL.wav'],
+	['DLSMIZEL', 'DLSMIZEL2.mp4', 'DLSMIZEL.wav'],
 	['DarkMenace', 'DarkMenaceNew.mp4', 'darkmenace.wav'],
 	['DavidBane', 'PSL_DavidBane.mp4', 'freeden.wav'],
 	['Deneb', 'PSL_Deneb.mp4', 'cloak.wav'],
+	['EnDerr', 'PSL_EnDerr2.mp4', ''],
 	['ExoDash', 'PSL_ExoDash.mp4', ''],
 	['Exoblazer', 'PSL_Exoblazer.mp4', 'freeden.wav'],
 	['FSL intro', 'FSL-logo_FINAL.mp4', 'FSL_s6.wav', 'noTitle'],
@@ -30,30 +32,28 @@ const playerList = [
 	['GG', 'transparent_greenscreen.mp4', 'FSL_GG.mp3', 'noTitle'],
 	['GG_Izzy', 'GG_Izzy.mp4', 'gg_izzy.wav'],
 	['HighCommand', 'HighCommand2.mp4', 'HighCommand.wav'],
+	['Hiro', 'PSL_Hiro.mp4', ''],
 	['Holden', 'Holden.mp4', ''],
 	['HurtnTime', 'PSL_hurtntime.mp4', 'HurtnTime.wav'],
 	['HyperTurtle', 'HyperTurtle.mp4', 'HyperTurtle.wav'],
 	['Imburnal', 'PSL_Imburnal.mp4', 'freeden.wav'],
 	['Instability', 'Instability.mp4', 'Instability.wav'],
 	['JDR', 'PSL_JDR.mp4', 'cloak.wav'],
+	['Kas', 'PSL_Kas.mp4', ''],
+	['KittyCatGamer', 'kittycatgamer.mp4', 'kittycatgamer.wav'],
 	['Klaw', 'PSL_Klaw.mp4', 'freeden.wav'],
-	['Kriminal_FSL', 'Kriminal_FSL.mp4', 'Kriminal.wav'],
+	['Kriminal', 'Kriminal_FSL.mp4', 'Kriminal.wav'],
 	['LAS_logo', 'LAS_logo.mp4', 'LAS.wav'],
-	['LuckyTiger', 'LuckyTiger.mp4', 'cloak.wav'],
+	['LittleReaper', 'littlereaper2.mp4', 'littlereaper.wav'],
 	['Match GG', 'transparent_greenscreen.mp4', 'PSL_GG.mp3', 'gifPlayer'],
-	['meme - No GG', 'transparent_greenscreen.mp4', 'PARTING- No GG (TRAP MIX) - short.mp3', 'gifPlayer-1'],
-	['meme - high ground', 'transparent_greenscreen.mp4', '10sec_Highground_Obi-Wan vs Anakin - Duel on Mustafar (Part 2) Star Wars Revenge of the Sith (2005) Movie Clip.mp3', 'gifPlayer-2'],
-	['meme - coffin dance', 'transparent_greenscreen.mp4', 'short_Coffin Dance (Official Music Video HD).mp3', 'gifPlayer-3'],
-	['meme - all I do is Win', 'transparent_greenscreen.mp4', '15sec_DJ Khaled All I Do Is Win feat. Ludacris, Rick Ross, T-Pain & Snoop Dogg Victory In Stores N.mp3', 'gifPlayer-4'],
-	['meme - rocky', 'transparent_greenscreen.mp4', 'short_1.15pct_speed_The Mandalorian Theme X Rocky Theme (EPIC HIP HOP REMIX).mp3', 'gifPlayer-6'],
-	['meme - braveheart', 'transparent_greenscreen.mp4', 'short_Braveheart (39) Movie CLIP - They Will Never Take Our Freedom (1995) HD.mp3', 'gifPlayer-7'],
-	['meme - Titanic', 'transparent_greenscreen.mp4', '40secs_My Heart Will Go On (Love Theme from Titanic).mp3'],
-	['meme - Victory', 'transparent_greenscreen.mp4', 'paula_white_victory_short.mp3', 'gifPlayer-26'],
 	['Meomaika2', 'Meomaika2.mp4', ''],
+	['Migu3la', 'migu3la_2023_final.mp4', 'migu3la.wav'],
 	['MrLasti', 'PSL_MrLasti.mp4', 'freeden.wav'],
+	['MrsUberXL', 'mrsuberxl.mp4', 'mrsuberxl.wav'],
 	['NeO', 'NeO.mp4', ''],
 	['Neutrophil', 'edmund_IMG_2967.mp4', 'neutrophil.wav'],
 	['Nightmare', 'PSL_Nightmare.mp4', ''],
+	['Nooblord', 'nooblord.mp4', 'nooblord.wav'],
 	['Nuks2', 'PSL_Nuks2.mp4', 'db.wav'],
 	['Pangz', 'PSL_Pangz.mp4', 'cloak.wav'],
 	['PanicSwitch', 'PanicSwitch.mp4', 'PanicSwitch.wav'],
@@ -66,11 +66,16 @@ const playerList = [
 	['Ranger', 'PSL_Ranger.mp4', ''],
 	['Rixilius', 'PSL_Rixilius.mp4', 'freeden.wav'],
 	['SEMPER', 'PSL_SEMPER.mp4', 'sef.wav'],
+	['Sef', 'sef.mp4', 'sef.wav'],
 	['Shadow', 'PSL_Shadow.mp4', ''],
+	['SirMalagant', 'sirmalagant.mp4', 'sirmalagant.wav'],
 	['SouLeer', 'PSL_SouLeer.mp4', ''],
 	['SpeCial', 'PSL_SpeCial.mp4', ''],
 	['SteelHeart', 'PSL_SteelHeart.mp4', 'freeden.wav'],
+	['Toirtoise&Hare', 'toirtoiseandhare.mp4', 'tortoiseandhare.wav'],
+	['TyphoonFusion', 'typhoonfusion.mp4', 'typhoonfusion.wav'],
 	['Uriel', 'PSL_Uriel.mp4', 'freeden.wav'],
+	['Vales', 'vales.mp4', 'vales.wav'],
 	['VeryCool', 'VeryCool2.mp4', 'verycool.wav'],
 	['Viole', 'PSL_Viole.mp4', 'freeden.wav'],
 	['Warbunnies', 'Warbunnies.mp4', 'warbunnies.wav'],
@@ -92,25 +97,20 @@ const playerList = [
 	['intro_sloza2', 'intro_sloza2.mp4', 'mightyant.wav'],
 	['jacob', 'jacob_VID_20200820_214139.mp4', 'thearchaic.wav'],
 	['jmpz', 'jmpz.mp4', 'jmpz.wav'],
-	['kittycatgamer', 'kittycatgamer.mp4', 'kittycatgamer.wav'],
-	['littlereaper', 'littlereaper2.mp4', 'littlereaper.wav'],
-	['migu3la', 'migu3la_2023_final.mp4', 'migu3la.wav'],
-	['mrsuberxl', 'mrsuberxl.mp4', 'mrsuberxl.wav'],
+	['meme - No GG', 'transparent_greenscreen.mp4', 'PARTING- No GG (TRAP MIX) - short.mp3', 'gifPlayer-1'],
+	['meme - Titanic', 'transparent_greenscreen.mp4', '40secs_My Heart Will Go On (Love Theme from Titanic).mp3'],
+	['meme - Victory', 'transparent_greenscreen.mp4', 'paula_white_victory_short.mp3', 'gifPlayer-26'],
+	['meme - all I do is Win', 'transparent_greenscreen.mp4', '15sec_DJ Khaled All I Do Is Win feat. Ludacris, Rick Ross, T-Pain & Snoop Dogg Victory In Stores N.mp3', 'gifPlayer-4'],
+	['meme - braveheart', 'transparent_greenscreen.mp4', 'short_Braveheart (39) Movie CLIP - They Will Never Take Our Freedom (1995) HD.mp3', 'gifPlayer-7'],
+	['meme - coffin dance', 'transparent_greenscreen.mp4', 'short_Coffin Dance (Official Music Video HD).mp3', 'gifPlayer-3'],
+	['meme - high ground', 'transparent_greenscreen.mp4', '10sec_Highground_Obi-Wan vs Anakin - Duel on Mustafar (Part 2) Star Wars Revenge of the Sith (2005) Movie Clip.mp3', 'gifPlayer-2'],
+	['meme - rocky', 'transparent_greenscreen.mp4', 'short_1.15pct_speed_The Mandalorian Theme X Rocky Theme (EPIC HIP HOP REMIX).mp3', 'gifPlayer-6'],
 	['nice', 'PSL_nice.mp4', ''],
-	['nooblord', 'nooblord.mp4', 'nooblord.wav'],
-	['player_EnDerr 2', 'PSL_EnDerr2.mp4', ''],
-	['player_Hiro 2', 'PSL_Hiro.mp4', ''],
-	['player_Kas 2', 'PSL_Kas.mp4', ''],
 	['regret', 'regret2b.mp4', 'regret.wav'],
 	['rex', 'FSL_rex.mp4', 'rex.wav'],
 	['ronan', 'ronan.mp4', 'tlmnronan.wav'],
 	['ruff', 'PSL_ruff.mp4', ''],
-	['sef', 'sef.mp4', 'sef.wav'],
-	['sirmalagant', 'sirmalagant.mp4', 'sirmalagant.wav'],
 	['stublu88', 'stublu88.mp4', 'stublu88.wav'],
-	['toirtoiseandhare', 'toirtoiseandhare.mp4', 'tortoiseandhare.wav'],
-	['typhoonfusion', 'typhoonfusion.mp4', 'typhoonfusion.wav'],
-	['vales', 'vales.mp4', 'vales.wav'],
 	['zzzzzz - last placeholder', '', '']
 ];
 
@@ -196,11 +196,11 @@ forms.forEach((form) => {
 		}
 
 		videoPlayer.setAttribute('src', videoPath);
-		//audioPlayer.setAttribute('src', audioPath);
 		videoPlayer.load();
-		//audioPlayer.load();
 
-		// Check if there is a fourth element in the matchingPlayer array
+		//show player name by default
+		playerNameBox.style.display = 'block';
+
 		// Check if there is a fourth element in the matchingPlayer array
 		if (matchingPlayer.length > 3) {
 			switch (matchingPlayer[3]) {
@@ -271,6 +271,7 @@ forms.forEach((form) => {
 
 	//CUSTOM 4th parameter functions
 
+	//hide title or player name for certain types
 	function noTitle() {
 		playerNameBox.style.display = 'none';
 	}
