@@ -1,0 +1,101 @@
+.container {
+    display: flex;
+}
+
+.left-column {
+    flex: 1 0 15%;
+    margin-right: 20px;
+}
+
+.right-column {
+    flex: 3 0 85%;
+    text-align: right;
+    border: 0px solid black;
+    background: #00FF00;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+}
+
+.media-form {
+    display: flex;
+    margin-bottom: 10px;
+}
+
+.video-wrapper {
+    position: relative;
+    width: 640px;
+    height: 480px;
+    border: 0px solid black;
+    padding-bottom: 56.25%;
+    position: relative;
+    height: 0;
+    display: flex;
+    justify-content: center;
+}
+
+#video-container {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    border: 0px solid white;
+    display: none;
+}
+
+#gif-container {
+    position: absolute;
+    top: 400px;
+    width: 100%;
+    height: 100%;
+    left: 100px;
+    border: 0px solid black;
+    display: flex;
+    justify-content: center;
+}
+
+#gif-image {
+    width: 50%;
+    height: 50%;
+    object-fit: contain;
+    display: flex;
+    justify-content: center;
+    border: 0px solid black;
+}
+
+#chart-container {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 500px;
+    height: 500px;
+    background-color: black;
+    border: 0px solid black;
+}
+
+.player-name-input {
+    flex: 1;
+    margin-right: 10px;
+}
+
+.player-name-box {
+    position: absolute;
+    bottom: 20px;
+    //left: 0;
+    bottom: 200px;
+    transform: translateX(-50%);
+    padding: 10px;
+    background-color: white;
+    color: black;
+    font-family: Arial, sans-serif;
+    display: none;
+    z-index: 9999;
+    text-align: center;
+    font-weight: bold;
+    font-size: 20px;
+    //text-transform: uppercase;
+    border: 0px solid black;
+
+}

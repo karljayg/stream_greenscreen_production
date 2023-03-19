@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<title>Player Ratings</title>
+    <link rel="stylesheet" href="styles/styles.css?ver=4">
+    <link rel="stylesheet" href="https://code.jquery.com/ui/1.13.1/themes/smoothness/jquery-ui.css">
+
+    <!-- spider chart -->
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="js/jquery-ui.min.js"></script>
+    <script src="js/popper.min.js"></script>
+    <script src="js/chart.js"></script>
+    <script src="js/player_ratings.js?ver=5"></script>
+    <script src="https://code.jquery.com/ui/1.13.1/jquery-ui.min.js"></script>
+</head>
+<body>
+	<h1>Player Ratings</h1>
+
+	<p>Enter a player name:</p>
+	<input id="player-input" type="text" oninput="searchPlayers(this.value)" value="grey">
+	<div id="player-list"></div>
+	<button onclick="loadSpiderChart()">Load Spider Chart</button>
+	<div id="chart-container" style="left: 400px;">
+	  <canvas id="spider-chart"></canvas>
+	</div>
+</body>
+</html>
