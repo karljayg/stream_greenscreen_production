@@ -25,6 +25,8 @@ See its use in one of our recent broadcasts: https://www.youtube.com/watch?v=gyR
 1. Select a media type from the dropdown list
 2. Choose a specific media item from the secondary dropdown list
 3. Click the "Play" button to display the media on the greenscreen
+4. Make adjustments so this is a Source in your OBS for example, you do Transform, with settings of LEFT: 280 TOP: 120 and BOTTOM/RIGHT: 20 to hide the inevitable scrollbars.
+
 
 ## Contributing
 
