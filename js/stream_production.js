@@ -114,7 +114,7 @@ const playerList = [
 	['zzzzzz - last placeholder', '', '']
 ];
 
-var masterpath = "../Stream_Production";
+var masterpath = ".";
 var production_files = masterpath + "/production_files";
 var audiopath = production_files + "/audio/";
 var videopath = production_files + "/video/";
