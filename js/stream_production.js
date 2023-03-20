@@ -1,3 +1,4 @@
+var projectpath = "."; //in some server, this has to be 'stream_production' or '.' so switch between the 2 and test by running Random Music
 var masterpath = ".";
 var production_files = masterpath + "/production_files";
 var audiopath = production_files + "/audio/";
@@ -30,7 +31,6 @@ forms.forEach((form) => {
 
 	// get the player name input and the player name box elements
 	const playerNameBox = document.querySelector('.player-name-box');
-
 	const playerNameInput = form.querySelector('.player-name-input');
 	const videoPlayer = document.querySelector('#video-player');
 	const audioPlayer = document.querySelector('#audio-player');
@@ -173,7 +173,7 @@ forms.forEach((form) => {
 
     function playRandomAudio() {
         const randomIndex = Math.floor(Math.random() * randomAudioFiles.length);
-        const audioPath = window.location.origin + '/' + randomAudioFiles[randomIndex];
+        const audioPath = window.location.origin + '/' + projectpath + '/' + randomAudioFiles[randomIndex];        
         const audio = new Audio(audioPath);
         audio.volume = document.getElementById('volume-slider').value / 100;
         audio.play();
