@@ -9,7 +9,7 @@ import { gifFiles, randomAudioFiles } from './other_lists.js';
 
 const forms = document.querySelectorAll('.media-form');
 const audioPlayer = document.querySelector('#audio-player');
-const audioObjects = []; // Create an array to store all audio objects for subsequent submits while 1 or more audio is playing
+//not needed: const audioObjects = []; // Create an array to store all audio objects for subsequent submits while 1 or more audio is playing
 
 // add an event listener for the "ended" event on the audio player
 audioPlayer.addEventListener('ended', function() {
@@ -22,7 +22,7 @@ audioPlayer.addEventListener('ended', function() {
         audioPlayer.volume = document.getElementById('volume-slider').value / 100;
 		audioPlayer.play();
 		// add the audio object to the array
-		audioObjects.push(audio);        
+		//not needed: audioObjects.push(audio);        
 	}
 });
 
@@ -71,13 +71,15 @@ forms.forEach((form) => {
           audio.load();
           audio.volume = document.getElementById('volume-slider').value / 100;
           audio.play();
-          audioObjects.push(audio); // add the audio object to the array
+          //not needed: audioObjects.push(audio); // add the audio object to the array
           audio.addEventListener('ended', () => {
             // remove the audio object from the array when it ends
-            const index = audioObjects.indexOf(audio);
+            /*const index = audioObjects.indexOf(audio);
             if (index > -1) {
               audioObjects.splice(index, 1);
             }
+            */
+
             playNextAudio(index + 1);
           });
         } else {
