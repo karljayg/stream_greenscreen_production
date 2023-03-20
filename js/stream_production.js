@@ -9,21 +9,7 @@ import { gifFiles, randomAudioFiles } from './other_lists.js';
 
 const forms = document.querySelectorAll('.media-form');
 const audioPlayer = document.querySelector('#audio-player');
-const volumeSlider = document.getElementById('volume-slider');
 const audioObjects = []; // Create an array to store all audio objects for subsequent submits while 1 or more audio is playing
-
-const setVolume = (volume) => {
-  audioObjects.forEach((audio) => {
-    audio.volume = volume;
-    console.log("volume set to " + volume);    
-  });
-};
-
-volumeSlider.addEventListener('input', () => {
-  const volume = volumeSlider.value / 100;
-  setVolume(volume);
-  console.log("slider event detected " + volume);
-});
 
 // add an event listener for the "ended" event on the audio player
 audioPlayer.addEventListener('ended', function() {
@@ -33,19 +19,12 @@ audioPlayer.addEventListener('ended', function() {
 		const nextAudioPath = audioFiles.shift();
 		audioPlayer.setAttribute('src', nextAudioPath);
 		audioPlayer.load();
+        audioPlayer.volume = document.getElementById('volume-slider').value / 100;
 		audioPlayer.play();
 		// add the audio object to the array
 		audioObjects.push(audio);        
 	}
 });
-
-const setAllVolumes = (volume) => {
-	// loop through all the audio objects and set their volume
-	for (let i = 0; i < audioObjects.length; i++) {
-		const audio = audioObjects[i];
-		audio.volume = volume;
-	}
-};
 
 forms.forEach((form) => {
 
@@ -86,25 +65,11 @@ forms.forEach((form) => {
 		When the form is submitted, we add the new audio file path to the audioFiles array and check if it is the first audio file in the array. If it is the first audio file, we call the playNextAudio function with an index of 0 to play the first audio file in the array. If there are already audio files in the audioFiles array, we don't call the playNextAudio function again, because it is already playing the previous audio files.
 		*/
 
-        /*
-		const playNextAudio = (index) => {
-			if (index < audioFiles.length) {
-				const audio = new Audio(audioFiles[index]);
-				audio.load();
-				audio.play();
-				audio.addEventListener('ended', () => {
-					playNextAudio(index + 1);
-				});
-			} else {
-				audioFiles = [];
-			}
-		};
-        */
-
        const playNextAudio = (index) => {
         if (index < audioFiles.length) {
           const audio = new Audio(audioFiles[index]);
           audio.load();
+          audio.volume = document.getElementById('volume-slider').value / 100;
           audio.play();
           audioObjects.push(audio); // add the audio object to the array
           audio.addEventListener('ended', () => {
@@ -165,10 +130,8 @@ forms.forEach((form) => {
 			}
 		}
 
-
-
 		Promise.all([
-			videoPlayer.play(),
+			videoPlayer.play(),            
 			audioPlayer.play()
 		]).catch((error) => {
 			errorMessage.textContent = `Error: ${error.message}`;
@@ -210,6 +173,7 @@ forms.forEach((form) => {
         const randomIndex = Math.floor(Math.random() * randomAudioFiles.length);
         const audioPath = window.location.origin + '/' + randomAudioFiles[randomIndex];
         const audio = new Audio(audioPath);
+        audio.volume = document.getElementById('volume-slider').value / 100;
         audio.play();
       }     
 
@@ -231,7 +195,6 @@ forms.forEach((form) => {
 		gifContainer.style.display = 'none';
 	  }, gifTimeout);
 	}
-
 
 	function showSuggestions(players) {
 		const suggestionList = document.createElement('ul');
