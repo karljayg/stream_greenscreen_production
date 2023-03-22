@@ -5,7 +5,10 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Stream Production Tool</title>
+    <link rel="icon" href="production_files/images/favicon.ico" type="image/x-icon">
+    <link rel="shortcut icon" href="production_files/images/favicon.ico" type="image/x-icon">    
     <link rel="stylesheet" href="styles/styles.css?ver=4">
+    <link rel="stylesheet" href="styles/main.css">    
     <link rel="stylesheet" href="https://code.jquery.com/ui/1.13.1/themes/smoothness/jquery-ui.css">
 
     <!-- spider chart -->
@@ -20,6 +23,11 @@
 <body onload="hideChart()">
     <div class="container">
         <div class="left-column">
+            <h2>Volume</h2>
+            <div>
+                <label for="volume-slider">Volume: </label>
+                <input type="range" id="volume-slider" min="0" max="100" value="50">
+            </div>          
             <h2>Player Intros, Memes & Effects</h2>
             <form class="media-form" id="media-form-1">
                 <input type="text" class="player-name-input" placeholder="Enter player name" value="DarkMenace" required>
@@ -95,6 +103,6 @@
     Your browser does not support the audio element.
 </audio>
 
-<script src="js/stream_production.js"></script>
+<script type="module" src="js/stream_production.js"></script>
 
 </html>
