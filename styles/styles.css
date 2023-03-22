@@ -23,7 +23,7 @@
     display: flex;
     margin-bottom: 10px;
     /* freeze size so suggestion does not make it wider */
-    width: 270px;
+    width: 260px;
     height: 40px;
 }
 

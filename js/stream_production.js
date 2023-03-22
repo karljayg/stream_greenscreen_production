@@ -1,4 +1,4 @@
-var projectpath = "stream_greenscreen_production"; //in some server, this has to be 'stream_production' or '.' so switch between the 2 and test by running Random Music
+var projectpath = "stream_greenscreen_production"; //in some servers this is '.' so switch between the 2 and test by running Random Music
 var masterpath = ".";
 var production_files = masterpath + "/production_files";
 var audiopath = production_files + "/audio/";
