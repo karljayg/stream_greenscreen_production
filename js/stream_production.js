@@ -1,4 +1,4 @@
-var projectpath = "."; //in some server, this has to be 'stream_production' or '.' so switch between the 2 and test by running Random Music
+var projectpath = "stream_greenscreen_production"; //in some server, this has to be 'stream_production' or '.' so switch between the 2 and test by running Random Music
 var masterpath = ".";
 var production_files = masterpath + "/production_files";
 var audiopath = production_files + "/audio/";
@@ -200,6 +200,7 @@ forms.forEach((form) => {
 
 	function showSuggestions(players) {
 		const suggestionList = document.createElement('ul');
+        suggestionList.setAttribute('id', 'suggestion-list');
 		suggestionList.classList.add('suggestion-list');
 		players.forEach(p => {
 			const suggestionItem = document.createElement('li');
