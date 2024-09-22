@@ -1,4 +1,4 @@
-var projectpath = "stream_greenscreen_production"; //in some servers this is '.' so switch between the 2 and test by running Random Music
+var projectpath = "stream_production"; //in some servers this is '.' so switch between the 2 and test by running Random Music
 var masterpath = ".";
 var production_files = masterpath + "/production_files";
 var audiopath = production_files + "/audio/";
@@ -10,7 +10,6 @@ import { gifFiles, randomAudioFiles } from './other_lists.js';
 
 const forms = document.querySelectorAll('.media-form');
 const audioPlayer = document.querySelector('#audio-player');
-//not needed: const audioObjects = []; // Create an array to store all audio objects for subsequent submits while 1 or more audio is playing
 
 // add an event listener for the "ended" event on the audio player
 audioPlayer.addEventListener('ended', function() {
@@ -22,10 +21,53 @@ audioPlayer.addEventListener('ended', function() {
 		audioPlayer.load();
         audioPlayer.volume = document.getElementById('volume-slider').value / 100;
 		audioPlayer.play();
-		// add the audio object to the array
-		//not needed: audioObjects.push(audio);        
 	}
 });
+
+// Attach the functions to the global window object to make them accessible in the HTML
+window.toggleStatus = function() {
+    const statusSection = document.getElementById("status-section");
+    if (statusSection.style.display === "none" || statusSection.style.display === "") {
+        statusSection.style.display = "block";
+    } else {
+        statusSection.style.display = "none";
+    }
+}
+
+window.showFormattedResult = function() {
+    const statusResult = document.getElementById("right-column-result"); // Target the right-column div for the result
+    
+    // Check if the status result is already displayed, if yes, hide it
+    if (statusResult.style.display === "block") {
+        statusResult.style.display = "none"; // Hide the result
+    } else {
+        // If hidden, display the formatted result
+        const title = document.getElementById("status-title").value;
+        const teamA = document.getElementById("status-teamA").value;
+        const teamB = document.getElementById("status-teamB").value;
+        const valueA = document.getElementById("status-valueA").value;
+        const valueB = document.getElementById("status-valueB").value;
+
+        const resultHTML = `
+            <div>
+                <h2>${title}</h2>
+                <div style="display: flex; justify-content: center;">
+                    <div style="margin-right: 20px;">
+                        <p><strong>${teamA}</strong></p>
+                        <p>${valueA}</p>
+                    </div>
+                    <div style="margin-left: 20px;">
+                        <p><strong>${teamB}</strong></p>
+                        <p>${valueB}</p>
+                    </div>
+                </div>
+            </div>
+        `;
+
+        statusResult.innerHTML = resultHTML;
+        statusResult.style.display = "block"; // Show the result
+    }
+}
 
 forms.forEach((form) => {
 
@@ -37,15 +79,11 @@ forms.forEach((form) => {
 	const errorMessage = document.querySelector('#error-message');
 	const videoContainer = document.querySelector('#video-container');
 
-	// Create an array to store the audio file paths to allow for continuous play of multiple audio after subsequent button presses
 	let audioFiles = [];
 
 	form.addEventListener('submit', (event) => {
-
 		event.preventDefault();
-		//const playerName = playerNameInput.value.trim().toLowerCase();
 		const playerName = playerNameInput.value.trim();
-		//const matchingPlayer = playerList.find(p => p[0].toLowerCase() === playerName);
 		const matchingPlayer = playerList.find(p => p[0] === playerName);
 		playerNameBox.textContent = matchingPlayer[0];
 
@@ -56,38 +94,22 @@ forms.forEach((form) => {
 		const videoPath = videopath + matchingPlayer[1];
 		const audioPath = audiopath + matchingPlayer[2];
 
-		// Add the audio file path to the array
 		audioFiles.push(audioPath);
 
-		// Play the audio files in the array one after the other
-		/*
-		In this code, we added an array called audioFiles to store the audio file paths. On each button press, we push the new audio file path to the audioFiles array. We also added a playNextAudio function to play the audio files in the array one after the other.
-		When the form is submitted, we add the new audio file path to the audioFiles array and check if it is the first audio file in the array. If it is the first audio file, we call the playNextAudio function with an index of 0 to play the first audio file in the array. If there are already audio files in the audioFiles array, we don't call the playNextAudio function again, because it is already playing the previous audio files.
-		*/
+		const playNextAudio = (index) => {
+			if (index < audioFiles.length) {
+				const audio = new Audio(audioFiles[index]);
+				audio.load();
+				audio.volume = document.getElementById('volume-slider').value / 100;
+				audio.play();
+				audio.addEventListener('ended', () => {
+					playNextAudio(index + 1);
+				});
+			} else {
+				audioFiles = [];
+			}
+		};   
 
-       const playNextAudio = (index) => {
-        if (index < audioFiles.length) {
-          const audio = new Audio(audioFiles[index]);
-          audio.load();
-          audio.volume = document.getElementById('volume-slider').value / 100;
-          audio.play();
-          //not needed: audioObjects.push(audio); // add the audio object to the array
-          audio.addEventListener('ended', () => {
-            // remove the audio object from the array when it ends
-            /*const index = audioObjects.indexOf(audio);
-            if (index > -1) {
-              audioObjects.splice(index, 1);
-            }
-            */
-
-            playNextAudio(index + 1);
-          });
-        } else {
-          audioFiles = [];
-        }
-      };   
-
-		// Play the first audio file in the array
 		if (audioFiles.length === 1) {
 			playNextAudio(0);
 		}
@@ -95,10 +117,8 @@ forms.forEach((form) => {
 		videoPlayer.setAttribute('src', videoPath);
 		videoPlayer.load();
 
-		//show player name by default
 		playerNameBox.style.display = 'block';
 
-		// Check if there is a fourth element in the matchingPlayer array
 		if (matchingPlayer.length > 3) {
 			switch (matchingPlayer[3]) {
 			  case 'noTitle':
@@ -113,7 +133,6 @@ forms.forEach((form) => {
 				noTitle();
 				break;
 			  default:
-				// Check if the command has a number suffix
 				try {
 				  if (matchingPlayer[3].match(/-\d+$/)) {
 					const gifIndex = parseInt(matchingPlayer[3].split('-')[1]);
@@ -164,9 +183,6 @@ forms.forEach((form) => {
 		setTimeout(clearSuggestions, 100);
 	});
 
-	//CUSTOM 4th parameter functions
-
-	//hide title or player name for certain types
 	function noTitle() {
 		playerNameBox.style.display = 'none';
 	}
@@ -177,21 +193,18 @@ forms.forEach((form) => {
         const audio = new Audio(audioPath);
         audio.volume = document.getElementById('volume-slider').value / 100;
         audio.play();
-      }     
+    }     
 
 	function gifPlayer(gifIndex = 0) {
-	  // Select the GIF file based on the gifIndex parameter
 	  const gifFileName = gifFiles.find(file => file[0] === gifIndex)[1];
 	  const gifPath = imagepath + gifFileName;
 
 	  const gifContainer = document.querySelector('#gif-container');
 	  const gifImage = document.querySelector('#gif-image');
-	  const gifTimeout = 8000; // in ms
+	  const gifTimeout = 8000;
 
-	  // Set the GIF image source
 	  gifImage.src = gifPath;
 
-	  // Show the GIF container and hide it after the timeout
 	  gifContainer.style.display = 'block';
 	  setTimeout(() => {
 		gifContainer.style.display = 'none';

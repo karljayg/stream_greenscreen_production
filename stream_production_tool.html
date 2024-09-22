@@ -47,6 +47,9 @@
 
             <h2>Player Intros, Memes & Effects</h2>
 
+            <!-- Toggle for the rest of the forms -->
+            <button class="collapsible-btn" onclick="toggleForms()">Show/Hide More</button>
+                        
             <!-- Always visible forms -->
             <form class="media-form" id="media-form-1">
                 <input type="text" class="player-name-input" placeholder="Enter player name" value="DarkMenace" required>
@@ -57,8 +60,6 @@
                 <button type="submit">Go</button>
             </form>
 
-            <!-- Toggle for the rest of the forms -->
-            <button class="collapsible-btn" onclick="toggleForms()">Show/Hide More</button>
             <div class="collapsible-content" id="player-intros-list">
                 <form class="media-form" id="media-form-3">
                     <input type="text" class="player-name-input" placeholder="Enter player name" value="Neutrophil" required>
@@ -94,6 +95,33 @@
                 </form>
             </div>
 
+            <!-- Toggle Button to Show/Hide Status Section -->
+            <button class="collapsible-btn" onclick="toggleStatus()">Show/Hide Status</button>
+
+            <!-- Status Section -->
+            <div id="status-section">
+                <h2>Status</h2>
+                <table>
+                    <tr>
+                        <th>Title</th>
+                        <th>Team A</th>
+                        <th>Team B</th>
+                    </tr>
+                    <tr>
+                        <td><input type="text" id="status-title" placeholder="Enter title"></td>
+                        <td><input type="text" id="status-teamA" placeholder="Team A"></td>
+                        <td><input type="text" id="status-teamB" placeholder="Team B"></td>
+                    </tr>
+                    <tr>
+                        <td></td>
+                        <td><input type="text" id="status-valueA" placeholder="Value A"></td>
+                        <td><input type="text" id="status-valueB" placeholder="Value B"></td>
+                    </tr>
+                </table>
+                <!-- Button to show formatted result -->
+                <button onclick="showFormattedResult()">Show/Hide Status</button>
+            </div>
+
             <h1>Player Ratings</h1>
 
             <p>Spider Chart</p>
@@ -110,6 +138,9 @@
                         Your browser does not support the video tag.
                     </video>
                 </div>
+                <div id="right-column-result" style="text-align: center; margin-top: 20px;">
+                    <!-- Status data will be dynamically inserted here -->
+                </div>                
                 <div id="gif-container">
                     <img id="gif-image" src="production_files/images/transparent_greenscreen.gif" alt="GIF">
                 </div>
