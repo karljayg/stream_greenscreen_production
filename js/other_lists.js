@@ -15,5 +15,11 @@ export const randomAudioFiles = [
     "production_files/audio/PSL_s2_intro3.mp3",
     "production_files/audio/PSL_s2_intro4.mp3",
     "production_files/audio/PSL_s2_intro5.mp3",
-    "production_files/audio/PSL_s2_intro6.mp3"                    
+    "production_files/audio/PSL_s2_intro6.mp3",
+    "production_files/audio/FSL_intro_2024_clip1.mp3",
+    "production_files/audio/FSL_intro_2024_clip2.mp3",
+    "production_files/audio/FSL_intro_2024_clip3.mp3",
+    "production_files/audio/FSL_intro_2024_clip4.mp3",
+    "production_files/audio/FSL_intro_2024_clip5.mp3",
+    "production_files/audio/FSL_intro_2024_clip6.mp3"                    
 ];
