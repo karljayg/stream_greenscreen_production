@@ -1,0 +1,4 @@
+# For normalize_sound_files.py
+pydub>=0.25.0
+numpy>=1.20.0
+pyloudnorm>=0.1.0

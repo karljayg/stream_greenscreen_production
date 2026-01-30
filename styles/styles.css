@@ -1,22 +1,44 @@
+/* General container styles */
 .container {
     display: flex;
+    height: 100vh; /* Full viewport height */
+    overflow: hidden; /* Prevent page scrolling */
 }
 
 .left-column {
     margin-left: 3px;
-    flex: 1 0 12%;
     margin-right: 3px;
+    flex: 1 0 12%; /* Flex-grow with a minimum width */
+    min-width: 260px; /* Ensure it doesn't shrink below 260px */
+    background: #FFFFFF; /* White background */
+    height: 100vh; /* Full viewport height */
+    overflow-y: auto; /* Enable vertical scrolling */
+    overflow-x: hidden; /* Prevent horizontal scrolling */
 }
 
 .right-column {
     flex: 3 0 88%;
     text-align: right;
     border: 0px solid black;
-    background: #00FF00;
+    background: #00FF00; /* Greenscreen background */
     display: flex;
     flex-direction: column;
     justify-content: center;
     align-items: center;
+}
+
+/* Optional scrollbar styling */
+.left-column::-webkit-scrollbar {
+    width: 8px; /* Narrow scrollbar */
+}
+
+.left-column::-webkit-scrollbar-thumb {
+    background-color: #888; /* Darker scrollbar color */
+    border-radius: 4px; /* Rounded scrollbar edges */
+}
+
+.left-column::-webkit-scrollbar-thumb:hover {
+    background-color: #555; /* Darker on hover */
 }
 
 .media-form {
@@ -32,7 +54,7 @@
     width: 640px;
     height: 480px;
     border: 0px solid black;
-    padding-bottom: 56.25%;
+    padding-bottom: 46.25%;
     position: relative;
     height: 0;
     display: flex;
@@ -56,7 +78,7 @@
 
 #gif-container {
     position: absolute;
-    top: 400px;
+    top: 405px;
     width: 100%;
     height: 100%;
     left: 220px;
@@ -93,9 +115,10 @@
 
 .player-name-box {
     position: absolute;
-    bottom: 200px;
-    left: 900px;
+    top: 400px;
+    left: 50%;
     transform: translateX(-50%);
+    margin-top: 10px;
     padding: 10px;
     background-color: rgb(7, 7, 7);
     color: rgb(255, 255, 255);
@@ -126,3 +149,64 @@
     padding-left:3em    
   }
   
+/* Ensure the left-column does not expand beyond 260px */
+.left-column {
+    width: 260px;
+}
+
+/* Define a global class for text shadow */
+.text-outline {
+    text-shadow: 
+        -2px -2px 0 #000,  
+        2px -2px 0 #000,
+        -2px 2px 0 #000,
+        2px 2px 0 #000,
+        -3px 0 0 #000, 
+        3px 0 0 #000, 
+        0 -3px 0 #000, 
+        0 3px 0 #000 !important; /* Ensure shadow applies to all relevant elements */
+}
+
+/* Adjust input width to fit within their cells */
+#status-section input {
+    width: 90%; /* Make inputs slightly smaller to fit comfortably in the cell */
+    box-sizing: border-box; /* Ensure padding and borders are included in the width calculation */
+    margin: 0 auto; /* Center the input */
+}
+
+/* Style for the result displayed in the right column */
+#right-column-result {
+    font-size: 40px; /* Large font for visibility */
+    color: white; /* Default color for text (can be overridden below) */
+    padding: 20px; /* Add some padding around the text */
+    text-align: center; /* Center the text */
+}
+
+/* Styling for the result description */
+#result_desc p {
+    font-size: 50px; /* Make the title stand out more */
+    color: white 
+}
+
+/* Team A Styling (Light Blue) */
+#teamA_name {
+    font-size: 40px; /* Large font for Team A name */
+    color: #ADD8E6 !important; /* Light blue for Team A name */
+}
+
+#teamA_value {
+    font-size: 40px; /* Large font for Team A value */
+    color: #ADD8E6 !important; /* Light blue for Team A value */
+}
+
+/* Team B Styling (Yellow) */
+#teamB_name {
+    font-size: 40px; /* Large font for Team B name */
+    color: #FFD700 !important; /* Bright yellow for Team B name */
+}
+
+#teamB_value {
+    font-size: 40px; /* Large font for Team B value */
+    color: #FFD700 !important; /* Bright yellow for Team B value */
+}
+

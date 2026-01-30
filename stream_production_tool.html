@@ -15,7 +15,6 @@
     <script src="js/jquery-ui.min.js"></script>
     <script src="js/popper.min.js"></script>
     <script src="js/chart.js"></script>
-    <script src="js/player_ratings.js?ver=5"></script>
     <script src="https://code.jquery.com/ui/1.13.1/jquery-ui.min.js"></script>
 
     <style>
@@ -36,7 +35,7 @@
     </style>
 </head>
 
-<body onload="hideChart()">
+<body>
     <div class="container">
         <div class="left-column">
             <h2>Volume</h2>
@@ -44,62 +43,11 @@
                 <label for="volume-slider">Volume: </label>
                 <input type="range" id="volume-slider" min="0" max="100" value="50">
             </div>
-
-            <h2>Player Intros, Memes & Effects</h2>
-
-            <!-- Toggle for the rest of the forms -->
-            <button class="collapsible-btn" onclick="toggleForms()">Show/Hide More</button>
-                        
-            <!-- Always visible forms -->
-            <form class="media-form" id="media-form-1">
-                <input type="text" class="player-name-input" placeholder="Enter player name" value="DarkMenace" required>
-                <button type="submit">Go</button>
-            </form>
-            <form class="media-form" id="media-form-2">
-                <input type="text" class="player-name-input" placeholder="Enter player name" value="LittleReaper" required>
-                <button type="submit">Go</button>
-            </form>
-
-            <div class="collapsible-content" id="player-intros-list">
-                <form class="media-form" id="media-form-3">
-                    <input type="text" class="player-name-input" placeholder="Enter player name" value="Neutrophil" required>
-                    <button type="submit">Go</button>
-                </form>
-                <form class="media-form" id="media-form-4">
-                    <input type="text" class="player-name-input" placeholder="Enter player name" value="HyperTurtle" required>
-                    <button type="submit">Go</button>
-                </form>
-                <form class="media-form" id="media-form-5">
-                    <input type="text" class="player-name-input" placeholder="Enter player name" value="Random Music" required>
-                    <button type="submit">Go</button>
-                </form>
-                <form class="media-form" id="media-form-6">
-                    <input type="text" class="player-name-input" placeholder="Enter player name" value="FSL intro" required>
-                    <button type="submit">Go</button>
-                </form>
-                <form class="media-form" id="media-form-7">
-                    <input type="text" class="player-name-input" placeholder="Enter player name" value="GG" required>
-                    <button type="submit">Go</button>
-                </form>
-                <form class="media-form" id="media-form-8">
-                    <input type="text" class="player-name-input" placeholder="Enter player name" value="Match GG" required>
-                    <button type="submit">Go</button>
-                </form>
-                <form class="media-form" id="media-form-9">
-                    <input type="text" class="player-name-input" placeholder="Enter player name" value="meme - rocky" required>
-                    <button type="submit">Go</button>
-                </form>
-                <form class="media-form" id="media-form-10">
-                    <input type="text" class="player-name-input" placeholder="Enter player name" value="meme - high ground" required>
-                    <button type="submit">Go</button>
-                </form>
-            </div>
-
             <!-- Toggle Button to Show/Hide Status Section -->
             <button class="collapsible-btn" onclick="toggleStatus()">Show/Hide Status</button>
 
             <!-- Status Section -->
-            <div id="status-section">
+            <div class="collapsible-content" id="status-section">
                 <h2>Status</h2>
                 <table>
                     <tr>
@@ -122,14 +70,81 @@
                 <button onclick="showFormattedResult()">Show/Hide Status</button>
             </div>
 
+            <!-- Matchup Controls -->
+            <h2>Matchup (2v2)</h2>
+            <div style="margin-bottom: 10px;">
+                <input type="text" id="matchup-teamA-name" placeholder="Team A Name" value="Team A" style="width: 10ch; margin: 2px 0; font-weight: bold;">
+                <input type="text" id="matchup-teamA1" class="matchup-input" placeholder="Player 1" value="DarkMenace" style="width: 10ch; margin: 2px 0;">
+                <input type="text" id="matchup-teamA2" class="matchup-input" placeholder="Player 2" value="Neutrophil" style="width: 10ch; margin: 2px 0;">
+                <input type="text" id="matchup-teamA-comment" placeholder="Score/Comment" maxlength="40" style="width: 10ch; margin: 2px 0; font-size: 12px;">
+            </div>
+            <div style="margin-bottom: 10px;">
+                <input type="text" id="matchup-teamB-name" placeholder="Team B Name" value="Team B" style="width: 10ch; margin: 2px 0; font-weight: bold;">
+                <input type="text" id="matchup-teamB1" class="matchup-input" placeholder="Player 1" value="LittleReaper" style="width: 10ch; margin: 2px 0;">
+                <input type="text" id="matchup-teamB2" class="matchup-input" placeholder="Player 2" value="HyperTurtle" style="width: 10ch; margin: 2px 0;">
+                <input type="text" id="matchup-teamB-comment" placeholder="Score/Comment" maxlength="40" style="width: 10ch; margin: 2px 0; font-size: 12px;">
+            </div>
+            <!-- Button to show formatted result -->
+            <button onclick="showMatchupResult()">Show/Hide Matchup</button>
+
             <h1>Player Ratings</h1>
 
-            <p>Spider Chart</p>
-            <input id="player-input" type="text" oninput="searchPlayers(this.value)" value="grey">
-            <div id="player-list"></div>
-            <button id="chart-toggle-btn" onclick="toggleSpiderChart()">Load Spider Chart</button>
+            <p>External Spider Chart</p>
+            <input id="player-input" type="text" placeholder="Enter player name" value="littlereaper">
+            <input id="division-input" type="text" placeholder="Division" value="A" style="width: 5ch; margin-left: 5px;">
+            <button id="chart-toggle-btn" onclick="toggleExternalChart()">Load External Chart</button>
 
-            <div id="error-message" style="color: red;"></div>
+            <div id="error-message" style="color: red;"></div>            
+
+            <h2>Player Intros, Memes & Effects</h2>
+
+            <!-- Toggle for the rest of the forms -->
+            <button class="collapsible-btn" onclick="toggleForms()">Show/Hide More</button>
+
+            <!-- Always visible forms -->
+            <form class="media-form" id="media-form-1">
+                <input type="text" class="player-name-input" placeholder="Enter player name" value="DarkMenace" required>
+                <button type="submit">Go</button>
+            </form>
+            <form class="media-form" id="media-form-2">
+                <input type="text" class="player-name-input" placeholder="Enter player name" value="LittleReaper" required>
+                <button type="submit">Go</button>
+            </form>
+
+            <div class="collapsible-content" id="player-intros-list">
+                <form class="media-form" id="media-form-3">
+                    <input type="text" class="player-name-input" placeholder="Enter player name" value="PulledTheBoys" required>
+                    <button type="submit">Go</button>
+                </form>
+                <form class="media-form" id="media-form-4">
+                    <input type="text" class="player-name-input" placeholder="Enter player name" value="HyperTurtle" required>
+                    <button type="submit">Go</button>
+                </form>
+                <form class="media-form" id="media-form-5">
+                    <input type="text" class="player-name-input" placeholder="Enter player name" value="Harouz" required>
+                    <button type="submit">Go</button>
+                </form>
+                <form class="media-form" id="media-form-6">
+                    <input type="text" class="player-name-input" placeholder="Enter player name" value="InfiniteCyclists" required>
+                    <button type="submit">Go</button>
+                </form>
+                <form class="media-form" id="media-form-7">
+                    <input type="text" class="player-name-input" placeholder="Enter player name" value="Random Music" required>
+                    <button type="submit">Go</button>
+                </form>
+                <form class="media-form" id="media-form-8">
+                    <input type="text" class="player-name-input" placeholder="Enter player name" value="FSL intro" required>
+                    <button type="submit">Go</button>
+                </form>
+                <form class="media-form" id="media-form-9">
+                    <input type="text" class="player-name-input" placeholder="Enter player name" value="GG" required>
+                    <button type="submit">Go</button>
+                </form>
+                <form class="media-form" id="media-form-10">
+                    <input type="text" class="player-name-input" placeholder="Enter player name" value="Match GG" required>
+                    <button type="submit">Go</button>
+                </form>
+            </div>
         </div>
         <div class="right-column">
             <div class="video-wrapper">
@@ -139,16 +154,26 @@
                     </video>
                 </div>
                 <div id="right-column-result" style="text-align: center; margin-top: 20px;">
-                    <!-- Status data will be dynamically inserted here -->
+                    <!-- Status data and Matchup data will be dynamically inserted here -->
                 </div>                
                 <div id="gif-container">
                     <img id="gif-image" src="production_files/images/transparent_greenscreen.gif" alt="GIF">
                 </div>
-                <div id="chart-container">
-                    <canvas id="spider-chart"></canvas>
-                </div>
+                <div id="chart-container" style="display: none;"></div>
+                
+                <!-- Dedicated External Chart Overlay -->
+                <div id="external-chart-overlay" style="
+                    display: none;
+                    position: absolute;
+                    top: 0;
+                    left: 0;
+                    width: 100%;
+                    height: 100%;
+                    z-index: 1000;
+                    pointer-events: none;
+                "></div>
+                <div class="player-name-box"></div>
             </div>
-            <div class="player-name-box"></div>
         </div>
     </div>
 
@@ -168,18 +193,65 @@
             }
         }
 
-        function toggleSpiderChart() {
-            const chartContainer = document.getElementById("chart-container");
+        function showMatchupResult() {
+            // This function is now handled in stream_production.js to access playerList
+            if (window.handleMatchupDisplay) {
+                window.handleMatchupDisplay();
+            }
+        }
+
+        let chartDisplayed = false;
+        
+        function toggleExternalChart() {
+            const chartOverlay = document.getElementById("external-chart-overlay");
             const chartButton = document.getElementById("chart-toggle-btn");
+            const playerName = document.getElementById("player-input").value.trim();
+            const division = document.getElementById("division-input").value.trim();
             
-            if (chartContainer.style.display === "none" || chartContainer.style.display === "") {
-                chartContainer.style.display = "block";
-                chartButton.textContent = "Hide Spider Chart";
-                loadSpiderChart(); // Assuming this function loads the chart
+            if (chartDisplayed) {
+                // Hide the chart
+                chartOverlay.style.display = 'none';
+                chartOverlay.innerHTML = '';
+                chartDisplayed = false;
+                chartButton.textContent = "Load External Chart";
+                document.getElementById("error-message").textContent = "";
+                return;
+            }
+            
+            if (playerName && division) {
+                const baseUrl = window.spiderChartBaseUrl || "http://localhost/psistorm.com/fsl/view_spider_chart_player.php";
+                const chartUrl = `${baseUrl}?name=${encodeURIComponent(playerName)}&division=${encodeURIComponent(division)}`;
+                
+                // Get positioning from JS variables  
+                const pos = window.displayPositions ? window.displayPositions.externalChart : {left: '-20%', top: '20%', scale: '1.2'};
+                
+                // Create iframe in dedicated overlay div
+                chartOverlay.innerHTML = `
+                    <div style="
+                        position: relative;
+                        left: ${pos.left};
+                        top: ${pos.top};
+                        transform: scale(${pos.scale});
+                        transform-origin: top left;
+                        width: 100%;
+                    ">
+                        <iframe 
+                            src="${chartUrl}" 
+                            width="800" 
+                            height="800" 
+                            frameborder="0"
+                            scrolling="no"
+                            style="border: none; overflow: hidden; pointer-events: auto;">
+                        </iframe>
+                    </div>
+                `;
+                
+                chartOverlay.style.display = 'block';
+                chartDisplayed = true;
+                chartButton.textContent = "Hide External Chart";
+                document.getElementById("error-message").textContent = "";
             } else {
-                chartContainer.style.display = "none";
-                chartButton.textContent = "Load Spider Chart";
-                hideChart(); // Assuming this function hides the chart
+                document.getElementById("error-message").textContent = "Please enter both player name and division";
             }
         }
     </script>
@@ -187,4 +259,5 @@
 </body>
 
 </html>
+
 
