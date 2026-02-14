@@ -30,16 +30,37 @@ audioPlayer.addEventListener('ended', function() {
 });
 
 // Attach the functions to the global window object to make them accessible in the HTML
-window.toggleStatus = function() {
+window.toggleStatus = function(btn) {
     const statusSection = document.getElementById("status-section");
     if (statusSection.style.display === "none" || statusSection.style.display === "") {
         statusSection.style.display = "block";
     } else {
         statusSection.style.display = "none";
     }
+    if (btn) btn.textContent = (statusSection.style.display === "block") ? "Hide Status" : "Show Status";
 }
 
-window.showFormattedResult = function() {
+window.toggleMatchup = function(btn) {
+    const matchupSection = document.getElementById("matchup-section");
+    if (matchupSection.style.display === "none" || matchupSection.style.display === "") {
+        matchupSection.style.display = "block";
+    } else {
+        matchupSection.style.display = "none";
+    }
+    if (btn) btn.textContent = (matchupSection.style.display === "block") ? "Hide Matchup (2v2)" : "Show Matchup (2v2)";
+}
+
+window.togglePlayerRatings = function(btn) {
+    const playerRatingsSection = document.getElementById("player-ratings-section");
+    if (playerRatingsSection.style.display === "none" || playerRatingsSection.style.display === "") {
+        playerRatingsSection.style.display = "block";
+    } else {
+        playerRatingsSection.style.display = "none";
+    }
+    if (btn) btn.textContent = (playerRatingsSection.style.display === "block") ? "Hide Player Ratings" : "Show Player Ratings";
+}
+
+window.showFormattedResult = function(btn) {
     const statusResult = document.getElementById("right-column-result"); // Target the right-column div for the result
     
     // Check if the status result is already displayed, if yes, hide it
@@ -79,6 +100,7 @@ window.showFormattedResult = function() {
         statusResult.innerHTML = resultHTML;
         statusResult.style.display = "block"; // Show the result
     }
+    if (btn) btn.textContent = (statusResult.style.display === "block") ? "Hide Status" : "Show Status";
 }
 
 forms.forEach((form) => {
@@ -92,6 +114,11 @@ forms.forEach((form) => {
 	const videoContainer = document.querySelector('#video-container');
 
 	let audioFiles = [];
+
+	const onVideoEnded = () => {
+		videoContainer.style.display = 'none';
+		playerNameBox.style.display = 'none';
+	};
 
 	form.addEventListener('submit', (event) => {
 		event.preventDefault();
@@ -107,6 +134,8 @@ forms.forEach((form) => {
 		const audioPath = audiopath + matchingPlayer[2];
 
 		audioFiles.push(audioPath);
+
+		videoPlayer.removeEventListener('ended', onVideoEnded);
 
 		const playNextAudio = (index) => {
 			if (index < audioFiles.length) {
@@ -170,11 +199,8 @@ forms.forEach((form) => {
 			errorMessage.textContent = `Error: ${error.message}`;
 			console.error('Error playing video ' + audioPath + ' or audio: ' + videoPath + ' ', error);
 		});
-		videoContainer.style.display = 'block';
-		videoPlayer.addEventListener('ended', () => {
-			videoContainer.style.display = 'none';
-			playerNameBox.style.display = 'none';
-		});
+		videoContainer.style.display = 'flex';
+		videoPlayer.addEventListener('ended', onVideoEnded, { once: true });
 	});
 
 	playerNameInput.addEventListener('input', (event) => {
@@ -228,7 +254,7 @@ forms.forEach((form) => {
 
 	  gifImage.src = gifPath;
 
-	  gifContainer.style.display = 'block';
+	  gifContainer.style.display = 'flex';
 	  setTimeout(() => {
 		gifContainer.style.display = 'none';
 	  }, gifTimeout);
@@ -288,7 +314,7 @@ window.spiderChartBaseUrl = spiderChartBaseUrl;
 // Matchup functionality
 let matchupDisplayed = false;
 
-window.handleMatchupDisplay = function() {
+window.handleMatchupDisplay = function(btn) {
     const teamAName = document.getElementById('matchup-teamA-name').value.trim() || 'Team A';
     const teamBName = document.getElementById('matchup-teamB-name').value.trim() || 'Team B';
     const teamA1 = document.getElementById('matchup-teamA1').value.trim();
@@ -303,6 +329,7 @@ window.handleMatchupDisplay = function() {
         // Hide the matchup
         resultDiv.innerHTML = '';
         matchupDisplayed = false;
+        if (btn) btn.textContent = 'Show Matchup';
         return;
     }
     
@@ -401,6 +428,7 @@ window.handleMatchupDisplay = function() {
     });
     
     matchupDisplayed = true;
+    if (btn) btn.textContent = 'Hide Matchup';
 };
 
 // Add autocomplete functionality for matchup inputs  
@@ -465,6 +493,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
 function showMatchupSuggestions(input, players) {
     const suggestionList = document.createElement('ul');
+    suggestionList.setAttribute('data-layer-id', 'matchup-suggestions');
     suggestionList.classList.add('suggestion-list', 'matchup-suggestions');
     suggestionList.style.cssText = `
         position: absolute;
@@ -508,6 +537,7 @@ function showMatchupSuggestions(input, players) {
     clearMatchupSuggestions(input);
     input.parentNode.style.position = 'relative';
     input.parentNode.appendChild(suggestionList);
+    if (window.reapplyLayerOrder) window.reapplyLayerOrder();
 }
 
 function clearMatchupSuggestions(input) {

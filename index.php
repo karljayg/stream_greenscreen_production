@@ -38,7 +38,7 @@
 <body>
     <div class="container" data-layer-id="container">
         <div class="left-column">
-            <button class="collapsible-btn" onclick="toggleSettings()">Show/Hide Settings</button>
+            <button class="collapsible-btn" id="btn-settings" onclick="toggleSettings(this)">Show Settings</button>
             <div class="collapsible-content" id="settings-section" style="display: none;">
                 <h2>Volume</h2>
                 <div>
@@ -51,18 +51,18 @@
                     <p class="layer-order-hint">Drag to reorder. Top = back, bottom = front. Order is saved automatically.</p>
                     <ul id="layer-list" aria-label="Layer order, drag to reorder"></ul>
                     <h2 class="layer-order-heading">Import / Export all settings</h2>
-                    <p class="layer-order-hint">Export saves layer order, volume, Status, Matchup, Player Ratings, Logos (checkboxes + positions), VDO full and SC2 panel positions, Scenes visibility, and Player Intros names. <strong>Share the downloaded file (stream_production_settings.json) with others—they use Import all and choose that file to get the same setup.</strong></p>
+                    <p class="layer-order-hint">Export saves layer order, volume, Status, Matchup, Player Ratings, Logos (checkboxes + positions), VDO full and SC2 panel positions, Scenes visibility, and Player Intros names. <strong>Save to server</strong> stores the current setup so anyone opening this link gets the same settings. You can still <strong>Export all</strong> / <strong>Import all</strong> to share via file.</p>
                     <div class="layer-order-actions">
                         <button type="button" id="layer-reset-btn">Reset layer order to default</button>
                         <button type="button" id="layer-export-btn">Export all</button>
+                        <button type="button" id="layer-save-server-btn">Save to server</button>
                         <input type="file" id="layer-import-file" accept=".json" style="display: none;">
                         <button type="button" id="layer-import-btn">Import all</button>
                     </div>
                 </div>
             </div>
 
-            <!-- Toggle Button to Show/Hide Status Section -->
-            <button class="collapsible-btn" onclick="toggleStatus()">Show/Hide Status</button>
+            <button class="collapsible-btn" id="btn-status" onclick="toggleStatus(this)">Show Status</button>
 
             <!-- Status Section -->
             <div class="collapsible-content" id="status-section">
@@ -85,11 +85,10 @@
                     </tr>
                 </table>
                 <!-- Button to show formatted result -->
-                <button onclick="showFormattedResult()">Show/Hide Status</button>
+                <button id="btn-status-result" onclick="showFormattedResult(this)">Show Status</button>
             </div>
 
-            <!-- Toggle Button to Show/Hide Matchup Section -->
-            <button class="collapsible-btn" onclick="toggleMatchup()">Show/Hide Matchup (2v2)</button>
+            <button class="collapsible-btn" id="btn-matchup" onclick="toggleMatchup(this)">Show Matchup (2v2)</button>
 
             <!-- Matchup Controls -->
             <div class="collapsible-content" id="matchup-section">
@@ -107,11 +106,10 @@
                     <input type="text" id="matchup-teamB-comment" placeholder="Score/Comment" maxlength="40" style="width: 10ch; margin: 2px 0; font-size: 12px;">
                 </div>
                 <!-- Button to show formatted result -->
-                <button onclick="showMatchupResult()">Show/Hide Matchup</button>
+                <button id="btn-matchup-result" onclick="showMatchupResult(this)">Show Matchup</button>
             </div>
 
-            <!-- Toggle Button to Show/Hide Player Ratings Section -->
-            <button class="collapsible-btn" onclick="togglePlayerRatings()">Show/Hide Player Ratings</button>
+            <button class="collapsible-btn" id="btn-player-ratings" onclick="togglePlayerRatings(this)">Show Player Ratings</button>
 
             <!-- Player Ratings -->
             <div class="collapsible-content" id="player-ratings-section">
@@ -125,8 +123,7 @@
                 <div id="error-message" style="color: red;"></div>
             </div>
 
-            <!-- Toggle Button to Show/Hide Logos settings -->
-            <button class="collapsible-btn" onclick="toggleLogosSettings()">Show/Hide Logos settings</button>
+            <button class="collapsible-btn" id="btn-logos-settings" onclick="toggleLogosSettings(this)">Show Logos settings</button>
 
             <!-- Logos settings -->
             <div class="collapsible-content" id="logos-settings-section" style="display: none;">
@@ -145,16 +142,28 @@
 
             <h2>Scenes</h2>
             <div class="scenes-buttons">
-                <button type="button" id="scene-btn-all-vdo" onclick="toggleSceneOverlay('all-vdo')">BG</button>
-                <button type="button" id="scene-btn-vdo-full" onclick="toggleSceneOverlay('vdo-full')">VDO full</button>
-                <button type="button" id="scene-btn-logos" onclick="toggleSceneOverlay('logos')">Logos</button>
-                <button type="button" id="scene-btn-sc2" onclick="toggleSceneOverlay('sc2')">SC2</button>
+                <div class="scenes-buttons-row">
+                    <button type="button" id="scene-btn-vdo-full" class="scenes-btn-large" onclick="toggleSceneOverlay('vdo-full')">VDO full</button>
+                    <button type="button" id="scene-btn-sc2" class="scenes-btn-large" onclick="toggleSceneOverlay('sc2')">SC2</button>
+                </div>
+                <div class="scenes-buttons-row">
+                    <button type="button" id="scene-btn-schedule" onclick="toggleSceneOverlay('schedule')">Schedule</button>
+                    <button type="button" id="scene-btn-matchup" onclick="toggleSceneOverlay('matchup')">Matchup</button>
+                    <button type="button" id="scene-btn-logos" onclick="toggleSceneOverlay('logos')">Logos</button>
+                    <button type="button" id="scene-btn-all-vdo" onclick="toggleSceneOverlay('all-vdo')">BG</button>
+                </div>
+                <div class="scenes-buttons-row">
+                    <button type="button" id="scene-btn-ash" onclick="toggleSceneOverlay('ash')">ASH</button>
+                    <button type="button" id="scene-btn-pog" onclick="toggleSceneOverlay('pog')">POG</button>
+                    <button type="button" id="scene-btn-ptb" onclick="toggleSceneOverlay('ptb')">PTB</button>
+                    <button type="button" id="scene-btn-st" onclick="toggleSceneOverlay('st')">ST</button>
+                </div>
             </div>
+            <div id="scene-video-error" class="scene-video-error" style="display: none; font-size: 0.8rem; color: #c00; margin-top: 4px;"></div>
 
             <h2>Player Intros, Memes & Effects</h2>
 
-            <!-- Toggle for the rest of the forms -->
-            <button class="collapsible-btn" onclick="toggleForms()">Show/Hide More</button>
+            <button class="collapsible-btn" id="btn-forms" onclick="toggleForms(this)">Show More</button>
 
             <!-- Always visible forms -->
             <form class="media-form" id="media-form-1">
@@ -215,7 +224,7 @@
                 z-index: 0;
                 background: #000;
             ">
-                <iframe src="2026/video_bg_no_frame.php" style="
+                <iframe id="scene-overlay-all-vdo-iframe" style="
                     position: absolute;
                     top: 0;
                     left: 0;
@@ -255,7 +264,7 @@
             <!-- VDO full: full-size overlay; inner panel is draggable/resizable and saveable like SC2 -->
             <div id="scene-overlay-vdo-full" data-layer-id="scene-overlay-vdo-full" class="vdo-full-overlay" style="display: none; position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: 2000;">
                 <div id="vdo-full-panel-wrap" class="vdo-full-panel-wrap" style="position: absolute; overflow: hidden; background: #000;">
-                    <iframe src="https://vdo.ninja/?scene=1&room=KJNinjaRoom123&password=FSL&sl&cover&autostart" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; border: none;" allow="autoplay"></iframe>
+                    <iframe data-src="https://vdo.ninja/?scene=1&room=KJNinjaRoom123&password=FSL&sl&cover&autostart" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; border: none;" allow="autoplay; fullscreen"></iframe>
                 </div>
             </div>
 
@@ -272,8 +281,12 @@
             <!-- SC2: smaller VDO panel; when SC2 scene is on, BG is hidden and this overlay is shown. Panel is draggable/resizable like logos. -->
             <div id="sc2-overlay" data-layer-id="sc2-overlay" class="sc2-overlay" style="display: none; position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none;">
                 <div id="sc2-panel-wrap" class="sc2-panel-wrap logo-wrap" style="display: none; position: absolute; overflow: hidden; background: #000;">
-                    <iframe src="https://vdo.ninja/?scene=1&room=KJNinjaRoom123&password=FSL&sl&cover&autostart" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; border: none;" allow="autoplay"></iframe>
+                    <iframe data-src="https://vdo.ninja/?scene=1&room=KJNinjaRoom123&password=FSL&sl&cover&autostart" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; border: none;" allow="autoplay; fullscreen"></iframe>
                 </div>
+            </div>
+            <!-- Fullscreen transition video overlay (fade in/out); used by playTransitionVideo() -->
+            <div id="transition-video-overlay" class="transition-video-overlay" style="display: none;">
+                <video id="transition-video-player" class="transition-video-player" muted playsinline></video>
             </div>
             </div>
         </div>
@@ -286,13 +299,14 @@
     <script type="module" src="js/stream_production.js"></script>
 
     <script>
-        function toggleSettings() {
+        function toggleSettings(btn) {
             var el = document.getElementById("settings-section");
             if (el.style.display === "none" || !el.style.display) {
                 el.style.display = "block";
             } else {
                 el.style.display = "none";
             }
+            if (btn) btn.textContent = (el.style.display === "block") ? "Hide Settings" : "Show Settings";
         }
 
         (function() {
@@ -522,7 +536,20 @@
                 var sc = parsed.scenes || def.scenes;
                 if (sc) {
                     var o1 = document.getElementById("scene-overlay-all-vdo"); var b1 = document.getElementById("scene-btn-all-vdo");
-                    if (o1 && b1) { o1.style.display = sc.bg ? "block" : "none"; b1.classList.toggle("active", !!sc.bg); }
+                    var videoIframe = document.getElementById("scene-overlay-all-vdo-iframe");
+                    if (o1 && b1) {
+                        if (sc.bg) {
+                            VIDEO_OVERLAY_KEYS.forEach(function(k) { var b = document.getElementById("scene-btn-" + k); if (b) b.classList.remove("active"); });
+                            if (videoIframe) videoIframe.src = "2026/video_player.php?v=" + encodeURIComponent(VIDEO_OVERLAY_FILES["all-vdo"]);
+                            o1.style.zIndex = typeof getVideoOverlayDefaultZIndex === 'function' ? getVideoOverlayDefaultZIndex() : '1';
+                            o1.style.display = "block";
+                            b1.classList.add("active");
+                        } else {
+                            o1.style.display = "none";
+                            b1.classList.remove("active");
+                            if (videoIframe) videoIframe.removeAttribute("src");
+                        }
+                    }
                     var o2 = document.getElementById("scene-overlay-vdo-full"); var b2 = document.getElementById("scene-btn-vdo-full");
                     if (o2 && b2) {
                         o2.style.display = sc.vdoFull ? "block" : "none";
@@ -531,13 +558,32 @@
                             var vdoPanel = document.getElementById("vdo-full-panel-wrap");
                             var vdoPos = (parsed.logos && parsed.logos.vdoFullPanel && parsed.logos.vdoFullPanel.left != null) ? parsed.logos.vdoFullPanel : null;
                             if (!vdoPos) try { var rv = localStorage.getItem("stream_production_vdo_full_panel"); if (rv) vdoPos = JSON.parse(rv); } catch (ev) {}
+                            if (vdoPos && (vdoPos.width == null || vdoPos.width <= 0 || vdoPos.height == null || vdoPos.height <= 0) && o2) {
+                                vdoPos = getDefaultVdoFullPanelPosition(o2.getBoundingClientRect());
+                            }
                             if (vdoPanel && vdoPos) { vdoPanel.style.left = vdoPos.left + "px"; vdoPanel.style.top = vdoPos.top + "px"; vdoPanel.style.width = vdoPos.width + "px"; vdoPanel.style.height = vdoPos.height + "px"; }
+                            var vdoFullIframe = vdoPanel ? vdoPanel.querySelector("iframe") : null;
+                            if (vdoFullIframe && vdoFullIframe.getAttribute("data-src")) { vdoFullIframe.src = vdoFullIframe.getAttribute("data-src"); }
                         }
                     }
                     var o3 = document.getElementById("logos-overlay"); var b3 = document.getElementById("scene-btn-logos");
                     if (o3 && b3) { o3.style.display = sc.logos ? "block" : "none"; b3.classList.toggle("active", !!sc.logos); }
                     var o4 = document.getElementById("sc2-overlay"); var b4 = document.getElementById("scene-btn-sc2");
-                    if (o4 && b4) { o4.style.display = sc.sc2 ? "block" : "none"; b4.classList.toggle("active", !!sc.sc2); if (sc.sc2 && o1) o1.style.display = "none"; }
+                    if (o4 && b4) {
+                        o4.style.display = sc.sc2 ? "block" : "none";
+                        b4.classList.toggle("active", !!sc.sc2);
+                        if (sc.sc2 && o1) o1.style.display = "none";
+                        if (sc.sc2) {
+                            var sc2PanelImport = document.getElementById("sc2-panel-wrap");
+                            if (sc2PanelImport) {
+                                sc2PanelImport.style.display = "block";
+                                var sc2Pos = getSavedSc2Panel() || (o4 ? getDefaultSc2PanelPosition(o4.getBoundingClientRect()) : null);
+                                if (sc2Pos) applyPositionToSc2Panel(sc2PanelImport, sc2Pos);
+                                var sc2IframeImport = sc2PanelImport.querySelector("iframe");
+                                if (sc2IframeImport && sc2IframeImport.getAttribute("data-src")) { sc2IframeImport.src = sc2IframeImport.getAttribute("data-src"); }
+                            }
+                        }
+                    }
                 }
                 var intros = parsed.playerIntros;
                 if (intros && Array.isArray(intros)) {
@@ -564,6 +610,28 @@
                 a.download = "stream_production_settings.json";
                 a.click();
                 URL.revokeObjectURL(a.href);
+            });
+
+            document.getElementById("layer-save-server-btn").addEventListener("click", function() {
+                var btn = this;
+                var out = exportAllSettings();
+                btn.disabled = true;
+                fetch("settings.php", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify(out)
+                }).then(function(r) { return r.json(); }).then(function(res) {
+                    if (res && res.ok) {
+                        btn.textContent = "Saved";
+                        setTimeout(function() { btn.textContent = "Save to server"; btn.disabled = false; }, 1500);
+                    } else {
+                        btn.textContent = "Error";
+                        setTimeout(function() { btn.textContent = "Save to server"; btn.disabled = false; }, 2000);
+                    }
+                }).catch(function() {
+                    btn.textContent = "Error";
+                    setTimeout(function() { btn.textContent = "Save to server"; btn.disabled = false; }, 2000);
+                });
             });
 
             document.getElementById("layer-import-btn").addEventListener("click", function() {
@@ -593,24 +661,36 @@
 
             applyOrder(getStoredOrder());
             buildLayerList();
+
+            fetch("settings.php").then(function(r) { return r.json(); }).then(function(parsed) {
+                if (parsed && (parsed.layerOrder !== undefined || parsed.order !== undefined || parsed.status !== undefined || parsed.version !== undefined)) {
+                    importAllSettings(parsed);
+                }
+                var shouldShowBg = !parsed || !parsed.scenes || parsed.scenes.bg === true;
+                if (shouldShowBg && typeof showBgVideoOverlay === 'function') showBgVideoOverlay();
+            }).catch(function() {
+                if (typeof showBgVideoOverlay === 'function') showBgVideoOverlay();
+            });
         })();
 
-        function toggleForms() {
+        function toggleForms(btn) {
             var content = document.getElementById("player-intros-list");
             if (content.style.display === "none" || content.style.display === "") {
                 content.style.display = "block";
             } else {
                 content.style.display = "none";
             }
+            if (btn) btn.textContent = (content.style.display === "block") ? "Hide More" : "Show More";
         }
 
-        function toggleLogosSettings() {
+        function toggleLogosSettings(btn) {
             var el = document.getElementById("logos-settings-section");
             if (el.style.display === "none" || !el.style.display) {
                 el.style.display = "block";
             } else {
                 el.style.display = "none";
             }
+            if (btn) btn.textContent = (el.style.display === "block") ? "Hide Logos settings" : "Show Logos settings";
         }
 
         var LOGO_POSITIONS_KEY = "stream_production_logo_positions";
@@ -686,6 +766,13 @@
         }
         function applyPositionToVdoFullPanel(el, pos) {
             if (!el || !pos || pos.left == null) return;
+            var w = pos.width;
+            var h = pos.height;
+            if (w == null || w <= 0 || h == null || h <= 0) {
+                var parent = document.getElementById("scene-overlay-vdo-full");
+                var rect = parent ? parent.getBoundingClientRect() : { width: 1280, height: 720 };
+                pos = getDefaultVdoFullPanelPosition(rect);
+            }
             el.style.left = (pos.left + "px");
             el.style.top = (pos.top + "px");
             el.style.width = (pos.width + "px");
@@ -998,11 +1085,26 @@
                 vdoFullOverlayEl.classList.add("logos-edit-mode");
                 var pos = getSavedVdoFullPanel() || getDefaultVdoFullPanelPosition(vdoFullOverlayEl.getBoundingClientRect());
                 applyPositionToVdoFullPanel(vdoFullPanelEl, pos);
+                var vdoIframe = vdoFullPanelEl.querySelector("iframe");
+                if (vdoIframe && vdoIframe.getAttribute("data-src")) { vdoIframe.src = vdoIframe.getAttribute("data-src"); }
             }
             var sc2Cb = document.getElementById("logo-sc2-cb");
             if (sc2Cb && sc2Cb.checked) {
                 var sc2OverlayEl = document.getElementById("sc2-overlay");
-                if (sc2OverlayEl) { sc2OverlayEl.style.display = "block"; sc2OverlayEl.style.pointerEvents = "auto"; sc2OverlayEl.style.zIndex = "100000"; sc2OverlayEl.classList.add("logos-edit-mode"); }
+                if (sc2OverlayEl) {
+                    sc2OverlayEl.style.display = "block";
+                    sc2OverlayEl.style.pointerEvents = "auto";
+                    sc2OverlayEl.style.zIndex = "100000";
+                    sc2OverlayEl.classList.add("logos-edit-mode");
+                    var sc2PanelEdit = document.getElementById("sc2-panel-wrap");
+                    if (sc2PanelEdit) {
+                        sc2PanelEdit.style.display = "block";
+                        var sc2PosEdit = getSavedSc2Panel() || getDefaultSc2PanelPosition(sc2OverlayEl.getBoundingClientRect());
+                        if (sc2PosEdit) applyPositionToSc2Panel(sc2PanelEdit, sc2PosEdit);
+                        var sc2IframeEdit = sc2PanelEdit.querySelector("iframe");
+                        if (sc2IframeEdit && sc2IframeEdit.getAttribute("data-src")) { sc2IframeEdit.src = sc2IframeEdit.getAttribute("data-src"); }
+                    }
+                }
             }
             updateLogosOverlay();
         }
@@ -1014,25 +1116,183 @@
         })();
         window.updateSc2Panel = updateSc2Panel;
 
-        function showMatchupResult() {
-            // This function is now handled in stream_production.js to access playerList
+        function showMatchupResult(btn) {
             if (window.handleMatchupDisplay) {
-                window.handleMatchupDisplay();
+                window.handleMatchupDisplay(btn);
             }
         }
 
-        function toggleSceneOverlay(sceneId) {
-            if (sceneId === 'all-vdo') {
-                const overlay = document.getElementById('scene-overlay-all-vdo');
-                const btn = document.getElementById('scene-btn-all-vdo');
-                if (overlay.style.display === 'none' || !overlay.style.display) {
+        /**
+         * Reusable fullscreen transition: play a video with fade-in at start and fade-out at end.
+         * @param {Object} options - videoSrc (string), fadeInMs (number), fadeOutMs (number), onComplete (function)
+         */
+        function playTransitionVideo(options) {
+            var opts = options || {};
+            var videoSrc = opts.videoSrc;
+            var fadeInMs = opts.fadeInMs != null ? opts.fadeInMs : 500;
+            var fadeOutMs = opts.fadeOutMs != null ? opts.fadeOutMs : 500;
+            var onComplete = typeof opts.onComplete === 'function' ? opts.onComplete : function() {};
+
+            var overlay = document.getElementById('transition-video-overlay');
+            var video = document.getElementById('transition-video-player');
+            if (!overlay || !video || !videoSrc) {
+                onComplete();
+                return;
+            }
+
+            video.pause();
+            video.removeAttribute('src');
+            video.onloadeddata = null;
+            video.onended = null;
+            video.onerror = null;
+            video.oncanplay = null;
+
+            video.style.transition = 'opacity ' + (fadeInMs / 1000) + 's ease';
+            video.style.opacity = '0';
+            overlay.style.display = 'block';
+            video.src = videoSrc;
+
+            var fadeInStarted = false;
+            function startFadeInAndPlay() {
+                if (fadeInStarted) return;
+                fadeInStarted = true;
+                video.currentTime = 0;
+                requestAnimationFrame(function() {
+                    requestAnimationFrame(function() {
+                        video.style.opacity = '1';
+                        video.play().catch(function() { onComplete(); });
+                    });
+                });
+            }
+
+            video.oncanplay = function() {
+                video.oncanplay = null;
+                startFadeInAndPlay();
+            };
+
+            video.onended = function() {
+                video.onended = null;
+                video.style.transition = 'opacity ' + (fadeOutMs / 1000) + 's ease';
+                video.style.opacity = '0';
+                setTimeout(function() {
+                    overlay.style.display = 'none';
+                    video.style.opacity = '1';
+                    video.pause();
+                    video.removeAttribute('src');
+                    video.load();
+                    onComplete();
+                }, fadeOutMs);
+            };
+
+            video.onerror = function() {
+                overlay.style.display = 'none';
+                onComplete();
+            };
+        }
+
+        var VIDEO_OVERLAY_KEYS = ['all-vdo', 'schedule', 'matchup', 'ash', 'pog', 'ptb', 'st'];
+            var VIDEO_OVERLAY_FILES = { 'all-vdo': '2026_FSL_BG.mp4', 'schedule': '2026_FSL_schedule_now.mp4', 'matchup': 'matchup_now.html', 'ash': 'ASH.mp4', 'pog': 'POG.mp4', 'ptb': 'PTB.mp4', 'st': 'ST.mp4' };
+            var VIDEO_OVERLAY_FRONT = ['schedule', 'matchup', 'ash', 'pog', 'ptb', 'st'];
+
+            function getVideoOverlayDefaultZIndex() {
+                try {
+                    var raw = localStorage.getItem('stream_production_layer_order');
+                    if (raw) {
+                        var order = JSON.parse(raw);
+                        var idx = order.indexOf('scene-overlay-all-vdo');
+                        if (idx >= 0) return String(idx + 1);
+                    }
+                } catch (e) {}
+                return '1';
+            }
+
+            function setSceneVideoError(msg) {
+                var el = document.getElementById('scene-video-error');
+                if (!el) return;
+                if (msg) { el.textContent = msg; el.style.display = 'block'; } else { el.textContent = ''; el.style.display = 'none'; }
+            }
+
+            function showBgVideoOverlay() {
+                var overlay = document.getElementById('scene-overlay-all-vdo');
+                var iframe = document.getElementById('scene-overlay-all-vdo-iframe');
+                var bgBtn = document.getElementById('scene-btn-all-vdo');
+                if (!overlay || !iframe || !bgBtn) return;
+                VIDEO_OVERLAY_KEYS.forEach(function(key) {
+                    var b = document.getElementById('scene-btn-' + key);
+                    if (b) b.classList.remove('active');
+                });
+                iframe.src = '2026/video_player.php?v=' + encodeURIComponent(VIDEO_OVERLAY_FILES['all-vdo']);
+                overlay.style.zIndex = getVideoOverlayDefaultZIndex();
+                overlay.style.display = 'block';
+                bgBtn.classList.add('active');
+                /* Sync non-video-overlay scene buttons so strikethrough matches overlay state on first load */
+                var vdoFullOverlay = document.getElementById('scene-overlay-vdo-full');
+                var sc2Overlay = document.getElementById('sc2-overlay');
+                var vdoFullBtn = document.getElementById('scene-btn-vdo-full');
+                var sc2Btn = document.getElementById('scene-btn-sc2');
+                if (vdoFullBtn && vdoFullOverlay && (vdoFullOverlay.style.display === 'none' || !vdoFullOverlay.style.display)) vdoFullBtn.classList.remove('active');
+                if (sc2Btn && sc2Overlay && (sc2Overlay.style.display === 'none' || !sc2Overlay.style.display)) sc2Btn.classList.remove('active');
+            }
+
+            function toggleVideoOverlay(sceneId) {
+                var overlay = document.getElementById('scene-overlay-all-vdo');
+                var iframe = document.getElementById('scene-overlay-all-vdo-iframe');
+                var btn = document.getElementById('scene-btn-' + sceneId);
+                if (!overlay || !iframe || !btn) return;
+                var file = VIDEO_OVERLAY_FILES[sceneId];
+                if (!file) return;
+                setSceneVideoError('');
+                var isThisActive = btn.classList.contains('active');
+                var useFront = VIDEO_OVERLAY_FRONT.indexOf(sceneId) !== -1;
+                if (isThisActive) {
+                    if (useFront) {
+                        showBgVideoOverlay();
+                    } else {
+                        overlay.style.display = 'none';
+                        btn.classList.remove('active');
+                        iframe.removeAttribute('src');
+                        setSceneVideoError('');
+                    }
+                    return;
+                }
+                function doShowVideoOverlay() {
+                    VIDEO_OVERLAY_KEYS.forEach(function(key) {
+                        var b = document.getElementById('scene-btn-' + key);
+                        if (b) b.classList.remove('active');
+                    });
+                    var url = (file.indexOf('.html') !== -1) ? ('2026/' + file) : ('2026/video_player.php?v=' + encodeURIComponent(file));
+                    if (useFront && file.indexOf('.html') === -1) url += '&front=true';
+                    iframe.src = url;
+                    overlay.style.zIndex = useFront ? '99999' : getVideoOverlayDefaultZIndex();
                     overlay.style.display = 'block';
                     btn.classList.add('active');
-                } else {
-                    overlay.style.display = 'none';
-                    btn.classList.remove('active');
                 }
-            } else if (sceneId === 'vdo-full') {
+                if (useFront) {
+                    fetch('2026/' + file, { method: 'HEAD' })
+                        .then(function(r) {
+                            if (!r.ok) { setSceneVideoError('error: ' + file + ' not found'); return; }
+                            doShowVideoOverlay();
+                        })
+                        .catch(function() { setSceneVideoError('error: ' + file + ' not found'); });
+                } else {
+                    doShowVideoOverlay();
+                }
+            }
+
+            window.addEventListener('message', function(e) {
+                if (e.data && e.data.type === 'video-error' && e.data.file) {
+                    setSceneVideoError('error: ' + e.data.file + ' not found');
+                }
+            });
+
+            showBgVideoOverlay();
+
+            function toggleSceneOverlay(sceneId) {
+            if (VIDEO_OVERLAY_KEYS.indexOf(sceneId) !== -1) {
+                toggleVideoOverlay(sceneId);
+                return;
+            }
+            if (sceneId === 'vdo-full') {
                 const overlay = document.getElementById('scene-overlay-vdo-full');
                 const panel = document.getElementById('vdo-full-panel-wrap');
                 const btn = document.getElementById('scene-btn-vdo-full');
@@ -1042,6 +1302,8 @@
                     if (panel) {
                         var pos = getSavedVdoFullPanel() || getDefaultVdoFullPanelPosition(overlay.getBoundingClientRect());
                         applyPositionToVdoFullPanel(panel, pos);
+                        var iframe = panel.querySelector('iframe');
+                        if (iframe && iframe.getAttribute('data-src')) { iframe.src = iframe.getAttribute('data-src'); }
                     }
                 } else {
                     overlay.style.display = 'none';
@@ -1066,20 +1328,31 @@
                 const sc2Panel = document.getElementById('sc2-panel-wrap');
                 const btn = document.getElementById('scene-btn-sc2');
                 if (sc2Overlay.style.display === 'none' || !sc2Overlay.style.display) {
-                    /* SC2 on: hide BG and big VDO, show small VDO panel */
-                    if (bgOverlay) bgOverlay.style.display = 'none';
-                    if (vdoFullOverlay) vdoFullOverlay.style.display = 'none';
-                    if (vdoFullBtn) vdoFullBtn.classList.remove('active');
-                    sc2Overlay.style.display = 'block';
-                    btn.classList.add('active');
-                    if (sc2Panel) {
-                        sc2Panel.style.display = 'block';
-                        var pos = getSavedSc2Panel() || getDefaultSc2PanelPosition(sc2Overlay.getBoundingClientRect());
-                        applyPositionToSc2Panel(sc2Panel, pos);
-                    }
+                    /* SC2 on: play transition video then show small VDO panel */
+                    playTransitionVideo({
+                        videoSrc: '2026/2026_FSL_logo_reveal_GS_fast.mp4',
+                        fadeInMs: 500,
+                        fadeOutMs: 500,
+                        onComplete: function() {
+                            if (bgOverlay) bgOverlay.style.display = 'none';
+                            if (vdoFullOverlay) vdoFullOverlay.style.display = 'none';
+                            if (vdoFullBtn) vdoFullBtn.classList.remove('active');
+                            sc2Overlay.style.display = 'block';
+                            btn.classList.add('active');
+                            if (sc2Panel) {
+                                sc2Panel.style.display = 'block';
+                                var pos = getSavedSc2Panel() || getDefaultSc2PanelPosition(sc2Overlay.getBoundingClientRect());
+                                applyPositionToSc2Panel(sc2Panel, pos);
+                                var sc2Iframe = sc2Panel.querySelector('iframe');
+                                if (sc2Iframe && sc2Iframe.getAttribute('data-src')) { sc2Iframe.src = sc2Iframe.getAttribute('data-src'); }
+                            }
+                        }
+                    });
                 } else {
-                    /* SC2 off: BG reappears, small VDO panel disappears */
+                    /* SC2 off: BG and VDO full reappear, small VDO panel disappears */
                     if (bgOverlay) bgOverlay.style.display = 'block';
+                    if (vdoFullOverlay) vdoFullOverlay.style.display = 'block';
+                    if (vdoFullBtn) vdoFullBtn.classList.add('active');
                     sc2Overlay.style.display = 'none';
                     btn.classList.remove('active');
                 }

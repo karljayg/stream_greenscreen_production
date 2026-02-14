@@ -1,0 +1,3 @@
+# Don't track media in production folders (code/config only)
+production_files/audio/
+production_files/video/

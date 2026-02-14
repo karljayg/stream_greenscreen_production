@@ -1,0 +1,87 @@
+{
+    "version": 1,
+    "volume": 50,
+    "layerOrder": [
+        "scene-overlay-all-vdo",
+        "scene-overlay-vdo-full",
+        "logos-overlay",
+        "container",
+        "gif-container",
+        "chart-container",
+        "video-container",
+        "right-column-result",
+        "external-chart-overlay",
+        "matchup-suggestions",
+        "player-name-box"
+    ],
+    "status": {
+        "title": "",
+        "teamA": "",
+        "teamB": "",
+        "valueA": "",
+        "valueB": ""
+    },
+    "matchup": {
+        "teamAName": "Team A",
+        "teamA1": "DarkMenace",
+        "teamA2": "Neutrophil",
+        "teamAComment": "",
+        "teamBName": "Team B",
+        "teamB1": "LittleReaper",
+        "teamB2": "HyperTurtle",
+        "teamBComment": ""
+    },
+    "playerRatings": {
+        "playerName": "littlereaper",
+        "division": "A"
+    },
+    "logos": {
+        "s10": true,
+        "fslSmall": true,
+        "sc2": false,
+        "positions": {
+            "s10": {
+                "left": 509,
+                "top": 7,
+                "width": 249,
+                "height": 84
+            },
+            "fsl-small": {
+                "left": 1126,
+                "top": 39,
+                "width": 119,
+                "height": 51
+            }
+        },
+        "sc2Panel": {
+            "left": 186,
+            "top": 526,
+            "width": 214,
+            "height": 126
+        },
+        "vdoFullPanel": {
+            "left": 0,
+            "top": 0,
+            "width": 0,
+            "height": 0
+        }
+    },
+    "scenes": {
+        "bg": true,
+        "vdoFull": true,
+        "logos": true,
+        "sc2": false
+    },
+    "playerIntros": [
+        "DarkMenace",
+        "LittleReaper",
+        "PulledTheBoys",
+        "HyperTurtle",
+        "Harouz",
+        "InfiniteCyclists",
+        "Random Music",
+        "FSL intro",
+        "GG",
+        "Match GG"
+    ]
+}

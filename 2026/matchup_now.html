@@ -1,0 +1,281 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PSIOP Gaming vs Angry Space Hares – Lineup</title>
+    <link href="https://fonts.googleapis.com/css2?family=Rajdhani:wght@500;600;700&family=Exo+2:wght@400;600;700&display=swap" rel="stylesheet">
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body {
+            font-family: 'Exo 2', sans-serif;
+            background: linear-gradient(135deg, #0a0a0f 0%, #1a1a2e 50%, #0a0a0f 100%);
+            color: #fff;
+            padding: 2rem;
+            max-width: 720px;
+            margin: 0 auto;
+            min-height: 100vh;
+        }
+        .lineup-pdf-header {
+            text-align: center;
+            margin-bottom: 1.5rem;
+            padding-bottom: 1rem;
+            border-bottom: 2px solid rgba(108, 92, 231, 0.3);
+        }
+        .lineup-pdf-header h1 {
+            font-family: 'Rajdhani', sans-serif;
+            font-size: 1.75rem;
+            font-weight: 700;
+            background: linear-gradient(135deg, #6c5ce7, #a29bfe);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            margin-bottom: 0.75rem;
+        }
+        .lineup-pdf-teams {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 1.5rem;
+            flex-wrap: wrap;
+        }
+        .lineup-pdf-team {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 0.35rem;
+        }
+        .lineup-pdf-team img {
+            width: 64px;
+            height: 64px;
+            object-fit: contain;
+            border-radius: 8px;
+            border: 1px solid rgba(108, 92, 231, 0.4);
+        }
+        .lineup-pdf-team .team-name { font-weight: 600; font-size: 1rem; color: #e0e0e0; }
+        .lineup-pdf-team .team-record { font-size: 0.8rem; color: #888; margin-top: 0.2rem; }
+        .lineup-pdf-team .team-record .record-num { color: #fff; }
+        .lineup-pdf-teams .vs-divider { color: #00b894; font-weight: 700; font-size: 1.25rem; font-family: 'Rajdhani', sans-serif; }
+        .lineup-pdf-meta { font-size: 0.85rem; color: #888; margin-top: 0.5rem; }
+        .lineup-table .player-record { font-size: 0.75rem; color: #888; margin-top: 0.15rem; }
+        .lineup-table .player-record .record-num { color: #fff; }
+        .lineup-table .line-type-tag { font-size: 0.7rem; color: #00b894; margin-left: 0.35rem; }
+        .lineup-pdf-table-wrap { background: rgba(0, 0, 0, 0.25); border-radius: 10px; overflow: hidden; border: 1px solid rgba(108, 92, 231, 0.2); }
+        table.lineup-table { width: 100%; border-collapse: collapse; }
+        .lineup-table th, .lineup-table td { padding: 0.6rem 0.75rem; text-align: left; border-bottom: 1px solid rgba(255,255,255,0.08); }
+        .lineup-table th { background: rgba(108, 92, 231, 0.25); color: #fff; font-weight: 600; font-size: 0.9rem; }
+        .lineup-table tr:last-child td { border-bottom: none; }
+        .lineup-table tr:nth-child(even) td { background: rgba(255,255,255,0.03); }
+        .lineup-table .col-slot { width: 2.5rem; text-align: center; color: #888; font-weight: 600; }
+        .lineup-table .col-vs { width: 2.5rem; text-align: center; color: #00b894; font-weight: 700; font-size: 0.9rem; }
+        .lineup-table .player-cell { vertical-align: middle; }
+        .lineup-table .player-name { font-weight: 600; margin-bottom: 0.2rem; }
+        .lineup-table .player-details { display: flex; align-items: center; gap: 0.35rem; flex-wrap: wrap; }
+        .lineup-table .player-details .rank-badge {
+            width: 22px; height: 22px; display: inline-flex; align-items: center; justify-content: center;
+            background: linear-gradient(135deg, #6c5ce7, #a29bfe); border-radius: 50%;
+            font-family: 'Rajdhani', sans-serif; font-size: 0.75rem; font-weight: 700; color: #fff;
+        }
+        .lineup-table .player-details .race-icon { width: 18px; height: 18px; vertical-align: middle; }
+        .lineup-table .player-details .group-badge {
+            font-size: 0.7rem; color: #a29bfe; background: rgba(108, 92, 231, 0.25);
+            padding: 0.1rem 0.4rem; border-radius: 10px;
+        }
+        .lineup-table tr.pdf-row-g1  { border-left: 4px solid #00b894; }
+        .lineup-table tr.pdf-row-g2  { border-left: 4px solid #00a187; }
+        .lineup-table tr.pdf-row-g3  { border-left: 4px solid #008f7a; }
+        .lineup-table tr.pdf-row-g4  { border-left: 4px solid #4a90e2; }
+        .lineup-table tr.pdf-row-g5  { border-left: 4px solid #3d7bc7; }
+        .lineup-table tr.pdf-row-g6  { border-left: 4px solid #3066ac; }
+        .lineup-table tr.pdf-row-g7  { border-left: 4px solid #8b6fc4; }
+        .lineup-table tr.pdf-row-g8  { border-left: 4px solid #7b5fb4; }
+        .lineup-table tr.pdf-row-g9  { border-left: 4px solid #6b4fa4; }
+        .lineup-table tr.pdf-row-g10 { border-left: 4px solid #5b5b6b; }
+        .lineup-table tr.pdf-row-g11 { border-left: 4px solid #4b4b5b; }
+        .lineup-table tr.pdf-row-g12 { border-left: 4px solid #3b3b4b; }
+        .no-print { margin-top: 1.5rem; text-align: center; }
+        .no-print button {
+            padding: 0.6rem 1.2rem;
+            background: linear-gradient(135deg, #6c5ce7, #a29bfe);
+            border: none;
+            border-radius: 6px;
+            color: #fff;
+            font-weight: 600;
+            cursor: pointer;
+        }
+        @media print {
+            body { padding: 1rem; background: #fff; color: #111; }
+            .lineup-pdf-header h1 { -webkit-text-fill-color: #333; color: #333; }
+            .lineup-pdf-meta { color: #666; }
+            .lineup-pdf-team .team-name { color: #333; }
+            .lineup-pdf-team .team-record { color: #555; }
+            .lineup-pdf-team .team-record .record-num { color: #111; font-weight: 600; }
+            .lineup-table .player-record { color: #555; }
+            .lineup-table .player-record .record-num { color: #111; font-weight: 600; }
+            .lineup-pdf-table-wrap { background: #f8f9fa; border-color: #dee2e6; }
+            .lineup-table th { background: #e9ecef; color: #212529; }
+            .lineup-table td { border-color: #dee2e6; }
+            .lineup-table tr:nth-child(even) td { background: #fff; }
+            .lineup-table .player-details .rank-badge { background: #6c5ce7; color: #fff; }
+            .lineup-table .player-details .group-badge { color: #5a4fd6; background: #e8e6f7; }
+            .lineup-table .player-record { color: #555; }
+            .no-print { display: none !important; }
+        }
+    </style>
+</head>
+<body>
+	<br>
+        <div class="lineup-pdf-teams">
+            <div class="lineup-pdf-team">
+                <img src="https://psistorm.com/fsl/images/FSL_team_square_logo_PSISOP_Gaming_256px.png" alt="PSIOP Gaming">                <span class="team-name">PSIOP Gaming</span>
+                <span class="team-record">Season 10: <span class="record-num">0-0</span> · Alltime: <span class="record-num">0-0</span></span>
+            </div>
+            <span class="vs-divider">vs</span>
+            <div class="lineup-pdf-team">
+                <img src="https://psistorm.com/fsl/images/FSL_team_square_logo_Angry_Space_Hares_256px.png" alt="Angry Space Hares">                <span class="team-name">Angry Space Hares</span>
+                <span class="team-record">Season 10: <span class="record-num">0-0</span> · Alltime: <span class="record-num">7-2</span></span>
+            </div>
+        </div>
+
+    <div class="lineup-pdf-table-wrap">
+    <table class="lineup-table">
+        <tbody>
+                        <tr class=" pdf-row-g4">
+                <td class="col-slot">1</td>
+                <td class="player-cell">
+                    <div class="player-name">DLSMIZEL</div>
+                                        <div class="player-details">
+                        <span class="rank-badge">15</span>
+                        <img src="https://psistorm.com/fsl/images/terran_icon.png" alt="" class="race-icon">
+                        <span class="group-badge">G4</span>
+                    </div>
+                                        <div class="player-record">Season 10: <span class="record-num">0-0</span> sets, <span class="record-num">0-0</span> games <br> Alltime: <span class="record-num">11-21</span> sets, <span class="record-num">35-50</span> games</div>
+                                                        </td>
+                <td class="col-vs">vs</td>
+                <td class="player-cell">
+                    <div class="player-name">Adastra</div>
+                                        <div class="player-details">
+                        <span class="rank-badge">8</span>
+                        <img src="https://psistorm.com/fsl/images/protoss_icon.png" alt="" class="race-icon">
+                        <span class="group-badge">G2</span>
+                    </div>
+                                        <div class="player-record">Season 10: <span class="record-num">0-0</span> sets, <span class="record-num">0-0</span> games <br> Alltime: <span class="record-num">1-2</span> sets, <span class="record-num">3-3</span> games</div>
+                                                        </td>
+            </tr>
+                        <tr class=" pdf-row-g6">
+                <td class="col-slot">2</td>
+                <td class="player-cell">
+                    <div class="player-name">CrankyToaster</div>
+                                        <div class="player-details">
+                        <span class="rank-badge">21</span>
+                        <img src="https://psistorm.com/fsl/images/terran_icon.png" alt="" class="race-icon">
+                        <span class="group-badge">G6</span>
+                    </div>
+                                        <div class="player-record">Season 10: <span class="record-num">0-0</span> sets, <span class="record-num">0-0</span> games <br> Alltime: <span class="record-num">0-0</span> sets, <span class="record-num">0-0</span> games</div>
+                                                        </td>
+                <td class="col-vs">vs</td>
+                <td class="player-cell">
+                    <div class="player-name">GreatArchon</div>
+                                        <div class="player-details">
+                        <span class="rank-badge">13</span>
+                        <img src="https://psistorm.com/fsl/images/terran_icon.png" alt="" class="race-icon">
+                        <span class="group-badge">G4</span>
+                    </div>
+                                        <div class="player-record">Season 10: <span class="record-num">0-0</span> sets, <span class="record-num">0-0</span> games <br> Alltime: <span class="record-num">0-2</span> sets, <span class="record-num">0-3</span> games</div>
+                                                        </td>
+            </tr>
+                        <tr class=" pdf-row-g5">
+                <td class="col-slot">3</td>
+                <td class="player-cell">
+                    <div class="player-name">HurtnTime</div>
+                                        <div class="player-details">
+                        <span class="rank-badge">18</span>
+                        <img src="https://psistorm.com/fsl/images/terran_icon.png" alt="" class="race-icon">
+                        <span class="group-badge">G5</span>
+                    </div>
+                                        <div class="player-record">Season 10: <span class="record-num">0-0</span> sets, <span class="record-num">0-0</span> games <br> Alltime: <span class="record-num">9-23</span> sets, <span class="record-num">21-49</span> games</div>
+                                                        </td>
+                <td class="col-vs">vs</td>
+                <td class="player-cell">
+                    <div class="player-name">PossiblyMayB</div>
+                                        <div class="player-details">
+                        <span class="rank-badge">23</span>
+                        <img src="https://psistorm.com/fsl/images/zerg_icon.png" alt="" class="race-icon">
+                        <span class="group-badge">G6</span>
+                    </div>
+                                        <div class="player-record">Season 10: <span class="record-num">0-0</span> sets, <span class="record-num">0-0</span> games <br> Alltime: <span class="record-num">3-1</span> sets, <span class="record-num">6-3</span> games</div>
+                                                        </td>
+            </tr>
+                        <tr class=" pdf-row-g8">
+                <td class="col-slot">4</td>
+                <td class="player-cell">
+                    <div class="player-name">Jmpz</div>
+                                        <div class="player-details">
+                        <span class="rank-badge">32</span>
+                        <img src="https://psistorm.com/fsl/images/zerg_icon.png" alt="" class="race-icon">
+                        <span class="group-badge">G8</span>
+                    </div>
+                                        <div class="player-record">Season 10: <span class="record-num">0-0</span> sets, <span class="record-num">0-0</span> games <br> Alltime: <span class="record-num">3-7</span> sets, <span class="record-num">7-16</span> games</div>
+                                                        </td>
+                <td class="col-vs">vs</td>
+                <td class="player-cell">
+                    <div class="player-name">PorkSisig</div>
+                                        <div class="player-details">
+                        <span class="rank-badge">31</span>
+                        <img src="https://psistorm.com/fsl/images/zerg_icon.png" alt="" class="race-icon">
+                        <span class="group-badge">G8</span>
+                    </div>
+                                        <div class="player-record">Season 10: <span class="record-num">0-0</span> sets, <span class="record-num">0-0</span> games <br> Alltime: <span class="record-num">0-0</span> sets, <span class="record-num">0-0</span> games</div>
+                                                        </td>
+            </tr>
+                        <tr class=" pdf-row-g1">
+                <td class="col-slot">5</td>
+                <td class="player-cell">
+                    <div class="player-name">HarOuz</div>
+                                        <div class="player-details">
+                        <span class="rank-badge">2</span>
+                        <img src="https://psistorm.com/fsl/images/protoss_icon.png" alt="" class="race-icon">
+                        <span class="group-badge">G1</span>
+                    </div>
+                                        <div class="player-record">Season 10: <span class="record-num">0-0</span> sets, <span class="record-num">0-0</span> games <br> Alltime: <span class="record-num">13-11</span> sets, <span class="record-num">29-26</span> games</div>
+                                                        </td>
+                <td class="col-vs">vs</td>
+                <td class="player-cell">
+                    <div class="player-name">Chat-Omic</div>
+                                        <div class="player-details">
+                        <span class="rank-badge">3</span>
+                        <img src="https://psistorm.com/fsl/images/terran_icon.png" alt="" class="race-icon">
+                        <span class="group-badge">G1</span>
+                    </div>
+                                        <div class="player-record">Season 10: <span class="record-num">0-0</span> sets, <span class="record-num">0-0</span> games <br> Alltime: <span class="record-num">5-3</span> sets, <span class="record-num">11-4</span> games</div>
+                                                        </td>
+            </tr>
+                        <tr class=" pdf-row-g10">
+                <td class="col-slot">6</td>
+                <td class="player-cell">
+                    <div class="player-name">LanixMagi &amp; WindShadow <span class="line-type-tag">2v2</span></div>
+                                        <div class="player-details">
+                        <span class="rank-badge">37</span><img src="https://psistorm.com/fsl/images/zerg_icon.png" alt="" class="race-icon"><span class="group-badge">G10</span>                         · <span class="rank-badge">42</span><img src="https://psistorm.com/fsl/images/protoss_icon.png" alt="" class="race-icon"><span class="group-badge">G11</span>                    </div>
+                                    </td>
+                <td class="col-vs">vs</td>
+                <td class="player-cell">
+                    <div class="player-name">Pacha &amp; SpamAndRice</div>
+                                        <div class="player-details">
+                        <span class="rank-badge">40</span><img src="https://psistorm.com/fsl/images/terran_icon.png" alt="" class="race-icon"><span class="group-badge">G10</span>                         · <span class="rank-badge">44</span><img src="https://psistorm.com/fsl/images/terran_icon.png" alt="" class="race-icon"><span class="group-badge">G11</span>                    </div>
+                                    </td>
+            </tr>
+                                </tbody>
+    </table>
+    </div>
+	<br><br><br>
+    <div class="no-print">
+        <button type="button" onclick="window.print();">Print / Save as PDF</button>
+    </div>
+    <script>
+    if (window.location.search.indexOf('autoPrint') !== -1) {
+        window.onload = function() { window.print(); };
+    }
+    </script>
+</body>
+</html>
