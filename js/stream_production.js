@@ -1,4 +1,4 @@
-var projectpath = "stream_production"; //in some servers this is '.' so switch between the 2 and test by running Random Music
+var projectpath = "psistorm.com/tools/stream_greenscreen_production"; // base path for asset URLs; test by running Random Music
 var masterpath = ".";
 var production_files = masterpath + "/production_files";
 var audiopath = production_files + "/audio/";
@@ -12,6 +12,112 @@ var spiderChartBaseUrl = "https://psistorm.com/fsl/view_spider_chart_player.php"
 
 import playerList from './playerlist.js';
 import { gifFiles, randomAudioFiles } from './other_lists.js';
+
+// Chroma key: makes green transparent on video/GIF player intros
+function isChromaKeyEnabled() {
+	const cb = document.getElementById('chroma-key-cb');
+	return cb && cb.checked;
+}
+
+function applyChromaKeyToContext(ctx, w, h) {
+	try {
+		const data = ctx.getImageData(0, 0, w, h);
+		const d = data.data;
+		for (let i = 0; i < d.length; i += 4) {
+			const r = d[i], g = d[i + 1], b = d[i + 2];
+			// Green screen: G dominant, R and B relatively low
+			const greenness = g - Math.max(r, b);
+			const isGreen = g > 60 && greenness > 40 && (r + b) < g * 1.2;
+			if (isGreen) d[i + 3] = 0;
+		}
+		ctx.putImageData(data, 0, 0);
+	} catch (e) {
+		console.warn('Chroma key: canvas tainted (CORS). Ensure video/image is same-origin or has CORS headers.', e);
+	}
+}
+
+let videoChromaRaf = null;
+function startVideoChromaLoop(video, canvas) {
+	let videoHidden = false;
+	function draw() {
+		if (!isChromaKeyEnabled() || video.paused || video.ended) {
+			videoChromaRaf = null;
+			canvas.style.display = 'none';
+			video.style.display = 'block';
+			return;
+		}
+		const vw = video.videoWidth;
+		const vh = video.videoHeight;
+		if (!vw || !vh) {
+			videoChromaRaf = requestAnimationFrame(draw);
+			return;
+		}
+		if (canvas.width !== vw || canvas.height !== vh) {
+			canvas.width = vw;
+			canvas.height = vh;
+		}
+		const ctx = canvas.getContext('2d');
+		ctx.drawImage(video, 0, 0, vw, vh);
+		applyChromaKeyToContext(ctx, vw, vh);
+		if (!videoHidden) {
+			video.style.display = 'none';
+			canvas.style.display = 'block';
+			videoHidden = true;
+		}
+		videoChromaRaf = requestAnimationFrame(draw);
+	}
+	if (videoChromaRaf) cancelAnimationFrame(videoChromaRaf);
+	draw();
+}
+
+function stopVideoChromaLoop() {
+	if (videoChromaRaf) {
+		cancelAnimationFrame(videoChromaRaf);
+		videoChromaRaf = null;
+	}
+	const video = document.getElementById('video-player');
+	const canvas = document.getElementById('video-chroma-canvas');
+	if (video) video.style.display = 'block';
+	if (canvas) canvas.style.display = 'none';
+}
+
+let gifChromaRaf = null;
+let gifChromaTimeout = null;
+function startGifChromaLoop(img, canvas, durationMs) {
+	function draw() {
+		if (!isChromaKeyEnabled() || !img.parentElement || img.parentElement.style.display === 'none') {
+			gifChromaRaf = null;
+			canvas.style.display = 'none';
+			img.style.display = '';
+			return;
+		}
+		const w = img.naturalWidth || img.clientWidth;
+		const h = img.naturalHeight || img.clientHeight;
+		if (w && h) {
+			if (canvas.width !== w || canvas.height !== h) {
+				canvas.width = w;
+				canvas.height = h;
+			}
+			const ctx = canvas.getContext('2d');
+			ctx.clearRect(0, 0, w, h);
+			ctx.drawImage(img, 0, 0, w, h);
+			applyChromaKeyToContext(ctx, w, h);
+		}
+		gifChromaRaf = requestAnimationFrame(draw);
+	}
+	if (gifChromaRaf) cancelAnimationFrame(gifChromaRaf);
+	if (gifChromaTimeout) clearTimeout(gifChromaTimeout);
+	img.style.display = 'none';
+	canvas.style.display = 'block';
+	draw();
+	gifChromaTimeout = setTimeout(() => {
+		gifChromaTimeout = null;
+		if (gifChromaRaf) cancelAnimationFrame(gifChromaRaf);
+		gifChromaRaf = null;
+		canvas.style.display = 'none';
+		img.style.display = '';
+	}, durationMs);
+}
 
 const forms = document.querySelectorAll('.media-form');
 const audioPlayer = document.querySelector('#audio-player');
@@ -57,7 +163,7 @@ window.togglePlayerRatings = function(btn) {
     } else {
         playerRatingsSection.style.display = "none";
     }
-    if (btn) btn.textContent = (playerRatingsSection.style.display === "block") ? "Hide Player Ratings" : "Show Player Ratings";
+    if (btn) btn.textContent = (playerRatingsSection.style.display === "block") ? "Hide Spider Ratings" : "Show Spider Ratings";
 }
 
 window.showFormattedResult = function(btn) {
@@ -116,6 +222,7 @@ forms.forEach((form) => {
 	let audioFiles = [];
 
 	const onVideoEnded = () => {
+		stopVideoChromaLoop();
 		videoContainer.style.display = 'none';
 		playerNameBox.style.display = 'none';
 	};
@@ -200,7 +307,14 @@ forms.forEach((form) => {
 			console.error('Error playing video ' + audioPath + ' or audio: ' + videoPath + ' ', error);
 		});
 		videoContainer.style.display = 'flex';
+		const videoChromaCanvas = document.getElementById('video-chroma-canvas');
 		videoPlayer.addEventListener('ended', onVideoEnded, { once: true });
+		videoPlayer.addEventListener('playing', function onPlaying() {
+			videoPlayer.removeEventListener('playing', onPlaying);
+			if (isChromaKeyEnabled() && videoChromaCanvas) {
+				startVideoChromaLoop(videoPlayer, videoChromaCanvas);
+			}
+		}, { once: true });
 	});
 
 	playerNameInput.addEventListener('input', (event) => {
@@ -246,17 +360,35 @@ forms.forEach((form) => {
 
 	function gifPlayer(gifIndex = 0) {
 	  const gifFileName = gifFiles.find(file => file[0] === gifIndex)[1];
-	  const gifPath = imagepath + gifFileName;
+	  let gifPath = imagepath + gifFileName;
+	  if (typeof window.ASSET_VERSION !== 'undefined') gifPath += '?v=' + window.ASSET_VERSION;
 
 	  const gifContainer = document.querySelector('#gif-container');
 	  const gifImage = document.querySelector('#gif-image');
+	  const gifChromaCanvas = document.querySelector('#gif-chroma-canvas');
 	  const gifTimeout = 8000;
 
 	  gifImage.src = gifPath;
 
 	  gifContainer.style.display = 'flex';
+	  gifImage.onload = function() {
+		if (isChromaKeyEnabled() && gifChromaCanvas) {
+		  startGifChromaLoop(gifImage, gifChromaCanvas, gifTimeout);
+		}
+	  };
+	  if (gifImage.complete && gifImage.naturalWidth) {
+		if (isChromaKeyEnabled() && gifChromaCanvas) {
+		  startGifChromaLoop(gifImage, gifChromaCanvas, gifTimeout);
+		}
+	  }
 	  setTimeout(() => {
 		gifContainer.style.display = 'none';
+		if (gifChromaRaf) cancelAnimationFrame(gifChromaRaf);
+		gifChromaRaf = null;
+		if (gifChromaTimeout) clearTimeout(gifChromaTimeout);
+		gifChromaTimeout = null;
+		if (gifChromaCanvas) gifChromaCanvas.style.display = 'none';
+		if (gifImage) gifImage.style.display = '';
 	  }, gifTimeout);
 	}
 
@@ -433,6 +565,28 @@ window.handleMatchupDisplay = function(btn) {
 
 // Add autocomplete functionality for matchup inputs  
 document.addEventListener('DOMContentLoaded', function() {
+    const chromaCb = document.getElementById('chroma-key-cb');
+    if (chromaCb) {
+        chromaCb.addEventListener('change', function() {
+            const videoContainer = document.getElementById('video-container');
+            const videoPlayer = document.getElementById('video-player');
+            const videoChromaCanvas = document.getElementById('video-chroma-canvas');
+            const gifContainer = document.getElementById('gif-container');
+            const gifImage = document.getElementById('gif-image');
+            const gifChromaCanvas = document.getElementById('gif-chroma-canvas');
+            if (isChromaKeyEnabled()) {
+                if (videoContainer && videoContainer.style.display !== 'none' && videoPlayer && !videoPlayer.paused && !videoPlayer.ended && videoChromaCanvas) {
+                    startVideoChromaLoop(videoPlayer, videoChromaCanvas);
+                }
+                if (gifContainer && gifContainer.style.display !== 'none' && gifImage && gifChromaCanvas) {
+                    startGifChromaLoop(gifImage, gifChromaCanvas, 8000);
+                }
+            } else {
+                stopVideoChromaLoop();
+            }
+        });
+    }
+
     const matchupInputs = document.querySelectorAll('.matchup-input');
     
     matchupInputs.forEach(input => {

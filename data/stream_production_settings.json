@@ -38,7 +38,7 @@
     "logos": {
         "s10": true,
         "fslSmall": true,
-        "sc2": false,
+        "sc2": true,
         "positions": {
             "s10": {
                 "left": 509,
@@ -60,10 +60,10 @@
             "height": 126
         },
         "vdoFullPanel": {
-            "left": 0,
-            "top": 0,
-            "width": 0,
-            "height": 0
+            "left": 56,
+            "top": 117,
+            "width": 1173,
+            "height": 565
         }
     },
     "scenes": {
@@ -83,5 +83,6 @@
         "FSL intro",
         "GG",
         "Match GG"
-    ]
+    ],
+    "chromaKey": true
 }

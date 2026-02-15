@@ -1,20 +1,27 @@
+<?php
+require_once __DIR__ . '/asset_version.php';
+header('Cache-Control: no-cache, no-store, must-revalidate');
+header('Pragma: no-cache');
+?>
 <!DOCTYPE html>
 <html lang="en">
 
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+    <meta http-equiv="Pragma" content="no-cache">
     <title>Stream Production Tool</title>
-    <link rel="icon" href="production_files/images/favicon.ico" type="image/x-icon">
-    <link rel="shortcut icon" href="production_files/images/favicon.ico" type="image/x-icon">
-    <link rel="stylesheet" href="styles/styles.css?ver=4">
-    <link rel="stylesheet" href="styles/main.css">
+    <link rel="icon" href="production_files/images/favicon.ico?v=<?php echo $v; ?>" type="image/x-icon">
+    <link rel="shortcut icon" href="production_files/images/favicon.ico?v=<?php echo $v; ?>" type="image/x-icon">
+    <link rel="stylesheet" href="styles/styles.css?v=<?php echo $v; ?>">
+    <link rel="stylesheet" href="styles/main.css?v=<?php echo $v; ?>">
     <link rel="stylesheet" href="https://code.jquery.com/ui/1.13.1/themes/smoothness/jquery-ui.css">
 
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
-    <script src="js/jquery-ui.min.js"></script>
-    <script src="js/popper.min.js"></script>
-    <script src="js/chart.js"></script>
+    <script src="js/jquery-ui.min.js?v=<?php echo $v; ?>"></script>
+    <script src="js/popper.min.js?v=<?php echo $v; ?>"></script>
+    <script src="js/chart.js?v=<?php echo $v; ?>"></script>
     <script src="https://code.jquery.com/ui/1.13.1/jquery-ui.min.js"></script>
 
     <style>
@@ -32,6 +39,12 @@
             border: none;
             text-align: left;
         }
+        .settings-group-heading {
+            margin-top: 1rem;
+            margin-bottom: 0.25rem;
+            font-size: 1rem;
+        }
+        .settings-group-heading:first-child { margin-top: 0; }
     </style>
 </head>
 
@@ -40,20 +53,114 @@
         <div class="left-column">
             <button class="collapsible-btn" id="btn-settings" onclick="toggleSettings(this)">Show Settings</button>
             <div class="collapsible-content" id="settings-section" style="display: none;">
-                <h2>Volume</h2>
-                <div>
-                    <label for="volume-slider">Volume: </label>
-                    <input type="range" id="volume-slider" min="0" max="100" value="50">
+                <h3 class="settings-group-heading">Onscreen Messages</h3>
+                <button class="collapsible-btn" id="btn-status" onclick="toggleStatus(this)">Show Status Message</button>
+                <div class="collapsible-content" id="status-section" style="display: none;">
+                    <h2>Status</h2>
+                    <table>
+                        <tr>
+                            <th>Title</th>
+                            <th>Team A</th>
+                            <th>Team B</th>
+                        </tr>
+                        <tr>
+                            <td><input type="text" id="status-title" placeholder="Enter title"></td>
+                            <td><input type="text" id="status-teamA" placeholder="Team A"></td>
+                            <td><input type="text" id="status-teamB" placeholder="Team B"></td>
+                        </tr>
+                        <tr>
+                            <td></td>
+                            <td><input type="text" id="status-valueA" placeholder="Value A"></td>
+                            <td><input type="text" id="status-valueB" placeholder="Value B"></td>
+                        </tr>
+                    </table>
+                    <button id="btn-status-result" onclick="showFormattedResult(this)">Show Status Message</button>
+                </div>
+                <button class="collapsible-btn" id="btn-matchup" onclick="toggleMatchup(this)">Show Matchup (2v2)</button>
+                <div class="collapsible-content" id="matchup-section" style="display: none;">
+                    <h2>Matchup (2v2)</h2>
+                    <div style="margin-bottom: 10px;">
+                        <input type="text" id="matchup-teamA-name" placeholder="Team A Name" value="Team A" style="width: 10ch; margin: 2px 0; font-weight: bold;">
+                        <input type="text" id="matchup-teamA1" class="matchup-input" placeholder="Player 1" value="DarkMenace" style="width: 10ch; margin: 2px 0;">
+                        <input type="text" id="matchup-teamA2" class="matchup-input" placeholder="Player 2" value="Neutrophil" style="width: 10ch; margin: 2px 0;">
+                        <input type="text" id="matchup-teamA-comment" placeholder="Score/Comment" maxlength="40" style="width: 10ch; margin: 2px 0; font-size: 12px;">
+                    </div>
+                    <div style="margin-bottom: 10px;">
+                        <input type="text" id="matchup-teamB-name" placeholder="Team B Name" value="Team B" style="width: 10ch; margin: 2px 0; font-weight: bold;">
+                        <input type="text" id="matchup-teamB1" class="matchup-input" placeholder="Player 1" value="LittleReaper" style="width: 10ch; margin: 2px 0;">
+                        <input type="text" id="matchup-teamB2" class="matchup-input" placeholder="Player 2" value="HyperTurtle" style="width: 10ch; margin: 2px 0;">
+                        <input type="text" id="matchup-teamB-comment" placeholder="Score/Comment" maxlength="40" style="width: 10ch; margin: 2px 0; font-size: 12px;">
+                    </div>
+                    <button id="btn-matchup-result" onclick="showMatchupResult(this)">Show Matchup</button>
                 </div>
 
-                <h2 class="layer-order-heading">Layer order</h2>
-                <div id="layer-order-ui">
-                    <p class="layer-order-hint">Drag to reorder. Top = back, bottom = front. Order is saved automatically.</p>
-                    <ul id="layer-list" aria-label="Layer order, drag to reorder"></ul>
+                <h3 class="settings-group-heading">Player</h3>
+                <button class="collapsible-btn" id="btn-player-intros" onclick="togglePlayerIntros(this)">Show Player Chroma</button>
+                <div class="collapsible-content" id="player-intros-settings-section" style="display: none;">
+                    <h2>Player Intros</h2>
+                    <label><input type="checkbox" id="chroma-key-cb" checked> Chroma key (green transparent)</label>
+                </div>
+                <button class="collapsible-btn" id="btn-player-ratings" onclick="togglePlayerRatings(this)">Show Spider Ratings</button>
+                <div class="collapsible-content" id="player-ratings-section" style="display: none;">
+                    <h2>Spider Ratings</h2>
+                    <p>External Spider Chart</p>
+                    <input id="player-input" type="text" placeholder="Enter player name" value="littlereaper">
+                    <input id="division-input" type="text" placeholder="Division" value="A" style="width: 5ch; margin-left: 5px;">
+                    <button id="chart-toggle-btn" onclick="toggleExternalChart()">Load External Chart</button>
+                    <div id="error-message" style="color: red;"></div>
+                </div>
+
+                <h3 class="settings-group-heading">Layouts and Layers</h3>
+                <button class="collapsible-btn" id="btn-volume" onclick="toggleVolume(this)">Show Volume</button>
+                <div class="collapsible-content" id="volume-section" style="display: none;">
+                    <h2>Volume</h2>
+                    <div>
+                        <label for="volume-slider">Volume: </label>
+                        <input type="range" id="volume-slider" min="0" max="100" value="50">
+                    </div>
+                </div>
+                <button class="collapsible-btn" id="btn-layer-order" onclick="toggleLayerOrder(this)">Show Layer order</button>
+                <div class="collapsible-content" id="layer-order-section" style="display: none;">
+                    <div id="layer-order-ui">
+                        <h2 class="layer-order-heading">Layer order</h2>
+                        <p class="layer-order-hint">Drag to reorder. Top = back, bottom = front. Order is saved automatically.</p>
+                        <ul id="layer-list" aria-label="Layer order, drag to reorder"></ul>
+                        <div class="layer-order-actions">
+                            <button type="button" id="layer-reset-btn">Reset layer order to default</button>
+                        </div>
+                    </div>
+                </div>
+                <button class="collapsible-btn" id="btn-logos-settings" onclick="toggleLogosSettings(this)">Show Positioning settings</button>
+                <div class="collapsible-content" id="logos-settings-section" style="display: none;">
+                    <h2>Positional settings</h2>
+                    <div class="logos-checkboxes">
+                        <label><input type="checkbox" id="logo-s10-cb" data-logo="s10"> FSL S10 logo</label><br>
+                        <label><input type="checkbox" id="logo-fsl-small-cb" data-logo="fsl-small"> FSL SC2 logo small</label><br>
+                        <label><input type="checkbox" id="logo-sc2-cb" data-logo="sc2"> SC2</label>
+                    </div>
+                    <div class="logos-edit-actions" style="margin-top: 10px;">
+                        <p class="layer-order-hint">Edit and Move: drag/resize logos, SC2 panel, and the big VDO full panel. Save stores all positions.</p>
+                        <button type="button" id="logos-edit-save-btn" onclick="toggleLogosEditMode()">Edit and Move</button>
+                        <button type="button" id="logos-reset-btn" onclick="resetLogosPositions()">Reset</button>
+                    </div>
+                </div>
+                <button class="collapsible-btn" id="btn-overlays" onclick="toggleOverlays(this)">Show Overlays</button>
+                <div class="collapsible-content" id="overlays-section" style="display: none;">
+                    <h2 class="layer-order-heading">Overlays</h2>
+                    <p class="layer-order-hint">BG, VDO full, and Logos toggles (optional).</p>
+                    <div class="scenes-buttons settings-overlays-row" style="margin-top: 6px;">
+                        <button type="button" id="scene-btn-all-vdo" onclick="toggleSceneOverlay('all-vdo')">BG</button>
+                        <button type="button" id="scene-btn-vdo-full" onclick="toggleSceneOverlay('vdo-full')">VDO full</button>
+                        <button type="button" id="scene-btn-logos" onclick="toggleSceneOverlay('logos')">Logos</button>
+                    </div>
+                </div>
+
+                <h3 class="settings-group-heading">Save / Load setup</h3>
+                <button class="collapsible-btn" id="btn-save-load" onclick="toggleSaveLoad(this)">Show Save/Load setup</button>
+                <div class="collapsible-content" id="save-load-section" style="display: none;">
                     <h2 class="layer-order-heading">Import / Export all settings</h2>
                     <p class="layer-order-hint">Export saves layer order, volume, Status, Matchup, Player Ratings, Logos (checkboxes + positions), VDO full and SC2 panel positions, Scenes visibility, and Player Intros names. <strong>Save to server</strong> stores the current setup so anyone opening this link gets the same settings. You can still <strong>Export all</strong> / <strong>Import all</strong> to share via file.</p>
                     <div class="layer-order-actions">
-                        <button type="button" id="layer-reset-btn">Reset layer order to default</button>
                         <button type="button" id="layer-export-btn">Export all</button>
                         <button type="button" id="layer-save-server-btn">Save to server</button>
                         <input type="file" id="layer-import-file" accept=".json" style="display: none;">
@@ -62,102 +169,16 @@
                 </div>
             </div>
 
-            <button class="collapsible-btn" id="btn-status" onclick="toggleStatus(this)">Show Status</button>
-
-            <!-- Status Section -->
-            <div class="collapsible-content" id="status-section">
-                <h2>Status</h2>
-                <table>
-                    <tr>
-                        <th>Title</th>
-                        <th>Team A</th>
-                        <th>Team B</th>
-                    </tr>
-                    <tr>
-                        <td><input type="text" id="status-title" placeholder="Enter title"></td>
-                        <td><input type="text" id="status-teamA" placeholder="Team A"></td>
-                        <td><input type="text" id="status-teamB" placeholder="Team B"></td>
-                    </tr>
-                    <tr>
-                        <td></td>
-                        <td><input type="text" id="status-valueA" placeholder="Value A"></td>
-                        <td><input type="text" id="status-valueB" placeholder="Value B"></td>
-                    </tr>
-                </table>
-                <!-- Button to show formatted result -->
-                <button id="btn-status-result" onclick="showFormattedResult(this)">Show Status</button>
-            </div>
-
-            <button class="collapsible-btn" id="btn-matchup" onclick="toggleMatchup(this)">Show Matchup (2v2)</button>
-
-            <!-- Matchup Controls -->
-            <div class="collapsible-content" id="matchup-section">
-                <h2>Matchup (2v2)</h2>
-                <div style="margin-bottom: 10px;">
-                    <input type="text" id="matchup-teamA-name" placeholder="Team A Name" value="Team A" style="width: 10ch; margin: 2px 0; font-weight: bold;">
-                    <input type="text" id="matchup-teamA1" class="matchup-input" placeholder="Player 1" value="DarkMenace" style="width: 10ch; margin: 2px 0;">
-                    <input type="text" id="matchup-teamA2" class="matchup-input" placeholder="Player 2" value="Neutrophil" style="width: 10ch; margin: 2px 0;">
-                    <input type="text" id="matchup-teamA-comment" placeholder="Score/Comment" maxlength="40" style="width: 10ch; margin: 2px 0; font-size: 12px;">
-                </div>
-                <div style="margin-bottom: 10px;">
-                    <input type="text" id="matchup-teamB-name" placeholder="Team B Name" value="Team B" style="width: 10ch; margin: 2px 0; font-weight: bold;">
-                    <input type="text" id="matchup-teamB1" class="matchup-input" placeholder="Player 1" value="LittleReaper" style="width: 10ch; margin: 2px 0;">
-                    <input type="text" id="matchup-teamB2" class="matchup-input" placeholder="Player 2" value="HyperTurtle" style="width: 10ch; margin: 2px 0;">
-                    <input type="text" id="matchup-teamB-comment" placeholder="Score/Comment" maxlength="40" style="width: 10ch; margin: 2px 0; font-size: 12px;">
-                </div>
-                <!-- Button to show formatted result -->
-                <button id="btn-matchup-result" onclick="showMatchupResult(this)">Show Matchup</button>
-            </div>
-
-            <button class="collapsible-btn" id="btn-player-ratings" onclick="togglePlayerRatings(this)">Show Player Ratings</button>
-
-            <!-- Player Ratings -->
-            <div class="collapsible-content" id="player-ratings-section">
-                <h1>Player Ratings</h1>
-
-                <p>External Spider Chart</p>
-                <input id="player-input" type="text" placeholder="Enter player name" value="littlereaper">
-                <input id="division-input" type="text" placeholder="Division" value="A" style="width: 5ch; margin-left: 5px;">
-                <button id="chart-toggle-btn" onclick="toggleExternalChart()">Load External Chart</button>
-
-                <div id="error-message" style="color: red;"></div>
-            </div>
-
-            <button class="collapsible-btn" id="btn-logos-settings" onclick="toggleLogosSettings(this)">Show Logos settings</button>
-
-            <!-- Logos settings -->
-            <div class="collapsible-content" id="logos-settings-section" style="display: none;">
-                <h2>Logos settings</h2>
-                <div class="logos-checkboxes">
-                    <label><input type="checkbox" id="logo-s10-cb" data-logo="s10"> FSL S10 logo</label><br>
-                    <label><input type="checkbox" id="logo-fsl-small-cb" data-logo="fsl-small"> FSL SC2 logo small</label><br>
-                    <label><input type="checkbox" id="logo-sc2-cb" data-logo="sc2"> SC2</label>
-                </div>
-                <div class="logos-edit-actions" style="margin-top: 10px;">
-                    <p class="layer-order-hint">Edit and Move: drag/resize logos, SC2 panel, and the big VDO full panel. Save stores all positions.</p>
-                    <button type="button" id="logos-edit-save-btn" onclick="toggleLogosEditMode()">Edit and Move</button>
-                    <button type="button" id="logos-reset-btn" onclick="resetLogosPositions()">Reset</button>
-                </div>
-            </div>
-
             <h2>Scenes</h2>
             <div class="scenes-buttons">
-                <div class="scenes-buttons-row">
-                    <button type="button" id="scene-btn-vdo-full" class="scenes-btn-large" onclick="toggleSceneOverlay('vdo-full')">VDO full</button>
-                    <button type="button" id="scene-btn-sc2" class="scenes-btn-large" onclick="toggleSceneOverlay('sc2')">SC2</button>
-                </div>
-                <div class="scenes-buttons-row">
-                    <button type="button" id="scene-btn-schedule" onclick="toggleSceneOverlay('schedule')">Schedule</button>
-                    <button type="button" id="scene-btn-matchup" onclick="toggleSceneOverlay('matchup')">Matchup</button>
-                    <button type="button" id="scene-btn-logos" onclick="toggleSceneOverlay('logos')">Logos</button>
-                    <button type="button" id="scene-btn-all-vdo" onclick="toggleSceneOverlay('all-vdo')">BG</button>
-                </div>
-                <div class="scenes-buttons-row">
-                    <button type="button" id="scene-btn-ash" onclick="toggleSceneOverlay('ash')">ASH</button>
-                    <button type="button" id="scene-btn-pog" onclick="toggleSceneOverlay('pog')">POG</button>
-                    <button type="button" id="scene-btn-ptb" onclick="toggleSceneOverlay('ptb')">PTB</button>
-                    <button type="button" id="scene-btn-st" onclick="toggleSceneOverlay('st')">ST</button>
-                </div>
+                <button type="button" id="scene-btn-sc2" class="scene-btn-major" onclick="toggleSceneOverlay('sc2')">SC2</button>
+                <button type="button" id="scene-btn-schedule" onclick="toggleSceneOverlay('schedule')">Schedule</button>
+                <button type="button" id="scene-btn-matchup" onclick="toggleSceneOverlay('matchup')">Matchup</button>
+                <button type="button" id="scene-btn-ash" onclick="toggleSceneOverlay('ash')">ASH</button>
+                <button type="button" id="scene-btn-pog" onclick="toggleSceneOverlay('pog')">POG</button>
+                <button type="button" id="scene-btn-ptb" onclick="toggleSceneOverlay('ptb')">PTB</button>
+                <button type="button" id="scene-btn-st" onclick="toggleSceneOverlay('st')">ST</button>
+                <button type="button" id="scene-btn-shared-window" onclick="toggleSceneOverlay('shared-window')">Shared Window</button>
             </div>
             <div id="scene-video-error" class="scene-video-error" style="display: none; font-size: 0.8rem; color: #c00; margin-top: 4px;"></div>
 
@@ -238,12 +259,14 @@
                     <video id="video-player" width="640" height="480">
                         Your browser does not support the video tag.
                     </video>
+                    <canvas id="video-chroma-canvas" style="display:none; position:absolute; pointer-events:none;"></canvas>
                 </div>
                 <div id="right-column-result" data-layer-id="right-column-result" style="text-align: center;">
                     <!-- Status data and Matchup data will be dynamically inserted here -->
                 </div>                
                 <div id="gif-container" data-layer-id="gif-container">
-                    <img id="gif-image" src="production_files/images/transparent_greenscreen.gif" alt="GIF">
+                    <img id="gif-image" src="production_files/images/transparent_greenscreen.gif?v=<?php echo $v; ?>" alt="GIF">
+                    <canvas id="gif-chroma-canvas" style="display:none; position:absolute; pointer-events:none;"></canvas>
                 </div>
                 <div id="chart-container" data-layer-id="chart-container" style="display: none;"></div>
                 
@@ -271,10 +294,10 @@
             <!-- Logos overlay: each logo is a wrapper div (dragged/resized) with img inside -->
             <div id="logos-overlay" data-layer-id="logos-overlay" class="logos-overlay" style="display: none; position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none;">
                 <div id="logo-s10-wrap" class="logo-wrap" style="display: none; position: absolute;">
-                    <img src="2026/FSL_s10_logo.png" alt="FSL S10" draggable="false">
+                    <img src="2026/FSL_s10_logo.png?v=<?php echo $v; ?>" alt="FSL S10" draggable="false">
                 </div>
                 <div id="logo-fsl-small-wrap" class="logo-wrap" style="display: none; position: absolute;">
-                    <img src="2026/fsl_sc2_logo_small.png" alt="FSL SC2" draggable="false">
+                    <img src="2026/fsl_sc2_logo_small.png?v=<?php echo $v; ?>" alt="FSL SC2" draggable="false">
                 </div>
             </div>
 
@@ -283,6 +306,10 @@
                 <div id="sc2-panel-wrap" class="sc2-panel-wrap logo-wrap" style="display: none; position: absolute; overflow: hidden; background: #000;">
                     <iframe data-src="https://vdo.ninja/?scene=1&room=KJNinjaRoom123&password=FSL&sl&cover&autostart" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; border: none;" allow="autoplay; fullscreen"></iframe>
                 </div>
+            </div>
+            <!-- Shared Window: shows getDisplayMedia() stream (browser tab/window). Works like other non-SC2 scenes. -->
+            <div id="scene-overlay-shared-window" data-layer-id="scene-overlay-shared-window" style="display: none; position: absolute; top: 0; left: 0; width: 100%; height: 100%; z-index: 99999; background: #000;">
+                <video id="shared-window-video" autoplay playsinline muted style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; object-fit: contain;"></video>
             </div>
             <!-- Fullscreen transition video overlay (fade in/out); used by playTransitionVideo() -->
             <div id="transition-video-overlay" class="transition-video-overlay" style="display: none;">
@@ -296,7 +323,19 @@
         Your browser does not support the audio element.
     </audio>
 
-    <script type="module" src="js/stream_production.js"></script>
+    <!-- Modal for Shared Window: choose window/tab to share -->
+    <div id="shared-window-dialog" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); z-index: 100000; flex-direction: column; justify-content: center; align-items: center;">
+        <div style="background: #fff; padding: 1.5rem; border-radius: 8px; max-width: 360px; box-shadow: 0 4px 20px rgba(0,0,0,0.3);">
+            <p style="margin: 0 0 1rem;">Select the window or browser tab you want to share.</p>
+            <div style="display: flex; gap: 0.5rem; justify-content: flex-end;">
+                <button type="button" id="shared-window-dialog-cancel">Cancel</button>
+                <button type="button" id="shared-window-dialog-select">Select window</button>
+            </div>
+        </div>
+    </div>
+
+    <script>window.ASSET_VERSION = "<?php echo $v; ?>";</script>
+    <script type="module" src="js/stream_production.js?v=<?php echo $v; ?>"></script>
 
     <script>
         function toggleSettings(btn) {
@@ -307,6 +346,31 @@
                 el.style.display = "none";
             }
             if (btn) btn.textContent = (el.style.display === "block") ? "Hide Settings" : "Show Settings";
+        }
+        function toggleVolume(btn) {
+            var el = document.getElementById("volume-section");
+            if (el.style.display === "none" || !el.style.display) { el.style.display = "block"; } else { el.style.display = "none"; }
+            if (btn) btn.textContent = (el.style.display === "block") ? "Hide Volume" : "Show Volume";
+        }
+        function togglePlayerIntros(btn) {
+            var el = document.getElementById("player-intros-settings-section");
+            if (el.style.display === "none" || !el.style.display) { el.style.display = "block"; } else { el.style.display = "none"; }
+            if (btn) btn.textContent = (el.style.display === "block") ? "Hide Player Chroma" : "Show Player Chroma";
+        }
+        function toggleLayerOrder(btn) {
+            var el = document.getElementById("layer-order-section");
+            if (el.style.display === "none" || !el.style.display) { el.style.display = "block"; } else { el.style.display = "none"; }
+            if (btn) btn.textContent = (el.style.display === "block") ? "Hide Layer order" : "Show Layer order";
+        }
+        function toggleSaveLoad(btn) {
+            var el = document.getElementById("save-load-section");
+            if (el.style.display === "none" || !el.style.display) { el.style.display = "block"; } else { el.style.display = "none"; }
+            if (btn) btn.textContent = (el.style.display === "block") ? "Hide Save/Load setup" : "Show Save/Load setup";
+        }
+        function toggleOverlays(btn) {
+            var el = document.getElementById("overlays-section");
+            if (el.style.display === "none" || !el.style.display) { el.style.display = "block"; } else { el.style.display = "none"; }
+            if (btn) btn.textContent = (el.style.display === "block") ? "Hide Overlays" : "Show Overlays";
         }
 
         (function() {
@@ -462,7 +526,8 @@
                 playerRatings: { playerName: "littlereaper", division: "A" },
                 logos: { s10: false, fslSmall: false, sc2: false, positions: {}, sc2Panel: null, vdoFullPanel: { left: 50, top: 100, width: 1180, height: 570 } },
                 scenes: { bg: false, vdoFull: false, logos: false, sc2: false },
-                playerIntros: ["DarkMenace", "LittleReaper", "PulledTheBoys", "HyperTurtle", "Harouz", "InfiniteCyclists", "Random Music", "FSL intro", "GG", "Match GG"]
+                playerIntros: ["DarkMenace", "LittleReaper", "PulledTheBoys", "HyperTurtle", "Harouz", "InfiniteCyclists", "Random Music", "FSL intro", "GG", "Match GG"],
+                chromaKey: true
             };
 
             function exportAllSettings() {
@@ -502,7 +567,8 @@
                     playerRatings: { playerName: s("player-input"), division: s("division-input") },
                     logos: { s10: !!document.getElementById("logo-s10-cb") && document.getElementById("logo-s10-cb").checked, fslSmall: !!document.getElementById("logo-fsl-small-cb") && document.getElementById("logo-fsl-small-cb").checked, sc2: !!document.getElementById("logo-sc2-cb") && document.getElementById("logo-sc2-cb").checked, positions: logoPositions, sc2Panel: sc2PanelPos, vdoFullPanel: vdoFullPanelPos },
                     scenes: { bg: sceneBg && sceneBg.style.display === "block", vdoFull: sceneVdo && sceneVdo.style.display === "block", logos: overlay && overlay.style.display === "block", sc2: sc2OverlayExport && sc2OverlayExport.style.display === "block" },
-                    playerIntros: intros
+                    playerIntros: intros,
+                    chromaKey: !!document.getElementById("chroma-key-cb") && document.getElementById("chroma-key-cb").checked
                 };
                 return out;
             }
@@ -540,7 +606,7 @@
                     if (o1 && b1) {
                         if (sc.bg) {
                             VIDEO_OVERLAY_KEYS.forEach(function(k) { var b = document.getElementById("scene-btn-" + k); if (b) b.classList.remove("active"); });
-                            if (videoIframe) videoIframe.src = "2026/video_player.php?v=" + encodeURIComponent(VIDEO_OVERLAY_FILES["all-vdo"]);
+                            if (videoIframe) videoIframe.src = "2026/video_player.php?v=" + encodeURIComponent(VIDEO_OVERLAY_FILES["all-vdo"]) + "&_t=" + Date.now();
                             o1.style.zIndex = typeof getVideoOverlayDefaultZIndex === 'function' ? getVideoOverlayDefaultZIndex() : '1';
                             o1.style.display = "block";
                             b1.classList.add("active");
@@ -563,7 +629,7 @@
                             }
                             if (vdoPanel && vdoPos) { vdoPanel.style.left = vdoPos.left + "px"; vdoPanel.style.top = vdoPos.top + "px"; vdoPanel.style.width = vdoPos.width + "px"; vdoPanel.style.height = vdoPos.height + "px"; }
                             var vdoFullIframe = vdoPanel ? vdoPanel.querySelector("iframe") : null;
-                            if (vdoFullIframe && vdoFullIframe.getAttribute("data-src")) { vdoFullIframe.src = vdoFullIframe.getAttribute("data-src"); }
+                            ensureVdoIframeLoaded(vdoFullIframe);
                         }
                     }
                     var o3 = document.getElementById("logos-overlay"); var b3 = document.getElementById("scene-btn-logos");
@@ -580,7 +646,7 @@
                                 var sc2Pos = getSavedSc2Panel() || (o4 ? getDefaultSc2PanelPosition(o4.getBoundingClientRect()) : null);
                                 if (sc2Pos) applyPositionToSc2Panel(sc2PanelImport, sc2Pos);
                                 var sc2IframeImport = sc2PanelImport.querySelector("iframe");
-                                if (sc2IframeImport && sc2IframeImport.getAttribute("data-src")) { sc2IframeImport.src = sc2IframeImport.getAttribute("data-src"); }
+                                ensureVdoIframeLoaded(sc2IframeImport);
                             }
                         }
                     }
@@ -593,6 +659,8 @@
                         if (inp) inp.value = val !== undefined && val !== null ? String(val) : "";
                     });
                 }
+                var chromaCb = document.getElementById("chroma-key-cb");
+                if (chromaCb && parsed.chromaKey !== undefined) chromaCb.checked = !!parsed.chromaKey;
                 if (window.updateLogosOverlay) window.updateLogosOverlay();
                 if (window.updateSc2Panel) window.updateSc2Panel();
                 if (window.reapplyLayerOrder) window.reapplyLayerOrder();
@@ -884,6 +952,7 @@
                     if ($(el).data("ui-resizable")) $(el).resizable("destroy");
                     return;
                 }
+                el.style.pointerEvents = "auto";
                 if ($(el).data("ui-draggable")) return;
 
                 if (saved[key]) {
@@ -903,7 +972,7 @@
             if (sc2Cb && sc2Cb.checked && sc2Overlay && sc2Panel) {
                 sc2Overlay.style.display = "block";
                 sc2Overlay.style.pointerEvents = "auto";
-                sc2Overlay.style.zIndex = "100000";
+                sc2Overlay.style.zIndex = "99999";
                 sc2Overlay.classList.add("logos-edit-mode");
                 var saved = getSavedSc2Panel();
                 var overlayRect = sc2Overlay.getBoundingClientRect();
@@ -1056,7 +1125,10 @@
                 logoIds.forEach(function(id) {
                     var el = document.getElementById(id);
                     var key = logoIdToKey[id];
-                    if (el && key) applySavedPositionToLogo(el, key);
+                    if (el && key) {
+                        applySavedPositionToLogo(el, key);
+                        el.style.pointerEvents = "";
+                    }
                 });
                 overlay.style.pointerEvents = "none";
                 overlay.style.zIndex = "";
@@ -1071,8 +1143,8 @@
             /* Enter edit mode: show overlay on top of right panel, enable pointer-events, make visible logos draggable */
             overlay.style.display = "block";
             document.getElementById("scene-btn-logos").classList.add("active");
-            overlay.style.pointerEvents = "auto";
-            overlay.style.zIndex = "99999";
+            overlay.style.pointerEvents = "none";
+            overlay.style.zIndex = "100001";
             overlay.classList.add("logos-edit-mode");
             logosEditMode = true;
             btn.textContent = "Save";
@@ -1081,12 +1153,12 @@
             if (vdoFullOverlayEl && vdoFullPanelEl) {
                 vdoFullOverlayEl.style.display = "block";
                 vdoFullOverlayEl.style.pointerEvents = "auto";
-                vdoFullOverlayEl.style.zIndex = "100001";
+                vdoFullOverlayEl.style.zIndex = "100000";
                 vdoFullOverlayEl.classList.add("logos-edit-mode");
                 var pos = getSavedVdoFullPanel() || getDefaultVdoFullPanelPosition(vdoFullOverlayEl.getBoundingClientRect());
                 applyPositionToVdoFullPanel(vdoFullPanelEl, pos);
                 var vdoIframe = vdoFullPanelEl.querySelector("iframe");
-                if (vdoIframe && vdoIframe.getAttribute("data-src")) { vdoIframe.src = vdoIframe.getAttribute("data-src"); }
+                ensureVdoIframeLoaded(vdoIframe);
             }
             var sc2Cb = document.getElementById("logo-sc2-cb");
             if (sc2Cb && sc2Cb.checked) {
@@ -1094,7 +1166,7 @@
                 if (sc2OverlayEl) {
                     sc2OverlayEl.style.display = "block";
                     sc2OverlayEl.style.pointerEvents = "auto";
-                    sc2OverlayEl.style.zIndex = "100000";
+                    sc2OverlayEl.style.zIndex = "99999";
                     sc2OverlayEl.classList.add("logos-edit-mode");
                     var sc2PanelEdit = document.getElementById("sc2-panel-wrap");
                     if (sc2PanelEdit) {
@@ -1102,7 +1174,7 @@
                         var sc2PosEdit = getSavedSc2Panel() || getDefaultSc2PanelPosition(sc2OverlayEl.getBoundingClientRect());
                         if (sc2PosEdit) applyPositionToSc2Panel(sc2PanelEdit, sc2PosEdit);
                         var sc2IframeEdit = sc2PanelEdit.querySelector("iframe");
-                        if (sc2IframeEdit && sc2IframeEdit.getAttribute("data-src")) { sc2IframeEdit.src = sc2IframeEdit.getAttribute("data-src"); }
+                        ensureVdoIframeLoaded(sc2IframeEdit);
                     }
                 }
             }
@@ -1212,6 +1284,76 @@
                 if (msg) { el.textContent = msg; el.style.display = 'block'; } else { el.textContent = ''; el.style.display = 'none'; }
             }
 
+            /** Set VDO iframe src from data-src only if not already loaded (vdo.ninja), to avoid reload and preserve camera state. */
+            function ensureVdoIframeLoaded(iframe) {
+                if (!iframe) return;
+                var dataSrc = iframe.getAttribute('data-src');
+                if (!dataSrc) return;
+                if (!iframe.src || iframe.src.indexOf('vdo.ninja') === -1) {
+                    iframe.src = dataSrc;
+                }
+            }
+
+            /** Load both VDO (vdo.ninja) iframes once on init so they run in background; we only hide/show panels. */
+            function ensureVdoIframesLoadedOnce() {
+                var vdoPanel = document.getElementById('vdo-full-panel-wrap');
+                var sc2Panel = document.getElementById('sc2-panel-wrap');
+                if (vdoPanel) ensureVdoIframeLoaded(vdoPanel.querySelector('iframe'));
+                if (sc2Panel) ensureVdoIframeLoaded(sc2Panel.querySelector('iframe'));
+            }
+
+            /**
+             * Apply layout to match current SC2 button state.
+             * SC2 ON: no BG, video overlay hidden; SC2 overlay + small VDO; VDO full hidden.
+             * SC2 OFF: BG in video overlay; SC2 hidden; VDO full shown.
+             */
+            function applyLayoutFromSc2Button() {
+                var sc2Btn = document.getElementById('scene-btn-sc2');
+                var bgOverlay = document.getElementById('scene-overlay-all-vdo');
+                var videoIframe = document.getElementById('scene-overlay-all-vdo-iframe');
+                var vdoFullOverlay = document.getElementById('scene-overlay-vdo-full');
+                var vdoFullBtn = document.getElementById('scene-btn-vdo-full');
+                var sc2Overlay = document.getElementById('sc2-overlay');
+                var sc2Panel = document.getElementById('sc2-panel-wrap');
+                var vdoPanel = document.getElementById('vdo-full-panel-wrap');
+                if (!sc2Btn) return;
+                VIDEO_OVERLAY_KEYS.forEach(function(key) {
+                    var b = document.getElementById('scene-btn-' + key);
+                    if (b) b.classList.remove('active');
+                });
+                setSceneVideoError('');
+                if (sc2Btn.classList.contains('active')) {
+                    if (bgOverlay) bgOverlay.style.display = 'none';
+                    if (videoIframe) videoIframe.removeAttribute('src');
+                    var sharedOverlay = document.getElementById('scene-overlay-shared-window');
+                    var sharedBtn = document.getElementById('scene-btn-shared-window');
+                    if (sharedOverlay) sharedOverlay.style.display = 'none';
+                    if (sharedBtn) sharedBtn.classList.remove('active');
+                    if (sc2Overlay) sc2Overlay.style.display = 'block';
+                    if (sc2Panel) {
+                        sc2Panel.style.display = 'block';
+                        var pos = getSavedSc2Panel() || getDefaultSc2PanelPosition(sc2Overlay ? sc2Overlay.getBoundingClientRect() : { width: 1280, height: 720 });
+                        applyPositionToSc2Panel(sc2Panel, pos);
+                        var sc2Iframe = sc2Panel.querySelector('iframe');
+                        ensureVdoIframeLoaded(sc2Iframe);
+                    }
+                    if (vdoFullOverlay) vdoFullOverlay.style.display = 'none';
+                    if (vdoFullBtn) vdoFullBtn.classList.remove('active');
+                } else {
+                    showBgVideoOverlay();
+                    if (vdoFullOverlay) vdoFullOverlay.style.display = 'block';
+                    if (vdoFullBtn) vdoFullBtn.classList.add('active');
+                    if (vdoPanel) {
+                        var vdoPos = getSavedVdoFullPanel() || getDefaultVdoFullPanelPosition(vdoFullOverlay ? vdoFullOverlay.getBoundingClientRect() : { width: 1280, height: 720 });
+                        applyPositionToVdoFullPanel(vdoPanel, vdoPos);
+                        var vdoIframe = vdoPanel.querySelector('iframe');
+                        ensureVdoIframeLoaded(vdoIframe);
+                    }
+                    if (sc2Overlay) sc2Overlay.style.display = 'none';
+                    sc2Btn.classList.remove('active');
+                }
+            }
+
             function showBgVideoOverlay() {
                 var overlay = document.getElementById('scene-overlay-all-vdo');
                 var iframe = document.getElementById('scene-overlay-all-vdo-iframe');
@@ -1221,7 +1363,11 @@
                     var b = document.getElementById('scene-btn-' + key);
                     if (b) b.classList.remove('active');
                 });
-                iframe.src = '2026/video_player.php?v=' + encodeURIComponent(VIDEO_OVERLAY_FILES['all-vdo']);
+                var sharedOverlay = document.getElementById('scene-overlay-shared-window');
+                var sharedBtn = document.getElementById('scene-btn-shared-window');
+                if (sharedOverlay) sharedOverlay.style.display = 'none';
+                if (sharedBtn) sharedBtn.classList.remove('active');
+                iframe.src = '2026/video_player.php?v=' + encodeURIComponent(VIDEO_OVERLAY_FILES['all-vdo']) + '&_t=' + Date.now();
                 overlay.style.zIndex = getVideoOverlayDefaultZIndex();
                 overlay.style.display = 'block';
                 bgBtn.classList.add('active');
@@ -1246,7 +1392,7 @@
                 var useFront = VIDEO_OVERLAY_FRONT.indexOf(sceneId) !== -1;
                 if (isThisActive) {
                     if (useFront) {
-                        showBgVideoOverlay();
+                        applyLayoutFromSc2Button();
                     } else {
                         overlay.style.display = 'none';
                         btn.classList.remove('active');
@@ -1260,7 +1406,11 @@
                         var b = document.getElementById('scene-btn-' + key);
                         if (b) b.classList.remove('active');
                     });
-                    var url = (file.indexOf('.html') !== -1) ? ('2026/' + file) : ('2026/video_player.php?v=' + encodeURIComponent(file));
+                    var sharedOverlay = document.getElementById('scene-overlay-shared-window');
+                    var sharedBtn = document.getElementById('scene-btn-shared-window');
+                    if (sharedOverlay) sharedOverlay.style.display = 'none';
+                    if (sharedBtn) sharedBtn.classList.remove('active');
+                    var url = (file.indexOf('.html') !== -1) ? ('2026/' + file) : ('2026/video_player.php?v=' + encodeURIComponent(file) + '&_t=' + Date.now());
                     if (useFront && file.indexOf('.html') === -1) url += '&front=true';
                     iframe.src = url;
                     overlay.style.zIndex = useFront ? '99999' : getVideoOverlayDefaultZIndex();
@@ -1286,6 +1436,7 @@
             });
 
             showBgVideoOverlay();
+            ensureVdoIframesLoadedOnce();
 
             function toggleSceneOverlay(sceneId) {
             if (VIDEO_OVERLAY_KEYS.indexOf(sceneId) !== -1) {
@@ -1303,7 +1454,7 @@
                         var pos = getSavedVdoFullPanel() || getDefaultVdoFullPanelPosition(overlay.getBoundingClientRect());
                         applyPositionToVdoFullPanel(panel, pos);
                         var iframe = panel.querySelector('iframe');
-                        if (iframe && iframe.getAttribute('data-src')) { iframe.src = iframe.getAttribute('data-src'); }
+                        ensureVdoIframeLoaded(iframe);
                     }
                 } else {
                     overlay.style.display = 'none';
@@ -1337,6 +1488,10 @@
                             if (bgOverlay) bgOverlay.style.display = 'none';
                             if (vdoFullOverlay) vdoFullOverlay.style.display = 'none';
                             if (vdoFullBtn) vdoFullBtn.classList.remove('active');
+                            var sharedOverlay = document.getElementById('scene-overlay-shared-window');
+                            var sharedBtn = document.getElementById('scene-btn-shared-window');
+                            if (sharedOverlay) sharedOverlay.style.display = 'none';
+                            if (sharedBtn) sharedBtn.classList.remove('active');
                             sc2Overlay.style.display = 'block';
                             btn.classList.add('active');
                             if (sc2Panel) {
@@ -1344,17 +1499,100 @@
                                 var pos = getSavedSc2Panel() || getDefaultSc2PanelPosition(sc2Overlay.getBoundingClientRect());
                                 applyPositionToSc2Panel(sc2Panel, pos);
                                 var sc2Iframe = sc2Panel.querySelector('iframe');
-                                if (sc2Iframe && sc2Iframe.getAttribute('data-src')) { sc2Iframe.src = sc2Iframe.getAttribute('data-src'); }
+                                ensureVdoIframeLoaded(sc2Iframe);
                             }
                         }
                     });
                 } else {
-                    /* SC2 off: BG and VDO full reappear, small VDO panel disappears */
-                    if (bgOverlay) bgOverlay.style.display = 'block';
+                    /* SC2 off: BG and VDO full reappear, small VDO panel disappears; restore video overlay to BG */
+                    var videoIframe = document.getElementById('scene-overlay-all-vdo-iframe');
+                    var bgBtn = document.getElementById('scene-btn-all-vdo');
+                    if (bgOverlay) {
+                        bgOverlay.style.display = 'block';
+                        bgOverlay.style.zIndex = typeof getVideoOverlayDefaultZIndex === 'function' ? getVideoOverlayDefaultZIndex() : '1';
+                    }
+                    if (videoIframe) {
+                        videoIframe.src = '2026/video_player.php?v=' + encodeURIComponent(VIDEO_OVERLAY_FILES['all-vdo']) + '&_t=' + Date.now();
+                    }
+                    VIDEO_OVERLAY_KEYS.forEach(function(key) {
+                        var b = document.getElementById('scene-btn-' + key);
+                        if (b) b.classList.remove('active');
+                    });
+                    var sharedOverlay = document.getElementById('scene-overlay-shared-window');
+                    var sharedBtn = document.getElementById('scene-btn-shared-window');
+                    if (sharedOverlay) sharedOverlay.style.display = 'none';
+                    if (sharedBtn) sharedBtn.classList.remove('active');
+                    if (bgBtn) bgBtn.classList.add('active');
                     if (vdoFullOverlay) vdoFullOverlay.style.display = 'block';
                     if (vdoFullBtn) vdoFullBtn.classList.add('active');
+                    var vdoPanel = document.getElementById('vdo-full-panel-wrap');
+                    if (vdoPanel) {
+                        var pos = getSavedVdoFullPanel() || getDefaultVdoFullPanelPosition(vdoFullOverlay ? vdoFullOverlay.getBoundingClientRect() : { width: 1280, height: 720 });
+                        applyPositionToVdoFullPanel(vdoPanel, pos);
+                        var vdoIframe = vdoPanel.querySelector('iframe');
+                        ensureVdoIframeLoaded(vdoIframe);
+                    }
                     sc2Overlay.style.display = 'none';
                     btn.classList.remove('active');
+                }
+            } else if (sceneId === 'shared-window') {
+                var sharedOverlay = document.getElementById('scene-overlay-shared-window');
+                var sharedVideo = document.getElementById('shared-window-video');
+                var sharedBtn = document.getElementById('scene-btn-shared-window');
+                var bgOverlay = document.getElementById('scene-overlay-all-vdo');
+                var bgBtn = document.getElementById('scene-btn-all-vdo');
+                var isSharedActive = sharedOverlay && (sharedOverlay.style.display === 'block');
+                var hasStream = sharedVideo && sharedVideo.srcObject && sharedVideo.srcObject.getTracks().some(function(t) { return t.readyState === 'live'; });
+
+                if (hasStream && isSharedActive) {
+                    sharedOverlay.style.display = 'none';
+                    sharedBtn.classList.remove('active');
+                    bgOverlay.style.display = 'block';
+                    bgOverlay.style.zIndex = typeof getVideoOverlayDefaultZIndex === 'function' ? getVideoOverlayDefaultZIndex() : '1';
+                    VIDEO_OVERLAY_KEYS.forEach(function(k) { var b = document.getElementById('scene-btn-' + k); if (b) b.classList.remove('active'); });
+                    if (bgBtn) bgBtn.classList.add('active');
+                } else if (hasStream) {
+                    VIDEO_OVERLAY_KEYS.forEach(function(k) { var b = document.getElementById('scene-btn-' + k); if (b) b.classList.remove('active'); });
+                    if (bgOverlay) bgOverlay.style.display = 'none';
+                    sharedOverlay.style.display = 'block';
+                    sharedBtn.classList.add('active');
+                } else {
+                    var dialog = document.getElementById('shared-window-dialog');
+                    if (dialog) {
+                        dialog.style.display = 'flex';
+                        var selectBtn = document.getElementById('shared-window-dialog-select');
+                        var cancelBtn = document.getElementById('shared-window-dialog-cancel');
+                        var doSelect = function() {
+                            dialog.style.display = 'none';
+                            if (!navigator.mediaDevices || !navigator.mediaDevices.getDisplayMedia) {
+                                setSceneVideoError('getDisplayMedia not supported');
+                                return;
+                            }
+                            navigator.mediaDevices.getDisplayMedia({ video: true, audio: false }).then(function(stream) {
+                                sharedVideo.srcObject = stream;
+                                sharedVideo.play();
+                                stream.getVideoTracks()[0].addEventListener('ended', function onEnded() {
+                                    stream.getVideoTracks()[0].removeEventListener('ended', onEnded);
+                                    sharedVideo.srcObject = null;
+                                    sharedOverlay.style.display = 'none';
+                                    sharedBtn.classList.remove('active');
+                                    bgOverlay.style.display = 'block';
+                                    bgOverlay.style.zIndex = typeof getVideoOverlayDefaultZIndex === 'function' ? getVideoOverlayDefaultZIndex() : '1';
+                                    VIDEO_OVERLAY_KEYS.forEach(function(k) { var b = document.getElementById('scene-btn-' + k); if (b) b.classList.remove('active'); });
+                                    if (bgBtn) bgBtn.classList.add('active');
+                                });
+                                VIDEO_OVERLAY_KEYS.forEach(function(k) { var b = document.getElementById('scene-btn-' + k); if (b) b.classList.remove('active'); });
+                                if (bgOverlay) bgOverlay.style.display = 'none';
+                                sharedOverlay.style.display = 'block';
+                                sharedBtn.classList.add('active');
+                            }).catch(function(err) {
+                                if (err.name !== 'NotAllowedError') setSceneVideoError(err.message || 'Share failed');
+                            });
+                        };
+                        var cancelHandler = function() { dialog.style.display = 'none'; };
+                        selectBtn.onclick = doSelect;
+                        cancelBtn.onclick = cancelHandler;
+                    }
                 }
             }
         }

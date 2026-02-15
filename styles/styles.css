@@ -90,6 +90,14 @@
     color: #fff;
     text-decoration: none;
 }
+.scene-btn-major {
+    padding: 14px 24px;
+    font-size: 1.25rem;
+    font-weight: 600;
+}
+.scene-btn-major:not(.active) {
+    text-decoration: line-through;
+}
 
 /* Layer order UI – inside Settings, drag-and-drop list */
 #layer-order-ui {
@@ -184,6 +192,17 @@ body.layer-outline-debug [data-layer-id].layer-outline-active {
     margin-right: auto;
 }
 
+#video-chroma-canvas {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 640px;
+    height: 480px;
+    object-fit: contain;
+    pointer-events: none;
+}
+
 #right-column-result {
     position: absolute;
     top: 50%;
@@ -192,6 +211,16 @@ body.layer-outline-debug [data-layer-id].layer-outline-active {
     margin: 0;
     width: auto;
     max-width: 90%;
+}
+
+#gif-chroma-canvas {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+    pointer-events: none;
 }
 
 #gif-container {
@@ -342,11 +371,12 @@ body.layer-outline-debug [data-layer-id].layer-outline-active {
     user-select: none;
 }
 
-/* Edit mode: wrapper is draggable/resizable */
+/* Edit mode: wrapper is draggable/resizable; pointer-events auto so logos receive clicks despite overlay's pointer-events: none */
 .logos-overlay.logos-edit-mode .logo-wrap {
     cursor: move;
     outline: 2px dashed rgba(255, 255, 255, 0.8);
     outline-offset: 2px;
+    pointer-events: auto;
 }
 .logos-overlay.logos-edit-mode .ui-resizable-handle {
     background: rgba(255, 255, 255, 0.3);

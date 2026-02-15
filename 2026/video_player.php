@@ -19,7 +19,19 @@ if ($file && is_file($path)) {
 video { width: 100%; height: 100%; object-fit: cover; }</style>
 </head>
 <body>
-<video src="<?php echo htmlspecialchars($file, ENT_QUOTES, 'UTF-8'); ?>" autoplay loop muted playsinline></video>
+<video id="bg-video" src="<?php echo htmlspecialchars($file, ENT_QUOTES, 'UTF-8'); ?>" autoplay loop muted playsinline></video>
+<script>
+(function() {
+  function tryPlay() {
+    var v = document.getElementById('bg-video');
+    if (v) v.play().catch(function() {});
+  }
+  tryPlay();
+  window.addEventListener('load', tryPlay);
+  window.addEventListener('pageshow', function(ev) { if (ev.persisted) tryPlay(); });
+  document.addEventListener('visibilitychange', function() { if (document.visibilityState === 'visible') tryPlay(); });
+})();
+</script>
 </body>
 </html>
 <?php
