@@ -17,6 +17,7 @@ header('Pragma: no-cache');
     <link rel="stylesheet" href="styles/styles.css?v=<?php echo $v; ?>">
     <link rel="stylesheet" href="styles/main.css?v=<?php echo $v; ?>">
     <link rel="stylesheet" href="https://code.jquery.com/ui/1.13.1/themes/smoothness/jquery-ui.css">
+    <link href="https://fonts.googleapis.com/css2?family=Rajdhani:wght@500;600;700&family=Exo+2:wght@400;600;700&display=swap" rel="stylesheet">
 
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
     <script src="js/jquery-ui.min.js?v=<?php echo $v; ?>"></script>
@@ -45,6 +46,57 @@ header('Pragma: no-cache');
             font-size: 1rem;
         }
         .settings-group-heading:first-child { margin-top: 0; }
+
+        .scoreboard-overlay-wrap { background: transparent; }
+        /* Centered horizontally; top edge 300px; bottom leaves room for small VDO */
+        #scoreboard-content.scoreboard-content-wrap {
+            position: absolute; left: 50%; top: 100px; bottom: 80px;
+            width: calc(100% - 200px); max-width: calc(100vw - 200px);
+            transform: translateX(-50%);
+            display: flex; flex-direction: column; align-items: center; justify-content: flex-start;
+            overflow: auto; box-sizing: border-box;
+        }
+        .scoreboard-panel { padding: 0.35rem 0.4rem; color: #fff; font-family: 'Exo 2', sans-serif; box-sizing: border-box; width: 100%; max-width: 100%; min-width: 0; }
+        .scoreboard-panel-inner { max-width: 100%; min-width: 0; margin: 0 auto; }
+        .scoreboard-header { display: flex; justify-content: center; align-items: center; gap: 0.6rem; margin-bottom: 0.45rem; padding-bottom: 0.4rem; border-bottom: 2px solid rgba(108, 92, 231, 0.3); flex-wrap: nowrap; }
+        .scoreboard-team-block { min-width: 0; flex: 1; }
+        .scoreboard-team-a { text-align: center; }
+        .scoreboard-team-b { text-align: center; }
+        .scoreboard-team-name { display: block; font-size: 2.525rem; font-weight: 600; line-height: 1.2; color: #e0e0e0; font-family: 'Exo 2', sans-serif; }
+        .scoreboard-team-a .scoreboard-team-name { color: #e0e0e0; }
+        .scoreboard-team-b .scoreboard-team-name { color: #e0e0e0; }
+        .scoreboard-vs-block { display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 0 0.4rem; flex-shrink: 0; }
+        .scoreboard-score-main { font-size: 2.625rem; font-weight: 700; color: #FFFF99; font-family: 'Rajdhani', sans-serif; }
+        .scoreboard-score-label { font-size: 0.825rem; color: #00b894; text-transform: uppercase; letter-spacing: 0.06em; margin-top: 0.08rem; font-weight: 600; font-family: 'Rajdhani', sans-serif; }
+        .scoreboard-table-wrap { background: rgba(0, 0, 0, 0.25); border-radius: 8px; overflow: hidden; border: 1px solid rgba(108, 92, 231, 0.2); margin-top: 0.35rem; width: 100%; max-width: 100%; min-width: 0; }
+        .scoreboard-table { width: 100%; max-width: 100%; min-width: 0; table-layout: auto; border-collapse: collapse; font-size: 1.045rem; font-family: 'Exo 2', sans-serif; }
+        /* Narrow columns shrink to content; team/map columns autosize (no width = fit content) */
+        .scoreboard-table col:nth-child(1), .scoreboard-table col:nth-child(6), .scoreboard-table col:nth-child(10) { width: 0.1%; }
+        .scoreboard-table col:nth-child(2) { width: 1%; min-width: 2.8em; }
+        .scoreboard-table col:nth-child(5), .scoreboard-table col:nth-child(9) { width: 1%; min-width: 2em; }
+        .scoreboard-table thead { border-bottom: none; }
+        .scoreboard-table th { padding: 0.28rem 0.35rem; text-align: center; color: #fff; font-weight: 600; font-size: 1.005rem; background: rgba(108, 92, 231, 0.25); border-bottom: 1px solid rgba(255,255,255,0.08); white-space: nowrap; }
+        .scoreboard-table th.scoreboard-th-empty { padding-left: 4px; padding-right: 4px; background: rgba(108, 92, 231, 0.15); }
+        .scoreboard-table th.scoreboard-th-map { color: #a29bfe; font-weight: 500; font-size: 0.82rem; }
+        .scoreboard-table th.scoreboard-th-group { text-align: center; }
+        .scoreboard-table td { padding: 0.25rem 0.35rem; border-bottom: 1px solid rgba(255,255,255,0.08); color: #e0e0e0; text-align: center; font-size: 1.025rem; }
+        .scoreboard-table tr:last-child td { border-bottom: none; }
+        .scoreboard-table tr:nth-child(even) td { background: rgba(255,255,255,0.03); }
+        .scoreboard-table td.scoreboard-empty-cell { padding-left: 4px; padding-right: 4px; overflow: hidden; border-color: rgba(255,255,255,0.06); }
+        .scoreboard-table td.scoreboard-type { font-size: 1.025rem; }
+        .scoreboard-table td.scoreboard-num { color: #FFD700; font-size: 1.1rem; font-weight: 700; text-align: center; white-space: nowrap; }
+        .scoreboard-table tbody tr:hover td { background: rgba(108, 92, 231, 0.12); }
+        .scoreboard-type { color: #00b894; font-weight: 600; font-family: 'Rajdhani', sans-serif; text-align: center; white-space: nowrap; }
+        .scoreboard-num { color: #FFD700; font-weight: 700; text-align: center; white-space: nowrap; }
+        .scoreboard-table td.scoreboard-map { color: #a29bfe; font-size: 0.82rem; text-align: center; overflow: hidden; text-overflow: ellipsis; max-width: 100%; }
+        .scoreboard-map { color: #a29bfe; text-align: center; overflow: hidden; text-overflow: ellipsis; max-width: 100%; }
+        .scoreboard-cell { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; text-align: center; }
+        .scoreboard-table td.scoreboard-cell-team { padding-left: 0.5rem; padding-right: 0.5rem; white-space: normal; overflow-wrap: break-word; text-overflow: clip; }
+        .scoreboard-table td.scoreboard-cell-team-a { text-align: left; padding-right: 0.85rem; }
+        .scoreboard-table td.scoreboard-cell-team-b { text-align: left; padding-left: 0.85rem; padding-right: 0.5rem; }
+        .scoreboard-slot { font-size: 0.75em; color: #a29bfe; font-weight: 600; }
+        .scoreboard-race-icon { width: 1em; height: 1em; vertical-align: middle; }
+        .scoreboard-empty { color: #a29bfe; text-align: center; padding: 1rem; font-size: 1.075rem; }
     </style>
 </head>
 
@@ -95,6 +147,13 @@ header('Pragma: no-cache');
                 </div>
 
                 <h3 class="settings-group-heading">Player</h3>
+                <button class="collapsible-btn" id="btn-scoreboard-settings" onclick="toggleScoreboardSettings(this)">Scoreboard</button>
+                <div class="collapsible-content" id="scoreboard-settings-section" style="display: none;">
+                    <h2>Scoreboard CSV</h2>
+                    <p class="layer-order-hint">Paste CSV below to overwrite <code>2026/scoreboard.csv</code>. The scoreboard panel will use this file when you click the Scoreboard scene button.</p>
+                    <textarea id="scoreboard-csv-input" rows="12" style="width: 100%; font-family: monospace; font-size: 12px;" placeholder="Paste CSV data here..."></textarea>
+                    <button type="button" id="scoreboard-csv-save-btn" style="margin-top: 6px;">Overwrite scoreboard.csv</button>
+                </div>
                 <button class="collapsible-btn" id="btn-player-intros" onclick="togglePlayerIntros(this)">Show Player Chroma</button>
                 <div class="collapsible-content" id="player-intros-settings-section" style="display: none;">
                     <h2>Player Intros</h2>
@@ -186,6 +245,7 @@ header('Pragma: no-cache');
                 <button type="button" id="scene-btn-sc2" class="scene-btn-major" onclick="toggleSceneOverlay('sc2')">SC2</button>
                 <button type="button" id="scene-btn-schedule" onclick="toggleSceneOverlay('schedule')">Schedule</button>
                 <button type="button" id="scene-btn-matchup" onclick="toggleSceneOverlay('matchup')">Matchup</button>
+                <button type="button" id="scene-btn-scoreboard" onclick="toggleSceneOverlay('scoreboard')">Scoreboard</button>
                 <button type="button" id="scene-btn-ash" onclick="toggleSceneOverlay('ash')">ASH</button>
                 <button type="button" id="scene-btn-pog" onclick="toggleSceneOverlay('pog')">POG</button>
                 <button type="button" id="scene-btn-ptb" onclick="toggleSceneOverlay('ptb')">PTB</button>
@@ -279,7 +339,10 @@ header('Pragma: no-cache');
                 </div>
                 <div id="right-column-result" data-layer-id="right-column-result" style="text-align: center;">
                     <!-- Status data and Matchup data will be dynamically inserted here -->
-                </div>                
+                </div>
+                <div id="scoreboard-overlay" data-layer-id="scoreboard-overlay" class="scoreboard-overlay-wrap" style="display: none; position: absolute; top: 0; left: 0; width: 100%; height: 100%; overflow: auto; pointer-events: none;">
+                    <div id="scoreboard-content" class="scoreboard-panel scoreboard-content-wrap"></div>
+                </div>
                 <div id="gif-container" data-layer-id="gif-container">
                     <img id="gif-image" src="production_files/images/transparent_greenscreen.gif?v=<?php echo $v; ?>" alt="GIF">
                     <canvas id="gif-chroma-canvas" style="display:none; position:absolute; pointer-events:none;"></canvas>
@@ -382,6 +445,11 @@ header('Pragma: no-cache');
             if (el.style.display === "none" || !el.style.display) { el.style.display = "block"; } else { el.style.display = "none"; }
             if (btn) btn.textContent = (el.style.display === "block") ? "Hide Volume" : "Show Volume";
         }
+        function toggleScoreboardSettings(btn) {
+            var el = document.getElementById("scoreboard-settings-section");
+            if (el.style.display === "none" || !el.style.display) { el.style.display = "block"; } else { el.style.display = "none"; }
+            if (btn) btn.textContent = (el.style.display === "block") ? "Hide Scoreboard" : "Scoreboard";
+        }
         function togglePlayerIntros(btn) {
             var el = document.getElementById("player-intros-settings-section");
             if (el.style.display === "none" || !el.style.display) { el.style.display = "block"; } else { el.style.display = "none"; }
@@ -418,6 +486,7 @@ header('Pragma: no-cache');
                 "sc2-overlay",            /* SC2 panel */
                 "container",
                 "right-column-result",
+                "scoreboard-overlay",
                 "external-chart-overlay",
                 "matchup-suggestions",
                 "chart-container",
@@ -436,6 +505,7 @@ header('Pragma: no-cache');
                 "chart-container": "Player ratings – chart",
                 "video-container": "Player intros – video",
                 "right-column-result": "Status / Matchup text",
+                "scoreboard-overlay": "Scoreboard",
                 "external-chart-overlay": "Player ratings – external chart",
                 "matchup-suggestions": "Matchup dropdown",
                 "player-name-box": "Player name"
@@ -785,6 +855,35 @@ header('Pragma: no-cache');
                 };
                 r.readAsText(file);
             });
+
+            var scoreboardSaveBtn = document.getElementById("scoreboard-csv-save-btn");
+            if (scoreboardSaveBtn) {
+                scoreboardSaveBtn.addEventListener("click", function() {
+                    var ta = document.getElementById("scoreboard-csv-input");
+                    var csv = ta ? ta.value : "";
+                    var btn = this;
+                    btn.disabled = true;
+                    fetch("save_scoreboard.php", {
+                        method: "POST",
+                        headers: { "Content-Type": "text/csv; charset=utf-8" },
+                        body: csv
+                    }).then(function(r) { return r.json(); }).then(function(res) {
+                        if (res && res.ok) {
+                            btn.textContent = "Saved";
+                            if (typeof loadAndRenderScoreboard === "function") {
+                                var overlay = document.getElementById("scoreboard-overlay");
+                                if (overlay && overlay.style.display === "block") loadAndRenderScoreboard();
+                            }
+                        } else {
+                            btn.textContent = "Error";
+                        }
+                        setTimeout(function() { btn.textContent = "Overwrite scoreboard.csv"; btn.disabled = false; }, 2000);
+                    }).catch(function() {
+                        btn.textContent = "Error";
+                        setTimeout(function() { btn.textContent = "Overwrite scoreboard.csv"; btn.disabled = false; }, 2000);
+                    });
+                });
+            }
 
             applyOrder(getStoredOrder());
             buildLayerList();
@@ -1417,6 +1516,142 @@ header('Pragma: no-cache');
                 if (msg) { el.textContent = msg; el.style.display = 'block'; } else { el.textContent = ''; el.style.display = 'none'; }
             }
 
+            /* ---------- Scoreboard image/style replacements (adjust here for icons and formatting) ---------- */
+            window.SCOREBOARD_REPLACEMENTS = {
+                raceIconBase: 'https://psistorm.com/fsl/images/',
+                raceIcons: {
+                    Z: 'zerg_icon.png',
+                    T: 'terran_icon.png',
+                    P: 'protoss_icon.png',
+                    R: 'random_icon.png'
+                }
+            };
+            function formatScoreboardTeamCell(val) {
+                if (val == null || val === '') return '';
+                var s = escapeHtml(String(val).trim());
+                s = s.replace(/\[(\d+)\]/g, '<span class="scoreboard-slot">#$1</span>');
+                var cfg = window.SCOREBOARD_REPLACEMENTS || {};
+                var base = (cfg.raceIconBase || '').replace(/\/?$/, '/');
+                ['Z', 'T', 'P', 'R'].forEach(function(letter) {
+                    var img = (cfg.raceIcons && cfg.raceIcons[letter]) ? (base + cfg.raceIcons[letter]) : '';
+                    if (img) s = s.replace(new RegExp('\\(' + letter + '\\)', 'g'), '<img src="' + escapeHtml(img) + '" alt="' + letter + '" class="scoreboard-race-icon">');
+                });
+                return s;
+            }
+            /* ---------- End scoreboard replacements ---------- */
+
+            function parseCSVLine(line) {
+                line = line.replace(/^\uFEFF/, '');
+                var out = [], i = 0;
+                while (i < line.length) {
+                    if (line[i] === '"') {
+                        var cell = '';
+                        i++;
+                        while (i < line.length) {
+                            if (line[i] === '"') {
+                                if (line[i + 1] === '"') { cell += '"'; i += 2; continue; }
+                                break;
+                            }
+                            cell += line[i]; i++;
+                        }
+                        i++;
+                        out.push(cell);
+                        if (i < line.length && line[i] === ',') i++;
+                    } else {
+                        var start = i;
+                        while (i < line.length && line[i] !== ',') i++;
+                        out.push(line.slice(start, i).replace(/^[\s\uFEFF]+|[\s\uFEFF]+$/g, ''));
+                        if (i < line.length && line[i] === ',') i++;
+                    }
+                }
+                return out;
+            }
+            function parseCSV(text) {
+                if (!text || !text.trim()) return [];
+                text = text.replace(/^\uFEFF/, '');
+                var lines = text.split(/\r?\n/);
+                var numCols = 12;
+                var rows = lines.map(function(l) {
+                    var row = parseCSVLine(l.replace(/\r/g, ''));
+                    var out = row.map(function(c) { return String(c).replace(/\r/g, '').trim(); });
+                    if (out.length > numCols) out = out.slice(0, numCols);
+                    while (out.length < numCols) out.push('');
+                    return out;
+                });
+                return rows;
+            }
+            function cellStr(val) {
+                if (val == null || val === undefined) return '';
+                return String(val).replace(/\r/g, '').trim();
+            }
+            function buildScoreboardHTML(rows) {
+                var teamA = '', scoreA = '', teamB = '', scoreB = '';
+                var map1Label = 'Map 1', map2Label = 'Map 2';
+                if (rows.length > 0) {
+                    var r0 = rows[0];
+                    teamA = cellStr(r0[2]);
+                    scoreA = cellStr(r0[4]);
+                    teamB = cellStr(r0[6]);
+                    scoreB = cellStr(r0[8]);
+                }
+                if (rows.length > 1) {
+                    var r1 = rows[1];
+                    map1Label = cellStr(r1[10]) || map1Label;
+                    map2Label = cellStr(r1[11]) || map2Label;
+                }
+                var dataRows = [];
+                for (var r = 2; r < rows.length; r++) {
+                    var row = rows[r];
+                    if (!cellStr(row[1]) && !cellStr(row[2]) && !cellStr(row[3]) && !cellStr(row[4]) && !cellStr(row[6]) && !cellStr(row[7]) && !cellStr(row[8]) && !cellStr(row[10]) && !cellStr(row[11])) continue;
+                    dataRows.push(row);
+                }
+                var sb = [];
+                sb.push('<div class="scoreboard-panel-inner">');
+                sb.push('<div class="scoreboard-header">');
+                sb.push('<div class="scoreboard-team-block scoreboard-team-a"><span class="scoreboard-team-name">' + formatScoreboardTeamCell(teamA) + '</span></div>');
+                sb.push('<div class="scoreboard-vs-block"><span class="scoreboard-score-main">' + escapeHtml(scoreA) + ' &ndash; ' + escapeHtml(scoreB) + '</span><span class="scoreboard-score-label"><!-- Score --></span></div>');
+                sb.push('<div class="scoreboard-team-block scoreboard-team-b"><span class="scoreboard-team-name">' + formatScoreboardTeamCell(teamB) + '</span></div>');
+                sb.push('</div>');
+                sb.push('<div class="scoreboard-table-wrap"><table class="scoreboard-table"><colgroup><col><col><col><col><col><col><col><col><col><col><col><col></colgroup><thead><tr>');
+                sb.push('<th class="scoreboard-th-empty"></th><th class="scoreboard-th-type">Type</th><th class="scoreboard-th-team scoreboard-th-group" colspan="3">Team A</th><th class="scoreboard-th-empty"></th><th class="scoreboard-th-team scoreboard-th-group" colspan="3">Team B</th><th class="scoreboard-th-empty"></th><th class="scoreboard-th-map">' + escapeHtml(map1Label) + '</th><th class="scoreboard-th-map">' + escapeHtml(map2Label) + '</th>');
+                sb.push('</tr></thead><tbody>');
+                dataRows.forEach(function(row) {
+                    sb.push('<tr>');
+                    for (var c = 0; c < 12; c++) {
+                        var val = cellStr(row[c]);
+                        var cls = c === 1 ? 'scoreboard-type' : c === 4 || c === 8 ? 'scoreboard-num' : c === 10 || c === 11 ? 'scoreboard-map' : (c === 0 || c === 5 || c === 9) ? 'scoreboard-empty-cell' : (c === 2 || c === 3) ? 'scoreboard-cell scoreboard-cell-team scoreboard-cell-team-a' : (c === 6 || c === 7) ? 'scoreboard-cell scoreboard-cell-team scoreboard-cell-team-b' : 'scoreboard-cell';
+                        var cellContent = (c === 2 || c === 3 || c === 6 || c === 7) ? formatScoreboardTeamCell(val) : escapeHtml(val);
+                        sb.push('<td class="' + cls + '">' + cellContent + '</td>');
+                    }
+                    sb.push('</tr>');
+                });
+                sb.push('</tbody></table></div></div>');
+                return sb.join('');
+            }
+            function escapeHtml(s) {
+                if (s == null) return '';
+                var div = document.createElement('div');
+                div.textContent = s;
+                return div.innerHTML;
+            }
+            window.loadAndRenderScoreboard = function() {
+                var container = document.getElementById('scoreboard-content');
+                if (!container) return;
+                var base = window.location.pathname.replace(/\/[^/]*$/, '') || '';
+                var csvUrl = (base ? base + '/' : '') + '2026/scoreboard.csv?_t=' + Date.now();
+                fetch(csvUrl).then(function(r) {
+                    if (!r.ok) throw new Error(r.status + ' ' + r.statusText);
+                    return r.text();
+                }).then(function(text) {
+                    var raw = (text || '').trim();
+                    if (!raw) throw new Error('Empty file');
+                    var rows = parseCSV(raw);
+                    container.innerHTML = rows.length ? buildScoreboardHTML(rows) : '<div class="scoreboard-panel-inner"><p class="scoreboard-empty">No scoreboard data. Add CSV in Settings &rarr; Player &rarr; Scoreboard.</p></div>';
+                }).catch(function(err) {
+                    container.innerHTML = '<div class="scoreboard-panel-inner"><p class="scoreboard-empty">Could not load scoreboard.csv. ' + (err && err.message ? err.message : '') + '</p></div>';
+                });
+            };
+
             /** Set VDO iframe src from data-src only if not already loaded (vdo.ninja), to avoid reload and preserve camera state. */
             function ensureVdoIframeLoaded(iframe) {
                 if (!iframe) return;
@@ -1612,6 +1847,62 @@ header('Pragma: no-cache');
             function toggleSceneOverlay(sceneId) {
             if (VIDEO_OVERLAY_KEYS.indexOf(sceneId) !== -1) {
                 toggleVideoOverlay(sceneId);
+                return;
+            }
+            if (sceneId === 'scoreboard') {
+                var scoreboardOverlay = document.getElementById('scoreboard-overlay');
+                var scoreboardBtn = document.getElementById('scene-btn-scoreboard');
+                if (!scoreboardOverlay || !scoreboardBtn) return;
+                var isScoreboardActive = scoreboardOverlay.style.display === 'block';
+                if (isScoreboardActive) {
+                    scoreboardOverlay.style.display = 'none';
+                    scoreboardOverlay.style.zIndex = '';
+                    scoreboardBtn.classList.remove('active');
+                    applyLayoutFromSc2Button();
+                } else {
+                    VIDEO_OVERLAY_KEYS.forEach(function(k) { var b = document.getElementById('scene-btn-' + k); if (b) b.classList.remove('active'); });
+                    var bgOverlay = document.getElementById('scene-overlay-all-vdo');
+                    var videoIframe = document.getElementById('scene-overlay-all-vdo-iframe');
+                    var bgBtn = document.getElementById('scene-btn-all-vdo');
+                    var sharedOverlay = document.getElementById('scene-overlay-shared-window');
+                    var sharedBtn = document.getElementById('scene-btn-shared-window');
+                    var fullSharedOverlay = document.getElementById('scene-overlay-full-shared-panel');
+                    var fullSharedBtn = document.getElementById('scene-btn-full-shared');
+                    var ytOverlay = document.getElementById('scene-overlay-yt');
+                    var ytBtn = document.getElementById('scene-btn-yt');
+                    var logosOverlay = document.getElementById('logos-overlay');
+                    var logosBtn = document.getElementById('scene-btn-logos');
+                    var sc2Overlay = document.getElementById('sc2-overlay');
+                    var sc2Panel = document.getElementById('sc2-panel-wrap');
+                    var vdoFullOverlay = document.getElementById('scene-overlay-vdo-full');
+                    var vdoFullBtn = document.getElementById('scene-btn-vdo-full');
+                    setSceneVideoError('');
+                    if (sharedOverlay) sharedOverlay.style.display = 'none';
+                    if (sharedBtn) sharedBtn.classList.remove('active');
+                    if (fullSharedOverlay) fullSharedOverlay.style.display = 'none';
+                    if (fullSharedBtn) fullSharedBtn.classList.remove('active');
+                    if (ytOverlay) ytOverlay.style.display = 'none';
+                    if (ytBtn) ytBtn.classList.remove('active');
+                    if (bgOverlay) { bgOverlay.style.display = 'block'; bgOverlay.style.zIndex = typeof getVideoOverlayDefaultZIndex === 'function' ? getVideoOverlayDefaultZIndex() : '1'; }
+                    if (videoIframe) videoIframe.src = '2026/video_player.php?v=' + encodeURIComponent(VIDEO_OVERLAY_FILES['all-vdo']) + '&_t=' + Date.now();
+                    if (bgBtn) bgBtn.classList.add('active');
+                    if (logosOverlay) { logosOverlay.style.display = 'block'; if (logosBtn) logosBtn.classList.add('active'); }
+                    if (typeof updateLogosOverlay === 'function') updateLogosOverlay();
+                    if (vdoFullOverlay) vdoFullOverlay.style.display = 'none';
+                    if (vdoFullBtn) vdoFullBtn.classList.remove('active');
+                    if (sc2Overlay) { sc2Overlay.style.display = 'block'; sc2Overlay.style.zIndex = '60000'; }
+                    if (sc2Panel) {
+                        sc2Panel.style.display = 'block';
+                        var pos = getSavedSc2Panel() || getDefaultSc2PanelPosition(sc2Overlay ? sc2Overlay.getBoundingClientRect() : { width: 1280, height: 720 });
+                        applyPositionToSc2Panel(sc2Panel, pos);
+                        var sc2Iframe = sc2Panel.querySelector('iframe');
+                        ensureVdoIframeLoaded(sc2Iframe);
+                    }
+                    scoreboardOverlay.style.display = 'block';
+                    scoreboardOverlay.style.zIndex = '99998';
+                    scoreboardBtn.classList.add('active');
+                    if (typeof loadAndRenderScoreboard === 'function') loadAndRenderScoreboard();
+                }
                 return;
             }
             if (sceneId === 'vdo-full') {
