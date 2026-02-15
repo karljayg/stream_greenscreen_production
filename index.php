@@ -100,6 +100,7 @@ header('Pragma: no-cache');
                     <h2>Player Intros</h2>
                     <label><input type="checkbox" id="chroma-key-cb" checked> Chroma key (green transparent)</label>
                 </div>
+                <button type="button" id="btn-reload-vdo" class="collapsible-btn" onclick="reloadVdo()">Reload VDO</button>
                 <button class="collapsible-btn" id="btn-player-ratings" onclick="togglePlayerRatings(this)">Show Spider Ratings</button>
                 <div class="collapsible-content" id="player-ratings-section" style="display: none;">
                     <h2>Spider Ratings</h2>
@@ -416,12 +417,12 @@ header('Pragma: no-cache');
                 "logos-overlay",           /* Logos */
                 "sc2-overlay",            /* SC2 panel */
                 "container",
-                "gif-container",
-                "chart-container",
-                "video-container",
                 "right-column-result",
                 "external-chart-overlay",
                 "matchup-suggestions",
+                "chart-container",
+                "gif-container",           /* Player intros – top by default so they show over YT/Schedule */
+                "video-container",
                 "player-name-box"
             ];
             var LABELS = {
@@ -446,7 +447,14 @@ header('Pragma: no-cache');
                     if (raw) {
                         var parsed = JSON.parse(raw);
                         var order = Array.isArray(parsed) ? parsed : (parsed.order || DEFAULT_ORDER);
-                        return order.filter(function(id) { return DEFAULT_ORDER.indexOf(id) !== -1; });
+                        var filtered = order.filter(function(id) { return DEFAULT_ORDER.indexOf(id) !== -1; });
+                        /* Merge in any DEFAULT_ORDER ids missing from stored (e.g. new layers) */
+                        DEFAULT_ORDER.forEach(function(id) {
+                            if (filtered.indexOf(id) === -1) {
+                                filtered.splice(DEFAULT_ORDER.indexOf(id), 0, id);
+                            }
+                        });
+                        return filtered;
                     }
                 } catch (e) {}
                 return DEFAULT_ORDER.slice();
@@ -471,6 +479,8 @@ header('Pragma: no-cache');
                 return document.querySelector("[data-layer-id=\"" + id + "\"]");
             }
 
+            /* z-index scale: 10000 per slot so top layers (10+) exceed scene overlays (99999) */
+            var Z_INDEX_BASE = 10000;
             function applyOrder(order) {
                 order.forEach(function(id, index) {
                     var el = getElementByLayerId(id);
@@ -478,7 +488,7 @@ header('Pragma: no-cache');
                     if (id === "right-column-result" && el.style) {
                         el.style.position = "relative";
                     }
-                    el.style.zIndex = String(index + 1);
+                    el.style.zIndex = String((index + 1) * Z_INDEX_BASE);
                 });
             }
 
@@ -619,8 +629,13 @@ header('Pragma: no-cache');
                 if (parsed.volume !== undefined) { var vs = document.getElementById("volume-slider"); if (vs) vs.value = Math.max(0, Math.min(100, parseInt(parsed.volume, 10) || 50)); }
                 var order = parsed.layerOrder || parsed.order;
                 if (order && Array.isArray(order)) {
-                    order = order.filter(function(id) { return DEFAULT_ORDER.indexOf(id) !== -1; });
-                    if (order.length) { saveOrder(order); applyOrder(order); buildLayerList(); }
+                    var filtered = order.filter(function(id) { return DEFAULT_ORDER.indexOf(id) !== -1; });
+                    DEFAULT_ORDER.forEach(function(id) {
+                        if (filtered.indexOf(id) === -1) {
+                            filtered.splice(DEFAULT_ORDER.indexOf(id), 0, id);
+                        }
+                    });
+                    if (filtered.length) { saveOrder(filtered); applyOrder(filtered); buildLayerList(); }
                 }
                 var st = parsed.status || def.status;
                 if (st) { set("status-title", st.title); set("status-teamA", st.teamA); set("status-teamB", st.teamB); set("status-valueA", st.valueA); set("status-valueB", st.valueB); }
@@ -1390,10 +1405,10 @@ header('Pragma: no-cache');
                     if (raw) {
                         var order = JSON.parse(raw);
                         var idx = order.indexOf('scene-overlay-all-vdo');
-                        if (idx >= 0) return String(idx + 1);
+                        if (idx >= 0) return String((idx + 1) * 10000);
                     }
                 } catch (e) {}
-                return '1';
+                return '10000';
             }
 
             function setSceneVideoError(msg) {
@@ -1418,6 +1433,20 @@ header('Pragma: no-cache');
                 var sc2Panel = document.getElementById('sc2-panel-wrap');
                 if (vdoPanel) ensureVdoIframeLoaded(vdoPanel.querySelector('iframe'));
                 if (sc2Panel) ensureVdoIframeLoaded(sc2Panel.querySelector('iframe'));
+            }
+
+            /** Force reload of VDO Ninja iframes (SC2 and VDO full). Use when camera feed is stuck. */
+            function reloadVdo() {
+                var vdoPanel = document.getElementById('vdo-full-panel-wrap');
+                var sc2Panel = document.getElementById('sc2-panel-wrap');
+                [vdoPanel, sc2Panel].forEach(function(panel) {
+                    var iframe = panel ? panel.querySelector('iframe') : null;
+                    if (!iframe) return;
+                    var dataSrc = iframe.getAttribute('data-src');
+                    if (!dataSrc) return;
+                    iframe.src = '';
+                    iframe.src = dataSrc;
+                });
             }
 
             /**
@@ -1768,6 +1797,7 @@ header('Pragma: no-cache');
                                     var videoIframe = document.getElementById('scene-overlay-all-vdo-iframe');
                                     if (videoIframe) videoIframe.src = '2026/video_player.php?v=' + encodeURIComponent(VIDEO_OVERLAY_FILES['all-vdo']) + '&_t=' + Date.now();
                                     if (bgBtn) bgBtn.classList.add('active');
+                                    fullSharedOverlay.style.zIndex = '25000'; /* above BG, below logos when in layer order */
                                     fullSharedOverlay.style.display = 'block';
                                     fullSharedBtn.classList.add('active');
                                     var logosOverlay = document.getElementById('logos-overlay');
@@ -1836,6 +1866,7 @@ header('Pragma: no-cache');
                     if (bgBtn) bgBtn.classList.add('active');
                     fullSharedVideo.srcObject = sharedVideo.srcObject;
                     fullSharedVideo.play();
+                    fullSharedOverlay.style.zIndex = '25000'; /* above BG, below logos when in layer order */
                     fullSharedOverlay.style.display = 'block';
                     fullSharedBtn.classList.add('active');
                     if (logosOverlay) { logosOverlay.style.display = 'block'; if (logosBtn) logosBtn.classList.add('active'); }

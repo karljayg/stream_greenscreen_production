@@ -170,6 +170,7 @@ body.layer-outline-debug [data-layer-id].layer-outline-active {
     height: 100%;
     border: 0 solid black;
     text-align: center;
+    z-index: 100000; /* above scene overlays (99999) so player intros (gif, video, name) are visible */
 }
 
 #video-container {
