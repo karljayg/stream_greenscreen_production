@@ -1806,7 +1806,7 @@ header('Pragma: no-cache');
                                     var sc2Panel = document.getElementById('sc2-panel-wrap');
                                     if (logosOverlay) { logosOverlay.style.display = 'block'; if (logosBtn) logosBtn.classList.add('active'); }
                                     updateLogosOverlay();
-                                    if (sc2Overlay) { sc2Overlay.style.display = 'block'; sc2Overlay.style.zIndex = '9998'; }
+                                    if (sc2Overlay) { sc2Overlay.style.display = 'block'; sc2Overlay.style.zIndex = '60000'; }
                                     if (sc2Panel) {
                                         sc2Panel.style.display = 'block';
                                         var pos = getSavedSc2Panel() || getDefaultSc2PanelPosition(sc2Overlay.getBoundingClientRect());
@@ -1873,7 +1873,7 @@ header('Pragma: no-cache');
                     updateLogosOverlay();
                     if (vdoFullOverlay) vdoFullOverlay.style.display = 'none';
                     if (vdoFullBtn) vdoFullBtn.classList.remove('active');
-                    if (sc2Overlay) { sc2Overlay.style.display = 'block'; sc2Overlay.style.zIndex = '9998'; }
+                    if (sc2Overlay) { sc2Overlay.style.display = 'block'; sc2Overlay.style.zIndex = '60000'; }
                     if (sc2Panel) {
                         sc2Panel.style.display = 'block';
                         var pos = getSavedSc2Panel() || getDefaultSc2PanelPosition(sc2Overlay.getBoundingClientRect());
