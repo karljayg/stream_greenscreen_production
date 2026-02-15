@@ -179,6 +179,7 @@ header('Pragma: no-cache');
                 <button type="button" id="scene-btn-ptb" onclick="toggleSceneOverlay('ptb')">PTB</button>
                 <button type="button" id="scene-btn-st" onclick="toggleSceneOverlay('st')">ST</button>
                 <button type="button" id="scene-btn-shared-window" onclick="toggleSceneOverlay('shared-window')">Shared Window</button>
+                <button type="button" id="scene-btn-full-shared" onclick="toggleSceneOverlay('full-shared')" style="display: none;">Full Shared</button>
             </div>
             <div id="scene-video-error" class="scene-video-error" style="display: none; font-size: 0.8rem; color: #c00; margin-top: 4px;"></div>
 
@@ -311,6 +312,10 @@ header('Pragma: no-cache');
             <div id="scene-overlay-shared-window" data-layer-id="scene-overlay-shared-window" style="display: none; position: absolute; top: 0; left: 0; width: 100%; height: 100%; z-index: 99999; background: #000;">
                 <video id="shared-window-video" autoplay playsinline muted style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; object-fit: contain;"></video>
             </div>
+            <!-- Full Shared: same stream as Shared Window but inset (50px L/R, 100px top) with BG, logos, mini VDO on top -->
+            <div id="scene-overlay-full-shared-panel" data-layer-id="scene-overlay-full-shared-panel" style="display: none; position: absolute; left: 50px; right: 50px; top: 100px; bottom: 0; z-index: 2; overflow: hidden; background: #000;">
+                <video id="full-shared-panel-video" autoplay playsinline muted style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; object-fit: contain;"></video>
+            </div>
             <!-- Fullscreen transition video overlay (fade in/out); used by playTransitionVideo() -->
             <div id="transition-video-overlay" class="transition-video-overlay" style="display: none;">
                 <video id="transition-video-player" class="transition-video-player" muted playsinline></video>
@@ -323,13 +328,17 @@ header('Pragma: no-cache');
         Your browser does not support the audio element.
     </audio>
 
-    <!-- Modal for Shared Window: choose window/tab to share -->
+    <!-- Modal for Shared Window: choose window/tab to share and display mode -->
     <div id="shared-window-dialog" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); z-index: 100000; flex-direction: column; justify-content: center; align-items: center;">
-        <div style="background: #fff; padding: 1.5rem; border-radius: 8px; max-width: 360px; box-shadow: 0 4px 20px rgba(0,0,0,0.3);">
-            <p style="margin: 0 0 1rem;">Select the window or browser tab you want to share.</p>
+        <div style="background: #fff; padding: 1.5rem; border-radius: 8px; max-width: 380px; box-shadow: 0 4px 20px rgba(0,0,0,0.3);">
+            <p style="margin: 0 0 0.75rem;">Select the window or browser tab you want to share.</p>
+            <p style="margin: 0 0 1rem; font-size: 0.9rem; color: #555;">Then choose how to display it:</p>
+            <div style="display: flex; flex-direction: column; gap: 0.5rem; margin-bottom: 1rem;">
+                <button type="button" class="shared-dialog-mode-btn" data-mode="full">Full screen – shared content fills the frame</button>
+                <button type="button" class="shared-dialog-mode-btn" data-mode="partial">With overlays – shared panel + BG + logos + mini VDO</button>
+            </div>
             <div style="display: flex; gap: 0.5rem; justify-content: flex-end;">
                 <button type="button" id="shared-window-dialog-cancel">Cancel</button>
-                <button type="button" id="shared-window-dialog-select">Select window</button>
             </div>
         </div>
     </div>
@@ -377,7 +386,8 @@ header('Pragma: no-cache');
             var LAYER_STORAGE_KEY = "stream_production_layer_order";
             var DEFAULT_ORDER = [
                 "scene-overlay-all-vdo",   /* 1 = BG (very back) */
-                "scene-overlay-vdo-full",  /* 2 = VDO full */
+                "scene-overlay-full-shared-panel", /* 2 = Full Shared (partial) inset panel */
+                "scene-overlay-vdo-full",  /* 3 = VDO full */
                 "logos-overlay",           /* Logos */
                 "sc2-overlay",            /* SC2 panel */
                 "container",
@@ -391,6 +401,7 @@ header('Pragma: no-cache');
             ];
             var LABELS = {
                 "scene-overlay-all-vdo": "BG",
+                "scene-overlay-full-shared-panel": "Full Shared panel",
                 "scene-overlay-vdo-full": "VDO full",
                 "logos-overlay": "Logos",
                 "sc2-overlay": "SC2",
@@ -1327,8 +1338,12 @@ header('Pragma: no-cache');
                     if (videoIframe) videoIframe.removeAttribute('src');
                     var sharedOverlay = document.getElementById('scene-overlay-shared-window');
                     var sharedBtn = document.getElementById('scene-btn-shared-window');
+                    var fullSharedOverlay = document.getElementById('scene-overlay-full-shared-panel');
+                    var fullSharedBtn = document.getElementById('scene-btn-full-shared');
                     if (sharedOverlay) sharedOverlay.style.display = 'none';
                     if (sharedBtn) sharedBtn.classList.remove('active');
+                    if (fullSharedOverlay) fullSharedOverlay.style.display = 'none';
+                    if (fullSharedBtn) fullSharedBtn.classList.remove('active');
                     if (sc2Overlay) sc2Overlay.style.display = 'block';
                     if (sc2Panel) {
                         sc2Panel.style.display = 'block';
@@ -1365,8 +1380,12 @@ header('Pragma: no-cache');
                 });
                 var sharedOverlay = document.getElementById('scene-overlay-shared-window');
                 var sharedBtn = document.getElementById('scene-btn-shared-window');
+                var fullSharedOverlay = document.getElementById('scene-overlay-full-shared-panel');
+                var fullSharedBtn = document.getElementById('scene-btn-full-shared');
                 if (sharedOverlay) sharedOverlay.style.display = 'none';
                 if (sharedBtn) sharedBtn.classList.remove('active');
+                if (fullSharedOverlay) fullSharedOverlay.style.display = 'none';
+                if (fullSharedBtn) fullSharedBtn.classList.remove('active');
                 iframe.src = '2026/video_player.php?v=' + encodeURIComponent(VIDEO_OVERLAY_FILES['all-vdo']) + '&_t=' + Date.now();
                 overlay.style.zIndex = getVideoOverlayDefaultZIndex();
                 overlay.style.display = 'block';
@@ -1408,8 +1427,12 @@ header('Pragma: no-cache');
                     });
                     var sharedOverlay = document.getElementById('scene-overlay-shared-window');
                     var sharedBtn = document.getElementById('scene-btn-shared-window');
+                    var fullSharedOverlay = document.getElementById('scene-overlay-full-shared-panel');
+                    var fullSharedBtn = document.getElementById('scene-btn-full-shared');
                     if (sharedOverlay) sharedOverlay.style.display = 'none';
                     if (sharedBtn) sharedBtn.classList.remove('active');
+                    if (fullSharedOverlay) fullSharedOverlay.style.display = 'none';
+                    if (fullSharedBtn) fullSharedBtn.classList.remove('active');
                     var url = (file.indexOf('.html') !== -1) ? ('2026/' + file) : ('2026/video_player.php?v=' + encodeURIComponent(file) + '&_t=' + Date.now());
                     if (useFront && file.indexOf('.html') === -1) url += '&front=true';
                     iframe.src = url;
@@ -1490,8 +1513,12 @@ header('Pragma: no-cache');
                             if (vdoFullBtn) vdoFullBtn.classList.remove('active');
                             var sharedOverlay = document.getElementById('scene-overlay-shared-window');
                             var sharedBtn = document.getElementById('scene-btn-shared-window');
+                            var fullSharedOverlay = document.getElementById('scene-overlay-full-shared-panel');
+                            var fullSharedBtn = document.getElementById('scene-btn-full-shared');
                             if (sharedOverlay) sharedOverlay.style.display = 'none';
                             if (sharedBtn) sharedBtn.classList.remove('active');
+                            if (fullSharedOverlay) fullSharedOverlay.style.display = 'none';
+                            if (fullSharedBtn) fullSharedBtn.classList.remove('active');
                             sc2Overlay.style.display = 'block';
                             btn.classList.add('active');
                             if (sc2Panel) {
@@ -1520,8 +1547,12 @@ header('Pragma: no-cache');
                     });
                     var sharedOverlay = document.getElementById('scene-overlay-shared-window');
                     var sharedBtn = document.getElementById('scene-btn-shared-window');
+                    var fullSharedOverlay = document.getElementById('scene-overlay-full-shared-panel');
+                    var fullSharedBtn = document.getElementById('scene-btn-full-shared');
                     if (sharedOverlay) sharedOverlay.style.display = 'none';
                     if (sharedBtn) sharedBtn.classList.remove('active');
+                    if (fullSharedOverlay) fullSharedOverlay.style.display = 'none';
+                    if (fullSharedBtn) fullSharedBtn.classList.remove('active');
                     if (bgBtn) bgBtn.classList.add('active');
                     if (vdoFullOverlay) vdoFullOverlay.style.display = 'block';
                     if (vdoFullBtn) vdoFullBtn.classList.add('active');
@@ -1547,22 +1578,26 @@ header('Pragma: no-cache');
                 if (hasStream && isSharedActive) {
                     sharedOverlay.style.display = 'none';
                     sharedBtn.classList.remove('active');
-                    bgOverlay.style.display = 'block';
-                    bgOverlay.style.zIndex = typeof getVideoOverlayDefaultZIndex === 'function' ? getVideoOverlayDefaultZIndex() : '1';
-                    VIDEO_OVERLAY_KEYS.forEach(function(k) { var b = document.getElementById('scene-btn-' + k); if (b) b.classList.remove('active'); });
-                    if (bgBtn) bgBtn.classList.add('active');
+                    applyLayoutFromSc2Button();
                 } else if (hasStream) {
                     VIDEO_OVERLAY_KEYS.forEach(function(k) { var b = document.getElementById('scene-btn-' + k); if (b) b.classList.remove('active'); });
                     if (bgOverlay) bgOverlay.style.display = 'none';
+                    var fullSharedOverlay = document.getElementById('scene-overlay-full-shared-panel');
+                    var fullSharedBtn = document.getElementById('scene-btn-full-shared');
+                    var sc2Overlay = document.getElementById('sc2-overlay');
+                    var sc2Panel = document.getElementById('sc2-panel-wrap');
+                    if (fullSharedOverlay) fullSharedOverlay.style.display = 'none';
+                    if (fullSharedBtn) fullSharedBtn.classList.remove('active');
+                    if (sc2Overlay) { sc2Overlay.style.display = 'none'; sc2Overlay.style.zIndex = ''; }
+                    if (sc2Panel) sc2Panel.style.display = 'none';
                     sharedOverlay.style.display = 'block';
                     sharedBtn.classList.add('active');
                 } else {
                     var dialog = document.getElementById('shared-window-dialog');
                     if (dialog) {
                         dialog.style.display = 'flex';
-                        var selectBtn = document.getElementById('shared-window-dialog-select');
                         var cancelBtn = document.getElementById('shared-window-dialog-cancel');
-                        var doSelect = function() {
+                        var doSelect = function(showPartial) {
                             dialog.style.display = 'none';
                             if (!navigator.mediaDevices || !navigator.mediaDevices.getDisplayMedia) {
                                 setSceneVideoError('getDisplayMedia not supported');
@@ -1571,27 +1606,110 @@ header('Pragma: no-cache');
                             navigator.mediaDevices.getDisplayMedia({ video: true, audio: false }).then(function(stream) {
                                 sharedVideo.srcObject = stream;
                                 sharedVideo.play();
+                                var fullSharedVideo = document.getElementById('full-shared-panel-video');
+                                var fullSharedOverlay = document.getElementById('scene-overlay-full-shared-panel');
+                                var fullSharedBtn = document.getElementById('scene-btn-full-shared');
+                                if (fullSharedVideo) { fullSharedVideo.srcObject = stream; fullSharedVideo.play(); }
+                                if (fullSharedBtn) fullSharedBtn.style.display = '';
                                 stream.getVideoTracks()[0].addEventListener('ended', function onEnded() {
                                     stream.getVideoTracks()[0].removeEventListener('ended', onEnded);
                                     sharedVideo.srcObject = null;
+                                    if (fullSharedVideo) fullSharedVideo.srcObject = null;
                                     sharedOverlay.style.display = 'none';
                                     sharedBtn.classList.remove('active');
-                                    bgOverlay.style.display = 'block';
-                                    bgOverlay.style.zIndex = typeof getVideoOverlayDefaultZIndex === 'function' ? getVideoOverlayDefaultZIndex() : '1';
-                                    VIDEO_OVERLAY_KEYS.forEach(function(k) { var b = document.getElementById('scene-btn-' + k); if (b) b.classList.remove('active'); });
-                                    if (bgBtn) bgBtn.classList.add('active');
+                                    if (fullSharedOverlay) fullSharedOverlay.style.display = 'none';
+                                    if (fullSharedBtn) { fullSharedBtn.style.display = 'none'; fullSharedBtn.classList.remove('active'); }
+                                    var sc2OverlayEl = document.getElementById('sc2-overlay');
+                                    if (sc2OverlayEl) sc2OverlayEl.style.zIndex = '';
+                                    applyLayoutFromSc2Button();
                                 });
                                 VIDEO_OVERLAY_KEYS.forEach(function(k) { var b = document.getElementById('scene-btn-' + k); if (b) b.classList.remove('active'); });
-                                if (bgOverlay) bgOverlay.style.display = 'none';
-                                sharedOverlay.style.display = 'block';
-                                sharedBtn.classList.add('active');
+                                if (showPartial) {
+                                    if (bgOverlay) { bgOverlay.style.display = 'block'; bgOverlay.style.zIndex = typeof getVideoOverlayDefaultZIndex === 'function' ? getVideoOverlayDefaultZIndex() : '1'; }
+                                    var videoIframe = document.getElementById('scene-overlay-all-vdo-iframe');
+                                    if (videoIframe) videoIframe.src = '2026/video_player.php?v=' + encodeURIComponent(VIDEO_OVERLAY_FILES['all-vdo']) + '&_t=' + Date.now();
+                                    if (bgBtn) bgBtn.classList.add('active');
+                                    fullSharedOverlay.style.display = 'block';
+                                    fullSharedBtn.classList.add('active');
+                                    var logosOverlay = document.getElementById('logos-overlay');
+                                    var logosBtn = document.getElementById('scene-btn-logos');
+                                    var sc2Overlay = document.getElementById('sc2-overlay');
+                                    var sc2Panel = document.getElementById('sc2-panel-wrap');
+                                    if (logosOverlay) { logosOverlay.style.display = 'block'; if (logosBtn) logosBtn.classList.add('active'); }
+                                    updateLogosOverlay();
+                                    if (sc2Overlay) { sc2Overlay.style.display = 'block'; sc2Overlay.style.zIndex = '9998'; }
+                                    if (sc2Panel) {
+                                        sc2Panel.style.display = 'block';
+                                        var pos = getSavedSc2Panel() || getDefaultSc2PanelPosition(sc2Overlay.getBoundingClientRect());
+                                        applyPositionToSc2Panel(sc2Panel, pos);
+                                        var sc2Iframe = sc2Panel.querySelector('iframe');
+                                        ensureVdoIframeLoaded(sc2Iframe);
+                                    }
+                                } else {
+                                    if (bgOverlay) bgOverlay.style.display = 'none';
+                                    sharedOverlay.style.display = 'block';
+                                    sharedBtn.classList.add('active');
+                                }
                             }).catch(function(err) {
                                 if (err.name !== 'NotAllowedError') setSceneVideoError(err.message || 'Share failed');
                             });
                         };
-                        var cancelHandler = function() { dialog.style.display = 'none'; };
-                        selectBtn.onclick = doSelect;
-                        cancelBtn.onclick = cancelHandler;
+                        dialog.querySelectorAll('.shared-dialog-mode-btn').forEach(function(btn) {
+                            btn.onclick = function() { doSelect(btn.getAttribute('data-mode') === 'partial'); };
+                        });
+                        cancelBtn.onclick = function() { dialog.style.display = 'none'; };
+                    }
+                }
+            } else if (sceneId === 'full-shared') {
+                var sharedVideo = document.getElementById('shared-window-video');
+                var fullSharedOverlay = document.getElementById('scene-overlay-full-shared-panel');
+                var fullSharedVideo = document.getElementById('full-shared-panel-video');
+                var fullSharedBtn = document.getElementById('scene-btn-full-shared');
+                var bgOverlay = document.getElementById('scene-overlay-all-vdo');
+                var videoIframe = document.getElementById('scene-overlay-all-vdo-iframe');
+                var bgBtn = document.getElementById('scene-btn-all-vdo');
+                var vdoFullOverlay = document.getElementById('scene-overlay-vdo-full');
+                var vdoFullBtn = document.getElementById('scene-btn-vdo-full');
+                var logosOverlay = document.getElementById('logos-overlay');
+                var logosBtn = document.getElementById('scene-btn-logos');
+                var sc2Overlay = document.getElementById('sc2-overlay');
+                var sc2Panel = document.getElementById('sc2-panel-wrap');
+                var sharedOverlay = document.getElementById('scene-overlay-shared-window');
+                var sharedBtn = document.getElementById('scene-btn-shared-window');
+                var hasStream = sharedVideo && sharedVideo.srcObject && sharedVideo.srcObject.getTracks().some(function(t) { return t.readyState === 'live'; });
+                var isFullSharedActive = fullSharedOverlay && (fullSharedOverlay.style.display === 'block');
+
+                if (!hasStream) return;
+                if (isFullSharedActive) {
+                    fullSharedOverlay.style.display = 'none';
+                    fullSharedBtn.classList.remove('active');
+                    if (sc2Overlay) sc2Overlay.style.zIndex = '';
+                    applyLayoutFromSc2Button();
+                } else {
+                    VIDEO_OVERLAY_KEYS.forEach(function(k) { var b = document.getElementById('scene-btn-' + k); if (b) b.classList.remove('active'); });
+                    if (sharedOverlay) sharedOverlay.style.display = 'none';
+                    if (sharedBtn) sharedBtn.classList.remove('active');
+                    if (bgOverlay) {
+                        bgOverlay.style.display = 'block';
+                        bgOverlay.style.zIndex = typeof getVideoOverlayDefaultZIndex === 'function' ? getVideoOverlayDefaultZIndex() : '1';
+                    }
+                    if (videoIframe) videoIframe.src = '2026/video_player.php?v=' + encodeURIComponent(VIDEO_OVERLAY_FILES['all-vdo']) + '&_t=' + Date.now();
+                    if (bgBtn) bgBtn.classList.add('active');
+                    fullSharedVideo.srcObject = sharedVideo.srcObject;
+                    fullSharedVideo.play();
+                    fullSharedOverlay.style.display = 'block';
+                    fullSharedBtn.classList.add('active');
+                    if (logosOverlay) { logosOverlay.style.display = 'block'; if (logosBtn) logosBtn.classList.add('active'); }
+                    updateLogosOverlay();
+                    if (vdoFullOverlay) vdoFullOverlay.style.display = 'none';
+                    if (vdoFullBtn) vdoFullBtn.classList.remove('active');
+                    if (sc2Overlay) { sc2Overlay.style.display = 'block'; sc2Overlay.style.zIndex = '9998'; }
+                    if (sc2Panel) {
+                        sc2Panel.style.display = 'block';
+                        var pos = getSavedSc2Panel() || getDefaultSc2PanelPosition(sc2Overlay.getBoundingClientRect());
+                        applyPositionToSc2Panel(sc2Panel, pos);
+                        var sc2Iframe = sc2Panel.querySelector('iframe');
+                        ensureVdoIframeLoaded(sc2Iframe);
                     }
                 }
             }
