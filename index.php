@@ -130,6 +130,17 @@ header('Pragma: no-cache');
                         </div>
                     </div>
                 </div>
+                <button class="collapsible-btn" id="btn-yt-video" onclick="toggleYtVideo(this)">Show YT Video</button>
+                <div class="collapsible-content" id="yt-video-section" style="display: none;">
+                    <h2 class="layer-order-heading">YT Video crop (pixels)</h2>
+                    <p class="layer-order-hint">Crop applied when YT scene is on. Top, left, right, bottom cut from shared window.</p>
+                    <div style="display: flex; flex-wrap: wrap; gap: 0.5rem 1rem; align-items: center; margin-top: 6px;">
+                        <label>Top: <input type="number" id="yt-crop-top" min="0" step="1" value="150" style="width: 5ch;"></label>
+                        <label>Left: <input type="number" id="yt-crop-left" min="0" step="1" value="10" style="width: 5ch;"></label>
+                        <label>Right: <input type="number" id="yt-crop-right" min="0" step="1" value="20" style="width: 5ch;"></label>
+                        <label>Bottom: <input type="number" id="yt-crop-bottom" min="0" step="1" value="100" style="width: 5ch;"></label>
+                    </div>
+                </div>
                 <button class="collapsible-btn" id="btn-logos-settings" onclick="toggleLogosSettings(this)">Show Positioning settings</button>
                 <div class="collapsible-content" id="logos-settings-section" style="display: none;">
                     <h2>Positional settings</h2>
@@ -178,8 +189,11 @@ header('Pragma: no-cache');
                 <button type="button" id="scene-btn-pog" onclick="toggleSceneOverlay('pog')">POG</button>
                 <button type="button" id="scene-btn-ptb" onclick="toggleSceneOverlay('ptb')">PTB</button>
                 <button type="button" id="scene-btn-st" onclick="toggleSceneOverlay('st')">ST</button>
-                <button type="button" id="scene-btn-shared-window" onclick="toggleSceneOverlay('shared-window')">Shared Window</button>
-                <button type="button" id="scene-btn-full-shared" onclick="toggleSceneOverlay('full-shared')" style="display: none;">Full Shared</button>
+                <span class="scenes-shared-group" style="display: inline-flex; align-items: center; gap: 0.25rem;">
+                    <button type="button" id="scene-btn-shared-window" onclick="toggleSceneOverlay('shared-window')">Shared Window</button>
+                    <button type="button" id="scene-btn-full-shared" onclick="toggleSceneOverlay('full-shared')" style="display: none;">Shared (Partial)</button>
+                    <button type="button" id="scene-btn-yt" onclick="toggleSceneOverlay('yt')" style="display: none;">YT</button>
+                </span>
             </div>
             <div id="scene-video-error" class="scene-video-error" style="display: none; font-size: 0.8rem; color: #c00; margin-top: 4px;"></div>
 
@@ -312,9 +326,15 @@ header('Pragma: no-cache');
             <div id="scene-overlay-shared-window" data-layer-id="scene-overlay-shared-window" style="display: none; position: absolute; top: 0; left: 0; width: 100%; height: 100%; z-index: 99999; background: #000;">
                 <video id="shared-window-video" autoplay playsinline muted style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; object-fit: contain;"></video>
             </div>
-            <!-- Full Shared: same stream as Shared Window but inset (50px L/R, 100px top) with BG, logos, mini VDO on top -->
+            <!-- Shared (Partial): same stream as Shared Window but inset (50px L/R, 100px top) with BG, logos, mini VDO on top -->
             <div id="scene-overlay-full-shared-panel" data-layer-id="scene-overlay-full-shared-panel" style="display: none; position: absolute; left: 50px; right: 50px; top: 100px; bottom: 0; z-index: 2; overflow: hidden; background: #000;">
                 <video id="full-shared-panel-video" autoplay playsinline muted style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; object-fit: contain;"></video>
+            </div>
+            <!-- YT: same stream as Shared Window, full frame but cropped by top/left/right/bottom from YT Video settings -->
+            <div id="scene-overlay-yt" data-layer-id="scene-overlay-yt" style="display: none; position: absolute; top: 0; left: 0; width: 100%; height: 100%; z-index: 99999; background: #000;">
+                <div id="yt-crop-wrap" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; overflow: hidden;">
+                    <video id="yt-video" autoplay playsinline muted style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; object-fit: contain; object-position: center center;"></video>
+                </div>
             </div>
             <!-- Fullscreen transition video overlay (fade in/out); used by playTransitionVideo() -->
             <div id="transition-video-overlay" class="transition-video-overlay" style="display: none;">
@@ -381,12 +401,17 @@ header('Pragma: no-cache');
             if (el.style.display === "none" || !el.style.display) { el.style.display = "block"; } else { el.style.display = "none"; }
             if (btn) btn.textContent = (el.style.display === "block") ? "Hide Overlays" : "Show Overlays";
         }
+        function toggleYtVideo(btn) {
+            var el = document.getElementById("yt-video-section");
+            if (el.style.display === "none" || !el.style.display) { el.style.display = "block"; } else { el.style.display = "none"; }
+            if (btn) btn.textContent = (el.style.display === "block") ? "Hide YT Video" : "Show YT Video";
+        }
 
         (function() {
             var LAYER_STORAGE_KEY = "stream_production_layer_order";
             var DEFAULT_ORDER = [
                 "scene-overlay-all-vdo",   /* 1 = BG (very back) */
-                "scene-overlay-full-shared-panel", /* 2 = Full Shared (partial) inset panel */
+                "scene-overlay-full-shared-panel", /* 2 = Shared (Partial) inset panel */
                 "scene-overlay-vdo-full",  /* 3 = VDO full */
                 "logos-overlay",           /* Logos */
                 "sc2-overlay",            /* SC2 panel */
@@ -401,7 +426,7 @@ header('Pragma: no-cache');
             ];
             var LABELS = {
                 "scene-overlay-all-vdo": "BG",
-                "scene-overlay-full-shared-panel": "Full Shared panel",
+                "scene-overlay-full-shared-panel": "Shared (Partial) panel",
                 "scene-overlay-vdo-full": "VDO full",
                 "logos-overlay": "Logos",
                 "sc2-overlay": "SC2",
@@ -538,7 +563,8 @@ header('Pragma: no-cache');
                 logos: { s10: false, fslSmall: false, sc2: false, positions: {}, sc2Panel: null, vdoFullPanel: { left: 50, top: 100, width: 1180, height: 570 } },
                 scenes: { bg: false, vdoFull: false, logos: false, sc2: false },
                 playerIntros: ["DarkMenace", "LittleReaper", "PulledTheBoys", "HyperTurtle", "Harouz", "InfiniteCyclists", "Random Music", "FSL intro", "GG", "Match GG"],
-                chromaKey: true
+                chromaKey: true,
+                ytCrop: { top: 150, left: 10, right: 20, bottom: 100 }
             };
 
             function exportAllSettings() {
@@ -579,7 +605,8 @@ header('Pragma: no-cache');
                     logos: { s10: !!document.getElementById("logo-s10-cb") && document.getElementById("logo-s10-cb").checked, fslSmall: !!document.getElementById("logo-fsl-small-cb") && document.getElementById("logo-fsl-small-cb").checked, sc2: !!document.getElementById("logo-sc2-cb") && document.getElementById("logo-sc2-cb").checked, positions: logoPositions, sc2Panel: sc2PanelPos, vdoFullPanel: vdoFullPanelPos },
                     scenes: { bg: sceneBg && sceneBg.style.display === "block", vdoFull: sceneVdo && sceneVdo.style.display === "block", logos: overlay && overlay.style.display === "block", sc2: sc2OverlayExport && sc2OverlayExport.style.display === "block" },
                     playerIntros: intros,
-                    chromaKey: !!document.getElementById("chroma-key-cb") && document.getElementById("chroma-key-cb").checked
+                    chromaKey: !!document.getElementById("chroma-key-cb") && document.getElementById("chroma-key-cb").checked,
+                    ytCrop: typeof getYtCrop === "function" ? getYtCrop() : { top: 150, left: 10, right: 20, bottom: 100 }
                 };
                 return out;
             }
@@ -661,6 +688,12 @@ header('Pragma: no-cache');
                             }
                         }
                     }
+                }
+                var yc = parsed.ytCrop;
+                if (yc && typeof yc === "object" && (yc.top != null || yc.left != null || yc.right != null || yc.bottom != null)) {
+                    if (typeof setYtCrop === "function") setYtCrop(yc);
+                    if (typeof saveYtCrop === "function") saveYtCrop();
+                    if (typeof applyYtCropToVideo === "function") applyYtCropToVideo();
                 }
                 var intros = parsed.playerIntros;
                 if (intros && Array.isArray(intros)) {
@@ -810,6 +843,80 @@ header('Pragma: no-cache');
                 localStorage.setItem(SC2_PANEL_KEY, JSON.stringify(obj));
             } catch (e) {}
         }
+        var YT_CROP_KEY = "stream_production_yt_crop";
+        var YT_CROP_DEFAULTS = { top: 150, left: 10, right: 20, bottom: 100 };
+        function getYtCrop() {
+            var topEl = document.getElementById("yt-crop-top");
+            var leftEl = document.getElementById("yt-crop-left");
+            var rightEl = document.getElementById("yt-crop-right");
+            var bottomEl = document.getElementById("yt-crop-bottom");
+            if (!topEl || !leftEl || !rightEl || !bottomEl) return YT_CROP_DEFAULTS;
+            var t = parseInt(topEl.value, 10); var l = parseInt(leftEl.value, 10);
+            var r = parseInt(rightEl.value, 10); var b = parseInt(bottomEl.value, 10);
+            return { top: isNaN(t) ? YT_CROP_DEFAULTS.top : Math.max(0, t), left: isNaN(l) ? YT_CROP_DEFAULTS.left : Math.max(0, l), right: isNaN(r) ? YT_CROP_DEFAULTS.right : Math.max(0, r), bottom: isNaN(b) ? YT_CROP_DEFAULTS.bottom : Math.max(0, b) };
+        }
+        function setYtCrop(obj) {
+            var topEl = document.getElementById("yt-crop-top");
+            var leftEl = document.getElementById("yt-crop-left");
+            var rightEl = document.getElementById("yt-crop-right");
+            var bottomEl = document.getElementById("yt-crop-bottom");
+            if (topEl) topEl.value = (obj && obj.top != null) ? obj.top : YT_CROP_DEFAULTS.top;
+            if (leftEl) leftEl.value = (obj && obj.left != null) ? obj.left : YT_CROP_DEFAULTS.left;
+            if (rightEl) rightEl.value = (obj && obj.right != null) ? obj.right : YT_CROP_DEFAULTS.right;
+            if (bottomEl) bottomEl.value = (obj && obj.bottom != null) ? obj.bottom : YT_CROP_DEFAULTS.bottom;
+        }
+        function saveYtCrop() {
+            try { localStorage.setItem(YT_CROP_KEY, JSON.stringify(getYtCrop())); } catch (e) {}
+        }
+        function loadYtCrop() {
+            try {
+                var raw = localStorage.getItem(YT_CROP_KEY);
+                if (raw) { var p = JSON.parse(raw); if (p && typeof p === "object") setYtCrop(p); }
+            } catch (e) {}
+        }
+        function applyYtCropToVideo() {
+            var crop = getYtCrop();
+            var overlay = document.getElementById("scene-overlay-yt");
+            var wrap = document.getElementById("yt-crop-wrap");
+            var video = document.getElementById("yt-video");
+            if (!overlay || !wrap || !video) return;
+            var parent = overlay.parentElement || overlay.offsetParent;
+            var rect = (parent && parent.getBoundingClientRect) ? parent.getBoundingClientRect() : { width: 1280, height: 720 };
+            var w = rect.width || 1280;
+            var h = rect.height || 720;
+            var cropW = Math.max(1, w - crop.left - crop.right);
+            var cropH = Math.max(1, h - crop.top - crop.bottom);
+            var scale = Math.min(w / cropW, h / cropH);
+            wrap.style.clipPath = "";
+            wrap.style.webkitClipPath = "";
+            wrap.style.left = "50%";
+            wrap.style.top = "50%";
+            wrap.style.width = cropW + "px";
+            wrap.style.height = cropH + "px";
+            wrap.style.transform = "translate(-50%, -50%) scale(" + scale + ")";
+            wrap.style.transformOrigin = "center center";
+            wrap.style.overflow = "hidden";
+            video.style.clipPath = "";
+            video.style.webkitClipPath = "";
+            video.style.position = "absolute";
+            video.style.left = (-crop.left) + "px";
+            video.style.top = (-crop.top) + "px";
+            video.style.width = (w) + "px";
+            video.style.height = (h) + "px";
+            video.style.objectFit = "contain";
+            video.style.objectPosition = "center center";
+        }
+        (function initYtCrop() {
+            loadYtCrop();
+            ["yt-crop-top", "yt-crop-left", "yt-crop-right", "yt-crop-bottom"].forEach(function(id) {
+                var el = document.getElementById(id);
+                if (el) el.addEventListener("change", function() { saveYtCrop(); applyYtCropToVideo(); });
+            });
+            window.addEventListener("resize", function() {
+                var ytOverlay = document.getElementById("scene-overlay-yt");
+                if (ytOverlay && ytOverlay.style.display === "block") applyYtCropToVideo();
+            });
+        })();
         function getDefaultSc2PanelPosition(overlayRect) {
             var ow = overlayRect.width || 1280;
             return { left: Math.round(ow - 420), top: 20, width: 400, height: 300 };
@@ -1340,10 +1447,14 @@ header('Pragma: no-cache');
                     var sharedBtn = document.getElementById('scene-btn-shared-window');
                     var fullSharedOverlay = document.getElementById('scene-overlay-full-shared-panel');
                     var fullSharedBtn = document.getElementById('scene-btn-full-shared');
+                    var ytOverlay = document.getElementById('scene-overlay-yt');
+                    var ytBtn = document.getElementById('scene-btn-yt');
                     if (sharedOverlay) sharedOverlay.style.display = 'none';
                     if (sharedBtn) sharedBtn.classList.remove('active');
                     if (fullSharedOverlay) fullSharedOverlay.style.display = 'none';
                     if (fullSharedBtn) fullSharedBtn.classList.remove('active');
+                    if (ytOverlay) ytOverlay.style.display = 'none';
+                    if (ytBtn) ytBtn.classList.remove('active');
                     if (sc2Overlay) sc2Overlay.style.display = 'block';
                     if (sc2Panel) {
                         sc2Panel.style.display = 'block';
@@ -1382,10 +1493,14 @@ header('Pragma: no-cache');
                 var sharedBtn = document.getElementById('scene-btn-shared-window');
                 var fullSharedOverlay = document.getElementById('scene-overlay-full-shared-panel');
                 var fullSharedBtn = document.getElementById('scene-btn-full-shared');
+                var ytOverlay = document.getElementById('scene-overlay-yt');
+                var ytBtn = document.getElementById('scene-btn-yt');
                 if (sharedOverlay) sharedOverlay.style.display = 'none';
                 if (sharedBtn) sharedBtn.classList.remove('active');
                 if (fullSharedOverlay) fullSharedOverlay.style.display = 'none';
                 if (fullSharedBtn) fullSharedBtn.classList.remove('active');
+                if (ytOverlay) ytOverlay.style.display = 'none';
+                if (ytBtn) ytBtn.classList.remove('active');
                 iframe.src = '2026/video_player.php?v=' + encodeURIComponent(VIDEO_OVERLAY_FILES['all-vdo']) + '&_t=' + Date.now();
                 overlay.style.zIndex = getVideoOverlayDefaultZIndex();
                 overlay.style.display = 'block';
@@ -1429,10 +1544,14 @@ header('Pragma: no-cache');
                     var sharedBtn = document.getElementById('scene-btn-shared-window');
                     var fullSharedOverlay = document.getElementById('scene-overlay-full-shared-panel');
                     var fullSharedBtn = document.getElementById('scene-btn-full-shared');
+                    var ytOverlay = document.getElementById('scene-overlay-yt');
+                    var ytBtn = document.getElementById('scene-btn-yt');
                     if (sharedOverlay) sharedOverlay.style.display = 'none';
                     if (sharedBtn) sharedBtn.classList.remove('active');
                     if (fullSharedOverlay) fullSharedOverlay.style.display = 'none';
                     if (fullSharedBtn) fullSharedBtn.classList.remove('active');
+                    if (ytOverlay) ytOverlay.style.display = 'none';
+                    if (ytBtn) ytBtn.classList.remove('active');
                     var url = (file.indexOf('.html') !== -1) ? ('2026/' + file) : ('2026/video_player.php?v=' + encodeURIComponent(file) + '&_t=' + Date.now());
                     if (useFront && file.indexOf('.html') === -1) url += '&front=true';
                     iframe.src = url;
@@ -1515,10 +1634,14 @@ header('Pragma: no-cache');
                             var sharedBtn = document.getElementById('scene-btn-shared-window');
                             var fullSharedOverlay = document.getElementById('scene-overlay-full-shared-panel');
                             var fullSharedBtn = document.getElementById('scene-btn-full-shared');
+                            var ytOverlay = document.getElementById('scene-overlay-yt');
+                            var ytBtn = document.getElementById('scene-btn-yt');
                             if (sharedOverlay) sharedOverlay.style.display = 'none';
                             if (sharedBtn) sharedBtn.classList.remove('active');
                             if (fullSharedOverlay) fullSharedOverlay.style.display = 'none';
                             if (fullSharedBtn) fullSharedBtn.classList.remove('active');
+                            if (ytOverlay) ytOverlay.style.display = 'none';
+                            if (ytBtn) ytBtn.classList.remove('active');
                             sc2Overlay.style.display = 'block';
                             btn.classList.add('active');
                             if (sc2Panel) {
@@ -1549,10 +1672,14 @@ header('Pragma: no-cache');
                     var sharedBtn = document.getElementById('scene-btn-shared-window');
                     var fullSharedOverlay = document.getElementById('scene-overlay-full-shared-panel');
                     var fullSharedBtn = document.getElementById('scene-btn-full-shared');
+                    var ytOverlay = document.getElementById('scene-overlay-yt');
+                    var ytBtn = document.getElementById('scene-btn-yt');
                     if (sharedOverlay) sharedOverlay.style.display = 'none';
                     if (sharedBtn) sharedBtn.classList.remove('active');
                     if (fullSharedOverlay) fullSharedOverlay.style.display = 'none';
                     if (fullSharedBtn) fullSharedBtn.classList.remove('active');
+                    if (ytOverlay) ytOverlay.style.display = 'none';
+                    if (ytBtn) ytBtn.classList.remove('active');
                     if (bgBtn) bgBtn.classList.add('active');
                     if (vdoFullOverlay) vdoFullOverlay.style.display = 'block';
                     if (vdoFullBtn) vdoFullBtn.classList.add('active');
@@ -1584,10 +1711,14 @@ header('Pragma: no-cache');
                     if (bgOverlay) bgOverlay.style.display = 'none';
                     var fullSharedOverlay = document.getElementById('scene-overlay-full-shared-panel');
                     var fullSharedBtn = document.getElementById('scene-btn-full-shared');
+                    var ytOverlay = document.getElementById('scene-overlay-yt');
+                    var ytBtn = document.getElementById('scene-btn-yt');
                     var sc2Overlay = document.getElementById('sc2-overlay');
                     var sc2Panel = document.getElementById('sc2-panel-wrap');
                     if (fullSharedOverlay) fullSharedOverlay.style.display = 'none';
                     if (fullSharedBtn) fullSharedBtn.classList.remove('active');
+                    if (ytOverlay) ytOverlay.style.display = 'none';
+                    if (ytBtn) ytBtn.classList.remove('active');
                     if (sc2Overlay) { sc2Overlay.style.display = 'none'; sc2Overlay.style.zIndex = ''; }
                     if (sc2Panel) sc2Panel.style.display = 'none';
                     sharedOverlay.style.display = 'block';
@@ -1609,16 +1740,24 @@ header('Pragma: no-cache');
                                 var fullSharedVideo = document.getElementById('full-shared-panel-video');
                                 var fullSharedOverlay = document.getElementById('scene-overlay-full-shared-panel');
                                 var fullSharedBtn = document.getElementById('scene-btn-full-shared');
+                                var ytVideo = document.getElementById('yt-video');
+                                var ytOverlay = document.getElementById('scene-overlay-yt');
+                                var ytBtn = document.getElementById('scene-btn-yt');
                                 if (fullSharedVideo) { fullSharedVideo.srcObject = stream; fullSharedVideo.play(); }
                                 if (fullSharedBtn) fullSharedBtn.style.display = '';
+                                if (ytVideo) { ytVideo.srcObject = stream; ytVideo.play(); }
+                                if (ytBtn) ytBtn.style.display = '';
                                 stream.getVideoTracks()[0].addEventListener('ended', function onEnded() {
                                     stream.getVideoTracks()[0].removeEventListener('ended', onEnded);
                                     sharedVideo.srcObject = null;
                                     if (fullSharedVideo) fullSharedVideo.srcObject = null;
+                                    if (ytVideo) ytVideo.srcObject = null;
                                     sharedOverlay.style.display = 'none';
                                     sharedBtn.classList.remove('active');
                                     if (fullSharedOverlay) fullSharedOverlay.style.display = 'none';
                                     if (fullSharedBtn) { fullSharedBtn.style.display = 'none'; fullSharedBtn.classList.remove('active'); }
+                                    if (ytOverlay) ytOverlay.style.display = 'none';
+                                    if (ytBtn) { ytBtn.style.display = 'none'; ytBtn.classList.remove('active'); }
                                     var sc2OverlayEl = document.getElementById('sc2-overlay');
                                     if (sc2OverlayEl) sc2OverlayEl.style.zIndex = '';
                                     applyLayoutFromSc2Button();
@@ -1711,6 +1850,35 @@ header('Pragma: no-cache');
                         var sc2Iframe = sc2Panel.querySelector('iframe');
                         ensureVdoIframeLoaded(sc2Iframe);
                     }
+                }
+            } else if (sceneId === 'yt') {
+                var sharedVideo = document.getElementById('shared-window-video');
+                var ytOverlay = document.getElementById('scene-overlay-yt');
+                var ytVideo = document.getElementById('yt-video');
+                var ytBtn = document.getElementById('scene-btn-yt');
+                var sharedOverlay = document.getElementById('scene-overlay-shared-window');
+                var sharedBtn = document.getElementById('scene-btn-shared-window');
+                var fullSharedOverlay = document.getElementById('scene-overlay-full-shared-panel');
+                var fullSharedBtn = document.getElementById('scene-btn-full-shared');
+                var hasStream = sharedVideo && sharedVideo.srcObject && sharedVideo.srcObject.getTracks().some(function(t) { return t.readyState === 'live'; });
+                var isYtActive = ytOverlay && (ytOverlay.style.display === 'block');
+
+                if (!hasStream) return;
+                if (isYtActive) {
+                    ytOverlay.style.display = 'none';
+                    ytBtn.classList.remove('active');
+                    applyLayoutFromSc2Button();
+                } else {
+                    VIDEO_OVERLAY_KEYS.forEach(function(k) { var b = document.getElementById('scene-btn-' + k); if (b) b.classList.remove('active'); });
+                    if (sharedOverlay) sharedOverlay.style.display = 'none';
+                    if (sharedBtn) sharedBtn.classList.remove('active');
+                    if (fullSharedOverlay) fullSharedOverlay.style.display = 'none';
+                    if (fullSharedBtn) fullSharedBtn.classList.remove('active');
+                    ytVideo.srcObject = sharedVideo.srcObject;
+                    ytVideo.play();
+                    applyYtCropToVideo();
+                    ytOverlay.style.display = 'block';
+                    ytBtn.classList.add('active');
                 }
             }
         }
