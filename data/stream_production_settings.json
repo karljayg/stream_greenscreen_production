@@ -3,8 +3,10 @@
     "volume": 50,
     "layerOrder": [
         "scene-overlay-all-vdo",
+        "scene-overlay-full-shared-panel",
         "scene-overlay-vdo-full",
         "logos-overlay",
+        "sc2-overlay",
         "container",
         "gif-container",
         "chart-container",
@@ -67,10 +69,10 @@
         }
     },
     "scenes": {
-        "bg": true,
-        "vdoFull": true,
+        "bg": false,
+        "vdoFull": false,
         "logos": true,
-        "sc2": false
+        "sc2": true
     },
     "playerIntros": [
         "DarkMenace",
@@ -84,5 +86,11 @@
         "GG",
         "Match GG"
     ],
-    "chromaKey": true
+    "chromaKey": true,
+    "ytCrop": {
+        "top": 130,
+        "left": 210,
+        "right": 120,
+        "bottom": 130
+    }
 }

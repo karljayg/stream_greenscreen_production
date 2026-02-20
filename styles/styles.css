@@ -262,25 +262,137 @@ body.layer-outline-debug [data-layer-id].layer-outline-active {
     margin-right: 10px;
 }
 
+/* FSL-style esports text badge: bright fill so text is always readable on green/dark */
 .player-name-box {
     position: absolute;
     bottom: 10%;
     left: 50%;
     transform: translateX(-50%);
-    margin: 0;
-    padding: 10px;
-    background-color: rgb(7, 7, 7);
-    color: rgb(255, 255, 255);
-    font-family: Copperplate, Papyrus, fantasy;
     display: none;
     z-index: 9999;
     text-align: center;
-    font-weight: bold;
-    font-size: 30px;
-    border: 0 solid black;
+    box-sizing: border-box;
+    padding: 18px 26px;
+    background: #0d0612;
+    border-radius: 10px;
     width: auto;
     max-width: 90%;
-    box-sizing: border-box;
+}
+
+/* Angled plate behind the text */
+.player-name-box::before {
+    content: "";
+    position: absolute;
+    inset: 6px;
+    transform: skewX(-12deg);
+    background: linear-gradient(180deg, rgba(255, 80, 240, 0.25), rgba(120, 50, 180, 0.12));
+    border: 3px solid #3a0b56;
+    box-shadow: 0 0 18px rgba(255, 70, 245, 0.22), 0 0 26px rgba(150, 50, 255, 0.16);
+    clip-path: polygon(2% 0%, 96% 0%, 100% 50%, 96% 100%, 2% 100%, 0% 50%);
+    z-index: 0;
+}
+
+/* "Speed lines" */
+.player-name-box::after {
+    content: "";
+    position: absolute;
+    right: -28px;
+    top: 50%;
+    width: 140px;
+    height: 36px;
+    transform: translateY(-50%) skewX(-12deg);
+    background: repeating-linear-gradient(
+        90deg,
+        rgba(255, 80, 245, 0.55) 0 10px,
+        rgba(255, 80, 245, 0) 10px 18px
+    );
+    filter: blur(1.2px);
+    opacity: 0.5;
+    z-index: 0;
+}
+
+.player-name-box .player-intro-name {
+    position: relative;
+    z-index: 1;
+    display: block;
+    font-family: "Rajdhani", "Teko", "Orbitron", "Montserrat", sans-serif;
+    font-weight: 900;
+    font-size: 56px;
+    line-height: 1;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    transform: skewX(-12deg);
+    color: #fff;
+    text-shadow:
+        3px 0 0 #22002e,
+        -3px 0 0 #22002e,
+        0 3px 0 #22002e,
+        0 -3px 0 #22002e,
+        2px 2px 0 #22002e,
+        -2px 2px 0 #22002e,
+        2px -2px 0 #22002e,
+        -2px -2px 0 #22002e,
+        2px 0 0 rgba(255, 255, 255, 0.9),
+        -2px 0 0 rgba(255, 255, 255, 0.9),
+        0 2px 0 rgba(255, 255, 255, 0.9),
+        0 -2px 0 rgba(255, 255, 255, 0.9),
+        1px 0 0 rgba(255, 255, 255, 0.85),
+        -1px 0 0 rgba(255, 255, 255, 0.85),
+        0 1px 0 rgba(255, 255, 255, 0.85),
+        0 -1px 0 rgba(255, 255, 255, 0.85),
+        0 0 12px rgba(255, 70, 245, 0.5),
+        0 0 22px rgba(150, 50, 255, 0.35);
+}
+
+.player-name-box .player-intro-rank {
+    font-size: 0.72em;
+    color: #add8e6;
+}
+
+.player-name-box .player-intro-group {
+    font-size: 0.72em;
+    color: #d3d3d3;
+}
+
+.player-name-box .player-intro-stats {
+    position: relative;
+    z-index: 1;
+    display: block;
+    margin-top: 8px;
+    font-family: "Rajdhani", "Teko", "Orbitron", "Montserrat", sans-serif;
+    font-weight: 800;
+    font-size: 1.5em;
+    line-height: 1.2;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    transform: skewX(-12deg);
+    color: #6eb5ff;
+    text-shadow:
+        2px 0 0 #22002e,
+        -2px 0 0 #22002e,
+        0 2px 0 #22002e,
+        0 -2px 0 #22002e,
+        1px 1px 0 #22002e,
+        -1px 1px 0 #22002e,
+        1px -1px 0 #22002e,
+        -1px -1px 0 #22002e,
+        1px 0 0 rgba(255, 255, 255, 0.85),
+        -1px 0 0 rgba(255, 255, 255, 0.85),
+        0 1px 0 rgba(255, 255, 255, 0.85),
+        0 -1px 0 rgba(255, 255, 255, 0.85),
+        0 0 10px rgba(255, 70, 245, 0.4),
+        0 0 18px rgba(150, 50, 255, 0.28);
+}
+
+/* Optional: extra pop for an accent span (e.g. stats or part of name) */
+.player-name-box .accent {
+    text-shadow:
+        4px 0 0 #22002e,
+        -4px 0 0 #22002e,
+        0 4px 0 #22002e,
+        0 -4px 0 #22002e,
+        0 0 16px rgba(255, 70, 245, 0.4),
+        0 0 24px rgba(150, 50, 255, 0.28);
 }
 
 #suggestion-list {

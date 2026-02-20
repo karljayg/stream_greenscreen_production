@@ -13,6 +13,62 @@ var spiderChartBaseUrl = "https://psistorm.com/fsl/view_spider_chart_player.php"
 import playerList from './playerlist.js';
 import { gifFiles, randomAudioFiles } from './other_lists.js';
 
+// FSL rankings: local cache for player intro stats (season/all-time W-L)
+let rankingsCache = [];
+async function loadRankings() {
+	try {
+		const r = await fetch('rankings.php');
+		const data = await r.json();
+		rankingsCache = Array.isArray(data) ? data : [];
+	} catch (e) {
+		rankingsCache = [];
+	}
+}
+function getRankingForPlayer(playerName) {
+	if (!playerName || !rankingsCache.length) return null;
+	const nameLower = playerName.trim().toLowerCase();
+	return rankingsCache.find((p) => p.name && String(p.name).toLowerCase() === nameLower) || null;
+}
+function setPlayerIntroContent(playerName) {
+	const box = document.querySelector('.player-name-box');
+	if (!box) return;
+	const name = String(playerName || '').trim();
+	const rank = getRankingForPlayer(name);
+	box.innerHTML = '';
+	const nameWrap = document.createElement('span');
+	nameWrap.className = 'player-intro-name';
+	if (rank) {
+		const rankSpan = document.createElement('span');
+		rankSpan.className = 'player-intro-rank';
+		rankSpan.textContent = `#${rank.rank} `;
+		nameWrap.appendChild(rankSpan);
+		nameWrap.appendChild(document.createTextNode(name));
+		if (rank.group != null && rank.group !== '') {
+			const groupSpan = document.createElement('span');
+			groupSpan.className = 'player-intro-group';
+			groupSpan.textContent = ` (G${rank.group})`;
+			nameWrap.appendChild(groupSpan);
+		}
+	} else {
+		nameWrap.textContent = name || '';
+	}
+	box.appendChild(nameWrap);
+	if (rank) {
+		const statsDiv = document.createElement('div');
+		statsDiv.className = 'player-intro-stats';
+		const s = rank;
+		const season = `Season ${s.season_gw ?? 0}-${s.season_gl ?? 0}`;
+		const alltime = `All-time ${s.alltime_gw ?? 0}-${s.alltime_gl ?? 0}`;
+		statsDiv.textContent = `${season} · ${alltime}`;
+		box.appendChild(statsDiv);
+	}
+}
+loadRankings();
+if (typeof window !== 'undefined') {
+	window.reloadRankingsCache = loadRankings;
+	window.getRankingForPlayer = getRankingForPlayer;
+}
+
 // Chroma key: makes green transparent on video/GIF player intros
 function isChromaKeyEnabled() {
 	const cb = document.getElementById('chroma-key-cb');
@@ -146,16 +202,6 @@ window.toggleStatus = function(btn) {
     if (btn) btn.textContent = (statusSection.style.display === "block") ? "Hide Status" : "Show Status";
 }
 
-window.toggleMatchup = function(btn) {
-    const matchupSection = document.getElementById("matchup-section");
-    if (matchupSection.style.display === "none" || matchupSection.style.display === "") {
-        matchupSection.style.display = "block";
-    } else {
-        matchupSection.style.display = "none";
-    }
-    if (btn) btn.textContent = (matchupSection.style.display === "block") ? "Hide Matchup (2v2)" : "Show Matchup (2v2)";
-}
-
 window.togglePlayerRatings = function(btn) {
     const playerRatingsSection = document.getElementById("player-ratings-section");
     if (playerRatingsSection.style.display === "none" || playerRatingsSection.style.display === "") {
@@ -231,7 +277,6 @@ forms.forEach((form) => {
 		event.preventDefault();
 		const playerName = playerNameInput.value.trim();
 		const matchingPlayer = playerList.find(p => p[0] === playerName);
-		playerNameBox.textContent = matchingPlayer[0];
 
 		if (!matchingPlayer) {
 			errorMessage.textContent = `Error: Player "${playerName}" not found.`;
@@ -265,7 +310,8 @@ forms.forEach((form) => {
 		videoPlayer.setAttribute('src', videoPath);
 		videoPlayer.load();
 
-		playerNameBox.style.display = 'block';
+		setPlayerIntroContent(playerName);
+		playerNameBox.style.display = 'inline-block';
 
 		if (matchingPlayer.length > 3) {
 			switch (matchingPlayer[3]) {
@@ -287,13 +333,13 @@ forms.forEach((form) => {
 					gifPlayer(gifIndex);
 					noTitle();
 				  } else {
-					playerNameBox.textContent = playerName;
-					playerNameBox.style.display = 'block';
+					setPlayerIntroContent(playerName);
+					playerNameBox.style.display = 'inline-block';
 				  }
 				} catch (error) {
 				  console.error('Error parsing GIF index:', error);
-				  playerNameBox.textContent = playerName;
-				  playerNameBox.style.display = 'block';
+				  setPlayerIntroContent(playerName);
+				  playerNameBox.style.display = 'inline-block';
 				}
 				break;
 			}
@@ -422,11 +468,6 @@ forms.forEach((form) => {
 
 // Display positioning controls for each section
 const displayPositions = {
-    matchup: {
-        left: '-20%',
-        top: '20%',
-        scale: '1.2'
-    },
     status: {
         left: '-30%',
         top: '0%', 
@@ -443,127 +484,6 @@ const displayPositions = {
 window.displayPositions = displayPositions;
 window.spiderChartBaseUrl = spiderChartBaseUrl;
 
-// Matchup functionality
-let matchupDisplayed = false;
-
-window.handleMatchupDisplay = function(btn) {
-    const teamAName = document.getElementById('matchup-teamA-name').value.trim() || 'Team A';
-    const teamBName = document.getElementById('matchup-teamB-name').value.trim() || 'Team B';
-    const teamA1 = document.getElementById('matchup-teamA1').value.trim();
-    const teamA2 = document.getElementById('matchup-teamA2').value.trim();
-    const teamB1 = document.getElementById('matchup-teamB1').value.trim();
-    const teamB2 = document.getElementById('matchup-teamB2').value.trim();
-    const teamAComment = document.getElementById('matchup-teamA-comment').value.trim();
-    const teamBComment = document.getElementById('matchup-teamB-comment').value.trim();
-    const resultDiv = document.getElementById('right-column-result');
-    
-    if (matchupDisplayed) {
-        // Hide the matchup
-        resultDiv.innerHTML = '';
-        matchupDisplayed = false;
-        if (btn) btn.textContent = 'Show Matchup';
-        return;
-    }
-    
-    // No validation - flexible to show any number of players
-    const players = [
-        { name: teamA1, side: 'A', pos: 1 },
-        { name: teamA2, side: 'A', pos: 2 },
-        { name: teamB1, side: 'B', pos: 1 },
-        { name: teamB2, side: 'B', pos: 2 }
-    ].filter(p => p.name); // Only include players with names
-    
-    console.log('Players to display:', players);
-    
-    // Find matching players in database
-    const matchedPlayers = players.map(p => ({
-        ...p,
-        data: playerList.find(pl => pl[0] === p.name)
-    }));
-    
-    // Generate HTML for team sides dynamically
-    const teamAPlayers = matchedPlayers.filter(p => p.side === 'A');
-    const teamBPlayers = matchedPlayers.filter(p => p.side === 'B');
-    
-    const generatePlayerHTML = (player, videoId) => {
-        if (!player.data) {
-            return `<div style="text-align: center; color: red; font-size: 12px; text-shadow: -1px -1px 0 #000, 1px -1px 0 #000, -1px 1px 0 #000, 1px 1px 0 #000;">Player not found: ${player.name}</div>`;
-        }
-        return `
-            <div style="text-align: center;">
-                <video id="${videoId}" width="140" height="105" muted loop>
-                    Your browser does not support the video tag.
-                </video>
-                <p style="font-size: 12px; text-shadow: -1px -1px 0 #000, 1px -1px 0 #000, -1px 1px 0 #000, 1px 1px 0 #000;"><strong>${player.name}</strong></p>
-            </div>
-        `;
-    };
-    
-    const teamAHTML = teamAPlayers.map((p, i) => generatePlayerHTML(p, `matchup-video-a${p.pos}`)).join('');
-    const teamBHTML = teamBPlayers.map((p, i) => generatePlayerHTML(p, `matchup-video-b${p.pos}`)).join('');
-    
-    // Create the flexible container structure (positioned and scaled for greenscreen overlay)
-    resultDiv.innerHTML = `
-        <div style="
-            position: relative;
-            left: ${displayPositions.matchup.left};
-            top: ${displayPositions.matchup.top};
-            transform: scale(${displayPositions.matchup.scale});
-            transform-origin: top left;
-            width: 100%;
-        ">
-            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
-                <div style="text-align: center; flex: 1;"><h3 style="font-size: 16px; text-shadow: -1px -1px 0 #000, 1px -1px 0 #000, -1px 1px 0 #000, 1px 1px 0 #000;">${teamAName}</h3></div>
-                <div style="text-align: center; flex: 0 0 40px;"><h3 style="font-size: 18px; text-shadow: -1px -1px 0 #000, 1px -1px 0 #000, -1px 1px 0 #000, 1px 1px 0 #000;"></h3></div>
-                <div style="text-align: center; flex: 1;"><h3 style="font-size: 16px; text-shadow: -1px -1px 0 #000, 1px -1px 0 #000, -1px 1px 0 #000, 1px 1px 0 #000;">${teamBName}</h3></div>
-            </div>
-            <div style="display: flex; justify-content: space-between; align-items: flex-start;">
-                <div style="display: flex; flex-direction: column; align-items: center; width: 45%;">
-                    <div style="display: flex; gap: 8px; margin-bottom: 8px; flex-wrap: wrap; justify-content: center;">
-                        ${teamAHTML}
-                    </div>
-                    ${teamAComment ? `<p style="font-size: 13px; text-shadow: -1px -1px 0 #000, 1px -1px 0 #000, -1px 1px 0 #000, 1px 1px 0 #000;"><strong>${teamAComment}</strong></p>` : ''}
-                </div>
-                <div style="display: flex; flex-direction: column; align-items: center; width: 45%;">
-                    <div style="display: flex; gap: 8px; margin-bottom: 8px; flex-wrap: wrap; justify-content: center;">
-                        ${teamBHTML}
-                    </div>
-                    ${teamBComment ? `<p style="font-size: 13px; text-shadow: -1px -1px 0 #000, 1px -1px 0 #000, -1px 1px 0 #000, 1px 1px 0 #000;"><strong>${teamBComment}</strong></p>` : ''}
-                </div>
-            </div>
-        </div>
-    `;
-    
-    // Load and play videos for matched players only
-    const videoPromises = [];
-    matchedPlayers.forEach(player => {
-        if (player.data) {
-            const videoId = `matchup-video-${player.side.toLowerCase()}${player.pos}`;
-            const video = document.getElementById(videoId);
-            if (video) {
-                const videoPath = videopath + player.data[1];
-                console.log(`Loading video for ${player.name}: ${videoPath}`);
-                video.setAttribute('src', videoPath);
-                video.load();
-                videoPromises.push(
-                    video.play().catch(err => console.log(`Video ${player.name} play error:`, err))
-                );
-            }
-        }
-    });
-    
-    // Wait for all videos to start
-    Promise.all(videoPromises).then(() => {
-        console.log(`${videoPromises.length} matchup videos started successfully`);
-    }).catch(error => {
-        console.error('Error playing matchup videos:', error);
-    });
-    
-    matchupDisplayed = true;
-    if (btn) btn.textContent = 'Hide Matchup';
-};
-
-// Add autocomplete functionality for matchup inputs  
 document.addEventListener('DOMContentLoaded', function() {
     const chromaCb = document.getElementById('chroma-key-cb');
     if (chromaCb) {
@@ -587,41 +507,6 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
 
-    const matchupInputs = document.querySelectorAll('.matchup-input');
-    
-    matchupInputs.forEach(input => {
-        if (!input) return;
-        
-        input.addEventListener('input', (event) => {
-            const inputValue = event.target.value.trim().toLowerCase();
-            if (inputValue.length < 3) {
-                clearMatchupSuggestions(input);
-                return;
-            }
-            const matchingPlayers = playerList.filter(p => p[0].toLowerCase().includes(inputValue));
-            if (matchingPlayers.length > 0) {
-                showMatchupSuggestions(input, matchingPlayers);
-            } else {
-                clearMatchupSuggestions(input);
-            }
-        });
-        
-        input.addEventListener('blur', () => {
-            setTimeout(() => clearMatchupSuggestions(input), 300);
-        });
-    });
-    
-    // Log available default players on load
-    setTimeout(() => {
-        const inputs = ['matchup-teamA1', 'matchup-teamA2', 'matchup-teamB1', 'matchup-teamB2']
-            .map(id => document.getElementById(id))
-            .filter(input => input && input.value);
-        
-        if (inputs.length > 0) {
-            console.log('Default players available:', inputs.map(i => i.value).join(', '));
-        }
-    }, 100);
-
     // Spider Chart Player Input Autocomplete
     const spiderPlayerInput = document.getElementById('player-input');
     if (spiderPlayerInput) {
@@ -644,62 +529,6 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
 });
-
-function showMatchupSuggestions(input, players) {
-    const suggestionList = document.createElement('ul');
-    suggestionList.setAttribute('data-layer-id', 'matchup-suggestions');
-    suggestionList.classList.add('suggestion-list', 'matchup-suggestions');
-    suggestionList.style.cssText = `
-        position: absolute;
-        background: white;
-        border: 1px solid #ccc;
-        list-style: none;
-        padding: 0;
-        margin: 0;
-        max-height: 200px;
-        overflow-y: auto;
-        z-index: 1000;
-        width: 100%;
-    `;
-    
-    players.forEach(p => {
-        const suggestionItem = document.createElement('li');
-        suggestionItem.textContent = p[0];
-        suggestionItem.style.cssText = `
-            padding: 8px 12px;
-            cursor: pointer;
-            border-bottom: 1px solid #eee;
-        `;
-        suggestionItem.addEventListener('mouseenter', () => {
-            suggestionItem.style.backgroundColor = '#f0f0f0';
-        });
-        suggestionItem.addEventListener('mouseleave', () => {
-            suggestionItem.style.backgroundColor = 'white';
-        });
-        suggestionItem.addEventListener('mousedown', (e) => {
-            e.preventDefault(); // Prevent blur from firing
-        });
-        suggestionItem.addEventListener('click', (e) => {
-            e.preventDefault();
-            input.value = p[0];
-            clearMatchupSuggestions(input);
-            input.focus();
-        });
-        suggestionList.appendChild(suggestionItem);
-    });
-    
-    clearMatchupSuggestions(input);
-    input.parentNode.style.position = 'relative';
-    input.parentNode.appendChild(suggestionList);
-    if (window.reapplyLayerOrder) window.reapplyLayerOrder();
-}
-
-function clearMatchupSuggestions(input) {
-    const suggestionList = input.parentNode.querySelector('.matchup-suggestions');
-    if (suggestionList) {
-        suggestionList.remove();
-    }
-}
 
 function showSpiderSuggestions(players) {
     const spiderPlayerInput = document.getElementById('player-input');

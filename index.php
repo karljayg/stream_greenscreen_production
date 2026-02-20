@@ -17,7 +17,7 @@ header('Pragma: no-cache');
     <link rel="stylesheet" href="styles/styles.css?v=<?php echo $v; ?>">
     <link rel="stylesheet" href="styles/main.css?v=<?php echo $v; ?>">
     <link rel="stylesheet" href="https://code.jquery.com/ui/1.13.1/themes/smoothness/jquery-ui.css">
-    <link href="https://fonts.googleapis.com/css2?family=Rajdhani:wght@500;600;700&family=Exo+2:wght@400;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Rajdhani:wght@500;600;700;800;900&family=Teko:wght@700&family=Orbitron:wght@700;800;900&family=Exo+2:wght@400;600;700&display=swap" rel="stylesheet">
 
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
     <script src="js/jquery-ui.min.js?v=<?php echo $v; ?>"></script>
@@ -128,24 +128,6 @@ header('Pragma: no-cache');
                     </table>
                     <button id="btn-status-result" onclick="showFormattedResult(this)">Show Status Message</button>
                 </div>
-                <button class="collapsible-btn" id="btn-matchup" onclick="toggleMatchup(this)">Show Matchup (2v2)</button>
-                <div class="collapsible-content" id="matchup-section" style="display: none;">
-                    <h2>Matchup (2v2)</h2>
-                    <div style="margin-bottom: 10px;">
-                        <input type="text" id="matchup-teamA-name" placeholder="Team A Name" value="Team A" style="width: 10ch; margin: 2px 0; font-weight: bold;">
-                        <input type="text" id="matchup-teamA1" class="matchup-input" placeholder="Player 1" value="DarkMenace" style="width: 10ch; margin: 2px 0;">
-                        <input type="text" id="matchup-teamA2" class="matchup-input" placeholder="Player 2" value="Neutrophil" style="width: 10ch; margin: 2px 0;">
-                        <input type="text" id="matchup-teamA-comment" placeholder="Score/Comment" maxlength="40" style="width: 10ch; margin: 2px 0; font-size: 12px;">
-                    </div>
-                    <div style="margin-bottom: 10px;">
-                        <input type="text" id="matchup-teamB-name" placeholder="Team B Name" value="Team B" style="width: 10ch; margin: 2px 0; font-weight: bold;">
-                        <input type="text" id="matchup-teamB1" class="matchup-input" placeholder="Player 1" value="LittleReaper" style="width: 10ch; margin: 2px 0;">
-                        <input type="text" id="matchup-teamB2" class="matchup-input" placeholder="Player 2" value="HyperTurtle" style="width: 10ch; margin: 2px 0;">
-                        <input type="text" id="matchup-teamB-comment" placeholder="Score/Comment" maxlength="40" style="width: 10ch; margin: 2px 0; font-size: 12px;">
-                    </div>
-                    <button id="btn-matchup-result" onclick="showMatchupResult(this)">Show Matchup</button>
-                </div>
-
                 <h3 class="settings-group-heading">Player</h3>
                 <button class="collapsible-btn" id="btn-scoreboard-settings" onclick="toggleScoreboardSettings(this)">Scoreboard</button>
                 <div class="collapsible-content" id="scoreboard-settings-section" style="display: none;">
@@ -158,6 +140,9 @@ header('Pragma: no-cache');
                 <div class="collapsible-content" id="player-intros-settings-section" style="display: none;">
                     <h2>Player Intros</h2>
                     <label><input type="checkbox" id="chroma-key-cb" checked> Chroma key (green transparent)</label>
+                    <p class="layer-order-hint" style="margin-top: 8px;">FSL rankings (season/all-time W–L under player name):</p>
+                    <button type="button" id="rankings-refresh-btn" style="margin-top: 4px;">Refresh rankings</button>
+                    <span id="rankings-refresh-status" style="margin-left: 6px; font-size: 0.9rem;"></span>
                 </div>
                 <button type="button" id="btn-reload-vdo" class="collapsible-btn" onclick="reloadVdo()">Reload VDO</button>
                 <button class="collapsible-btn" id="btn-player-ratings" onclick="togglePlayerRatings(this)">Show Spider Ratings</button>
@@ -230,7 +215,7 @@ header('Pragma: no-cache');
                 <button class="collapsible-btn" id="btn-save-load" onclick="toggleSaveLoad(this)">Show Save/Load setup</button>
                 <div class="collapsible-content" id="save-load-section" style="display: none;">
                     <h2 class="layer-order-heading">Import / Export all settings</h2>
-                    <p class="layer-order-hint">Export saves layer order, volume, Status, Matchup, Player Ratings, Logos (checkboxes + positions), VDO full and SC2 panel positions, Scenes visibility, and Player Intros names. <strong>Save to server</strong> stores the current setup so anyone opening this link gets the same settings. You can still <strong>Export all</strong> / <strong>Import all</strong> to share via file.</p>
+                    <p class="layer-order-hint">Export saves layer order, volume, Status, Player Ratings, Logos (checkboxes + positions), VDO full and SC2 panel positions, Scenes visibility, and Player Intros names. <strong>Save to server</strong> stores the current setup so anyone opening this link gets the same settings. You can still <strong>Export all</strong> / <strong>Import all</strong> to share via file.</p>
                     <div class="layer-order-actions">
                         <button type="button" id="layer-export-btn">Export all</button>
                         <button type="button" id="layer-save-server-btn">Save to server</button>
@@ -244,7 +229,6 @@ header('Pragma: no-cache');
             <div class="scenes-buttons">
                 <button type="button" id="scene-btn-sc2" class="scene-btn-major" onclick="toggleSceneOverlay('sc2')">SC2</button>
                 <button type="button" id="scene-btn-schedule" onclick="toggleSceneOverlay('schedule')">Schedule</button>
-                <button type="button" id="scene-btn-matchup" onclick="toggleSceneOverlay('matchup')">Matchup</button>
                 <button type="button" id="scene-btn-scoreboard" onclick="toggleSceneOverlay('scoreboard')">Scoreboard</button>
                 <button type="button" id="scene-btn-ash" onclick="toggleSceneOverlay('ash')">ASH</button>
                 <button type="button" id="scene-btn-pog" onclick="toggleSceneOverlay('pog')">POG</button>
@@ -338,7 +322,7 @@ header('Pragma: no-cache');
                     <canvas id="video-chroma-canvas" style="display:none; position:absolute; pointer-events:none;"></canvas>
                 </div>
                 <div id="right-column-result" data-layer-id="right-column-result" style="text-align: center;">
-                    <!-- Status data and Matchup data will be dynamically inserted here -->
+                    <!-- Status data will be dynamically inserted here -->
                 </div>
                 <div id="scoreboard-overlay" data-layer-id="scoreboard-overlay" class="scoreboard-overlay-wrap" style="display: none; position: absolute; top: 0; left: 0; width: 100%; height: 100%; overflow: auto; pointer-events: none;">
                     <div id="scoreboard-content" class="scoreboard-panel scoreboard-content-wrap"></div>
@@ -488,7 +472,6 @@ header('Pragma: no-cache');
                 "right-column-result",
                 "scoreboard-overlay",
                 "external-chart-overlay",
-                "matchup-suggestions",
                 "chart-container",
                 "gif-container",           /* Player intros – top by default so they show over YT/Schedule */
                 "video-container",
@@ -504,10 +487,9 @@ header('Pragma: no-cache');
                 "gif-container": "Player intros – GIF",
                 "chart-container": "Player ratings – chart",
                 "video-container": "Player intros – video",
-                "right-column-result": "Status / Matchup text",
+                "right-column-result": "Status text",
                 "scoreboard-overlay": "Scoreboard",
                 "external-chart-overlay": "Player ratings – external chart",
-                "matchup-suggestions": "Matchup dropdown",
                 "player-name-box": "Player name"
             };
 
@@ -537,9 +519,6 @@ header('Pragma: no-cache');
             }
 
             function getElementByLayerId(id) {
-                if (id === "matchup-suggestions") {
-                    return document.querySelector(".matchup-suggestions");
-                }
                 if (id === "logos-overlay") {
                     return document.getElementById("logos-overlay");
                 }
@@ -567,11 +546,6 @@ header('Pragma: no-cache');
                 document.querySelectorAll("[data-layer-id]").forEach(function(el) {
                     el.classList.toggle("layer-outline-active", el.getAttribute("data-layer-id") === id);
                 });
-                var match = document.querySelector(".matchup-suggestions");
-                if (match) {
-                    match.setAttribute("data-layer-id", "matchup-suggestions");
-                    match.classList.toggle("layer-outline-active", id === "matchup-suggestions");
-                }
             }
 
             function hideOutline() {
@@ -638,7 +612,6 @@ header('Pragma: no-cache');
                 volume: 50,
                 layerOrder: DEFAULT_ORDER.slice(),
                 status: { title: "", teamA: "", teamB: "", valueA: "", valueB: "" },
-                matchup: { teamAName: "Team A", teamA1: "DarkMenace", teamA2: "Neutrophil", teamAComment: "", teamBName: "Team B", teamB1: "LittleReaper", teamB2: "HyperTurtle", teamBComment: "" },
                 playerRatings: { playerName: "littlereaper", division: "A" },
                 logos: { s10: false, fslSmall: false, sc2: false, positions: {}, sc2Panel: null, vdoFullPanel: { left: 50, top: 100, width: 1180, height: 570 } },
                 scenes: { bg: false, vdoFull: false, logos: false, sc2: false },
@@ -680,7 +653,6 @@ header('Pragma: no-cache');
                     volume: volEl ? parseInt(volEl.value, 10) : 50,
                     layerOrder: order,
                     status: { title: s("status-title"), teamA: s("status-teamA"), teamB: s("status-teamB"), valueA: s("status-valueA"), valueB: s("status-valueB") },
-                    matchup: { teamAName: s("matchup-teamA-name"), teamA1: s("matchup-teamA1"), teamA2: s("matchup-teamA2"), teamAComment: s("matchup-teamA-comment"), teamBName: s("matchup-teamB-name"), teamB1: s("matchup-teamB1"), teamB2: s("matchup-teamB2"), teamBComment: s("matchup-teamB-comment") },
                     playerRatings: { playerName: s("player-input"), division: s("division-input") },
                     logos: { s10: !!document.getElementById("logo-s10-cb") && document.getElementById("logo-s10-cb").checked, fslSmall: !!document.getElementById("logo-fsl-small-cb") && document.getElementById("logo-fsl-small-cb").checked, sc2: !!document.getElementById("logo-sc2-cb") && document.getElementById("logo-sc2-cb").checked, positions: logoPositions, sc2Panel: sc2PanelPos, vdoFullPanel: vdoFullPanelPos },
                     scenes: { bg: sceneBg && sceneBg.style.display === "block", vdoFull: sceneVdo && sceneVdo.style.display === "block", logos: overlay && overlay.style.display === "block", sc2: sc2OverlayExport && sc2OverlayExport.style.display === "block" },
@@ -709,8 +681,6 @@ header('Pragma: no-cache');
                 }
                 var st = parsed.status || def.status;
                 if (st) { set("status-title", st.title); set("status-teamA", st.teamA); set("status-teamB", st.teamB); set("status-valueA", st.valueA); set("status-valueB", st.valueB); }
-                var mu = parsed.matchup || def.matchup;
-                if (mu) { set("matchup-teamA-name", mu.teamAName); set("matchup-teamA1", mu.teamA1); set("matchup-teamA2", mu.teamA2); set("matchup-teamA-comment", mu.teamAComment); set("matchup-teamB-name", mu.teamBName); set("matchup-teamB1", mu.teamB1); set("matchup-teamB2", mu.teamB2); set("matchup-teamB-comment", mu.teamBComment); }
                 var pr = parsed.playerRatings || def.playerRatings;
                 if (pr) { set("player-input", pr.playerName); set("division-input", pr.division); }
                 var lo = parsed.logos || def.logos;
@@ -842,7 +812,7 @@ header('Pragma: no-cache');
                 r.onload = function() {
                     try {
                         var parsed = JSON.parse(r.result);
-                        if (parsed.layerOrder !== undefined || parsed.order !== undefined || parsed.status !== undefined || parsed.matchup !== undefined) {
+                        if (parsed.layerOrder !== undefined || parsed.order !== undefined || parsed.status !== undefined) {
                             importAllSettings(parsed);
                         } else if (Array.isArray(parsed)) {
                             var order = parsed.filter(function(id) { return DEFAULT_ORDER.indexOf(id) !== -1; });
@@ -881,6 +851,28 @@ header('Pragma: no-cache');
                     }).catch(function() {
                         btn.textContent = "Error";
                         setTimeout(function() { btn.textContent = "Overwrite scoreboard.csv"; btn.disabled = false; }, 2000);
+                    });
+                });
+            }
+
+            var rankingsRefreshBtn = document.getElementById("rankings-refresh-btn");
+            var rankingsRefreshStatus = document.getElementById("rankings-refresh-status");
+            if (rankingsRefreshBtn && rankingsRefreshStatus) {
+                rankingsRefreshBtn.addEventListener("click", function() {
+                    rankingsRefreshStatus.textContent = "…";
+                    rankingsRefreshBtn.disabled = true;
+                    fetch("rankings.php", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ refresh: true }) }).then(function(r) { return r.json(); }).then(function(result) {
+                        if (result && result.ok) {
+                            if (typeof window.reloadRankingsCache === "function") window.reloadRankingsCache();
+                            rankingsRefreshStatus.textContent = "Updated.";
+                        } else {
+                            rankingsRefreshStatus.textContent = result && result.error ? result.error : "Save failed.";
+                        }
+                    }).catch(function(e) {
+                        rankingsRefreshStatus.textContent = "Error: " + (e.message || "fetch failed");
+                    }).finally(function() {
+                        rankingsRefreshBtn.disabled = false;
+                        setTimeout(function() { rankingsRefreshStatus.textContent = ""; }, 4000);
                     });
                 });
             }
@@ -1420,12 +1412,6 @@ header('Pragma: no-cache');
         })();
         window.updateSc2Panel = updateSc2Panel;
 
-        function showMatchupResult(btn) {
-            if (window.handleMatchupDisplay) {
-                window.handleMatchupDisplay(btn);
-            }
-        }
-
         /**
          * Reusable fullscreen transition: play a video with fade-in at start and fade-out at end.
          * @param {Object} options - videoSrc (string), fadeInMs (number), fadeOutMs (number), onComplete (function)
@@ -1494,9 +1480,9 @@ header('Pragma: no-cache');
             };
         }
 
-        var VIDEO_OVERLAY_KEYS = ['all-vdo', 'schedule', 'matchup', 'ash', 'pog', 'ptb', 'st'];
-            var VIDEO_OVERLAY_FILES = { 'all-vdo': '2026_FSL_BG.mp4', 'schedule': '2026_FSL_schedule_now.mp4', 'matchup': 'matchup_now.html', 'ash': 'ASH.mp4', 'pog': 'POG.mp4', 'ptb': 'PTB.mp4', 'st': 'ST.mp4' };
-            var VIDEO_OVERLAY_FRONT = ['schedule', 'matchup', 'ash', 'pog', 'ptb', 'st'];
+        var VIDEO_OVERLAY_KEYS = ['all-vdo', 'schedule', 'ash', 'pog', 'ptb', 'st'];
+            var VIDEO_OVERLAY_FILES = { 'all-vdo': '2026_FSL_BG.mp4', 'schedule': '2026_FSL_schedule_now.mp4', 'ash': 'ASH.mp4', 'pog': 'POG.mp4', 'ptb': 'PTB.mp4', 'st': 'ST.mp4' };
+            var VIDEO_OVERLAY_FRONT = ['schedule', 'ash', 'pog', 'ptb', 'st'];
 
             function getVideoOverlayDefaultZIndex() {
                 try {
@@ -1526,6 +1512,26 @@ header('Pragma: no-cache');
                     R: 'random_icon.png'
                 }
             };
+            /** Overwrite rank from rankings when we have a match (CSV may have stale #07 etc). rankings = array from rankings.php. */
+            function scoreboardCellWithRankFromJson(val, rankings) {
+                if (val == null || val === '') return val;
+                var raw = String(val).trim();
+                var rest = raw.replace(/^(?:\[\d+\]|#?\d+)\s*/, '').trim();
+                var nameForLookup = rest.replace(/\s*\([ZTPR]\)\s*/gi, '').trim();
+                var rank = null;
+                if (rankings && rankings.length) {
+                    var nameLower = nameForLookup.toLowerCase();
+                    for (var i = 0; i < rankings.length; i++) {
+                        var p = rankings[i];
+                        if (p.name && String(p.name).toLowerCase() === nameLower) { rank = p; break; }
+                    }
+                }
+                if (rank == null && typeof window.getRankingForPlayer === 'function') rank = window.getRankingForPlayer(nameForLookup);
+                if (rank != null) {
+                    raw = '[' + rank.rank + '] ' + rest;
+                }
+                return raw;
+            }
             function formatScoreboardTeamCell(val) {
                 if (val == null || val === '') return '';
                 var s = escapeHtml(String(val).trim());
@@ -1584,7 +1590,7 @@ header('Pragma: no-cache');
                 if (val == null || val === undefined) return '';
                 return String(val).replace(/\r/g, '').trim();
             }
-            function buildScoreboardHTML(rows) {
+            function buildScoreboardHTML(rows, rankings) {
                 var teamA = '', scoreA = '', teamB = '', scoreB = '';
                 var map1Label = 'Map 1', map2Label = 'Map 2';
                 if (rows.length > 0) {
@@ -1620,7 +1626,7 @@ header('Pragma: no-cache');
                     for (var c = 0; c < 12; c++) {
                         var val = cellStr(row[c]);
                         var cls = c === 1 ? 'scoreboard-type' : c === 4 || c === 8 ? 'scoreboard-num' : c === 10 || c === 11 ? 'scoreboard-map' : (c === 0 || c === 5 || c === 9) ? 'scoreboard-empty-cell' : (c === 2 || c === 3) ? 'scoreboard-cell scoreboard-cell-team scoreboard-cell-team-a' : (c === 6 || c === 7) ? 'scoreboard-cell scoreboard-cell-team scoreboard-cell-team-b' : 'scoreboard-cell';
-                        var cellContent = (c === 2 || c === 3 || c === 6 || c === 7) ? formatScoreboardTeamCell(val) : escapeHtml(val);
+                        var cellContent = (c === 2 || c === 3 || c === 6 || c === 7) ? formatScoreboardTeamCell(scoreboardCellWithRankFromJson(val, rankings)) : escapeHtml(val);
                         sb.push('<td class="' + cls + '">' + cellContent + '</td>');
                     }
                     sb.push('</tr>');
@@ -1638,17 +1644,22 @@ header('Pragma: no-cache');
                 var container = document.getElementById('scoreboard-content');
                 if (!container) return;
                 var base = window.location.pathname.replace(/\/[^/]*$/, '') || '';
-                var csvUrl = (base ? base + '/' : '') + '2026/scoreboard.csv?_t=' + Date.now();
-                fetch(csvUrl).then(function(r) {
-                    if (!r.ok) throw new Error(r.status + ' ' + r.statusText);
-                    return r.text();
-                }).then(function(text) {
-                    var raw = (text || '').trim();
-                    if (!raw) throw new Error('Empty file');
-                    var rows = parseCSV(raw);
-                    container.innerHTML = rows.length ? buildScoreboardHTML(rows) : '<div class="scoreboard-panel-inner"><p class="scoreboard-empty">No scoreboard data. Add CSV in Settings &rarr; Player &rarr; Scoreboard.</p></div>';
+                var baseUrl = (base ? base + '/' : '');
+                var csvUrl = baseUrl + '2026/scoreboard.csv?_t=' + Date.now();
+                var rankingsUrl = (baseUrl || './') + 'rankings.php';
+                fetch(rankingsUrl).then(function(r) { return r.json(); }).then(function(rankings) {
+                    if (!Array.isArray(rankings)) rankings = [];
+                    return fetch(csvUrl).then(function(r) {
+                        if (!r.ok) throw new Error(r.status + ' ' + r.statusText);
+                        return r.text();
+                    }).then(function(text) {
+                        var raw = (text || '').trim();
+                        if (!raw) throw new Error('Empty file');
+                        var rows = parseCSV(raw);
+                        container.innerHTML = rows.length ? buildScoreboardHTML(rows, rankings) : '<div class="scoreboard-panel-inner"><p class="scoreboard-empty">No scoreboard data. Add CSV in Settings &rarr; Player &rarr; Scoreboard.</p></div>';
+                    });
                 }).catch(function(err) {
-                    container.innerHTML = '<div class="scoreboard-panel-inner"><p class="scoreboard-empty">Could not load scoreboard.csv. ' + (err && err.message ? err.message : '') + '</p></div>';
+                    container.innerHTML = '<div class="scoreboard-panel-inner"><p class="scoreboard-empty">Could not load scoreboard. ' + (err && err.message ? err.message : '') + '</p></div>';
                 });
             };
 
