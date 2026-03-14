@@ -63,10 +63,45 @@ function setPlayerIntroContent(playerName) {
 		box.appendChild(statsDiv);
 	}
 }
+/** Populate a target element with player name, rank, and stats (same as player intro). Used by external chart overlay. */
+function setPlayerLabelContent(box, playerName) {
+	if (!box) return;
+	const name = String(playerName || '').trim();
+	const rank = getRankingForPlayer(name);
+	box.innerHTML = '';
+	const nameWrap = document.createElement('span');
+	nameWrap.className = 'player-intro-name';
+	if (rank) {
+		const rankSpan = document.createElement('span');
+		rankSpan.className = 'player-intro-rank';
+		rankSpan.textContent = `#${rank.rank} `;
+		nameWrap.appendChild(rankSpan);
+		nameWrap.appendChild(document.createTextNode(name));
+		if (rank.group != null && rank.group !== '') {
+			const groupSpan = document.createElement('span');
+			groupSpan.className = 'player-intro-group';
+			groupSpan.textContent = ` (G${rank.group})`;
+			nameWrap.appendChild(groupSpan);
+		}
+	} else {
+		nameWrap.textContent = name || '';
+	}
+	box.appendChild(nameWrap);
+	if (rank) {
+		const statsDiv = document.createElement('div');
+		statsDiv.className = 'player-intro-stats';
+		const s = rank;
+		const season = `Season ${s.season_gw ?? 0}-${s.season_gl ?? 0}`;
+		const alltime = `All-time ${s.alltime_gw ?? 0}-${s.alltime_gl ?? 0}`;
+		statsDiv.textContent = `${season} · ${alltime}`;
+		box.appendChild(statsDiv);
+	}
+}
 loadRankings();
 if (typeof window !== 'undefined') {
 	window.reloadRankingsCache = loadRankings;
 	window.getRankingForPlayer = getRankingForPlayer;
+	window.setPlayerLabelContent = setPlayerLabelContent;
 }
 
 // Chroma key: makes green transparent on video/GIF player intros
@@ -283,9 +318,10 @@ forms.forEach((form) => {
 			return;
 		}
 		const videoPath = videopath + matchingPlayer[1];
-		const audioPath = audiopath + matchingPlayer[2];
 
-		audioFiles.push(audioPath);
+		if (matchingPlayer[2]) {
+			audioFiles.push(audiopath + matchingPlayer[2]);
+		}
 
 		videoPlayer.removeEventListener('ended', onVideoEnded);
 
@@ -398,7 +434,7 @@ forms.forEach((form) => {
 
     function playRandomAudio() {
         const randomIndex = Math.floor(Math.random() * randomAudioFiles.length);
-        const audioPath = window.location.origin + '/' + projectpath + '/' + randomAudioFiles[randomIndex];        
+        const audioPath = randomAudioFiles[randomIndex];
         const audio = new Audio(audioPath);
         audio.volume = document.getElementById('volume-slider').value / 100;
         audio.play();

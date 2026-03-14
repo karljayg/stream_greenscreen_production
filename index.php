@@ -131,18 +131,40 @@ header('Pragma: no-cache');
                 <h3 class="settings-group-heading">Player</h3>
                 <button class="collapsible-btn" id="btn-scoreboard-settings" onclick="toggleScoreboardSettings(this)">Scoreboard</button>
                 <div class="collapsible-content" id="scoreboard-settings-section" style="display: none;">
-                    <h2>Scoreboard CSV</h2>
-                    <p class="layer-order-hint">Paste CSV below to overwrite <code>2026/scoreboard.csv</code>. The scoreboard panel will use this file when you click the Scoreboard scene button.</p>
-                    <textarea id="scoreboard-csv-input" rows="12" style="width: 100%; font-family: monospace; font-size: 12px;" placeholder="Paste CSV data here..."></textarea>
-                    <button type="button" id="scoreboard-csv-save-btn" style="margin-top: 6px;">Overwrite scoreboard.csv</button>
+                    <h2>Scoreboard</h2>
+                    <div style="display:flex; gap:6px; align-items:center; margin-bottom:8px;">
+                        <button type="button" id="scoreboard-load-btn" onclick="scoreboardEditorLoad()">Load Current Scores</button>
+                        <span id="scoreboard-load-status" style="font-size:12px; color:#aaa;"></span>
+                    </div>
+                    <div id="scoreboard-editor-content" style="display:none;">
+                        <div style="display:flex; align-items:center; gap:8px; margin-bottom:8px; padding:8px; background:#1a1a1a; border-radius:4px;">
+                            <span id="sb-team-a-name" style="flex:1; text-align:center; font-weight:bold; font-size:13px; color:#8f8; overflow:hidden; text-overflow:ellipsis;" title=""></span>
+                            <div style="display:flex; align-items:center; gap:4px;">
+                                <span id="sb-score-a" style="display:inline-block; width:52px; text-align:center; font-size:20px; font-weight:bold; color:#8f8; border:1px solid #484; border-radius:4px; padding:2px 4px; background:#1a2a1a; min-height:1.2em;">0</span>
+                                <span style="font-size:16px; color:#888; padding:0 2px;">–</span>
+                                <span id="sb-score-b" style="display:inline-block; width:52px; text-align:center; font-size:20px; font-weight:bold; color:#88f; border:1px solid #448; border-radius:4px; padding:2px 4px; background:#1a1a2a; min-height:1.2em;">0</span>
+                            </div>
+                            <span id="sb-team-b-name" style="flex:1; text-align:center; font-weight:bold; font-size:13px; color:#88f; overflow:hidden; text-overflow:ellipsis;" title=""></span>
+                        </div>
+                        <div id="scoreboard-matchup-rows"></div>
+                        <div style="margin-top:8px; display:flex; gap:6px; align-items:center;">
+                            <button type="button" id="scoreboard-score-save-btn" onclick="scoreboardEditorSave()">Save Scores</button>
+                            <span id="scoreboard-save-status" style="font-size:12px; color:#aaa;"></span>
+                        </div>
+                    </div>
+                    <details style="margin-top:10px;">
+                        <summary style="cursor:pointer; font-size:11px; color:#888; user-select:none;">Raw CSV (advanced)</summary>
+                        <div style="margin-top:6px;">
+                            <p class="layer-order-hint">Paste CSV to overwrite <code>2026/scoreboard.csv</code> directly.</p>
+                            <textarea id="scoreboard-csv-input" rows="10" style="width: 100%; font-family: monospace; font-size: 11px;" placeholder="Paste CSV data here..."></textarea>
+                            <button type="button" id="scoreboard-csv-save-btn" style="margin-top: 6px;">Overwrite scoreboard.csv</button>
+                        </div>
+                    </details>
                 </div>
                 <button class="collapsible-btn" id="btn-player-intros" onclick="togglePlayerIntros(this)">Show Player Chroma</button>
                 <div class="collapsible-content" id="player-intros-settings-section" style="display: none;">
                     <h2>Player Intros</h2>
                     <label><input type="checkbox" id="chroma-key-cb" checked> Chroma key (green transparent)</label>
-                    <p class="layer-order-hint" style="margin-top: 8px;">FSL rankings (season/all-time W–L under player name):</p>
-                    <button type="button" id="rankings-refresh-btn" style="margin-top: 4px;">Refresh rankings</button>
-                    <span id="rankings-refresh-status" style="margin-left: 6px; font-size: 0.9rem;"></span>
                 </div>
                 <button type="button" id="btn-reload-vdo" class="collapsible-btn" onclick="reloadVdo()">Reload VDO</button>
                 <button class="collapsible-btn" id="btn-player-ratings" onclick="togglePlayerRatings(this)">Show Spider Ratings</button>
@@ -153,6 +175,9 @@ header('Pragma: no-cache');
                     <input id="division-input" type="text" placeholder="Division" value="A" style="width: 5ch; margin-left: 5px;">
                     <button id="chart-toggle-btn" onclick="toggleExternalChart()">Load External Chart</button>
                     <div id="error-message" style="color: red;"></div>
+                    <p class="layer-order-hint" style="margin-top: 8px;">FSL rankings (season/all-time W–L under player name):</p>
+                    <button type="button" id="rankings-refresh-btn" style="margin-top: 4px;">Refresh rankings</button>
+                    <span id="rankings-refresh-status" style="margin-left: 6px; font-size: 0.9rem;"></span>
                 </div>
 
                 <h3 class="settings-group-heading">Layouts and Layers</h3>
@@ -186,16 +211,55 @@ header('Pragma: no-cache');
                         <label>Bottom: <input type="number" id="yt-crop-bottom" min="0" step="1" value="100" style="width: 5ch;"></label>
                     </div>
                 </div>
+                <button class="collapsible-btn" id="btn-yt-videos-settings" onclick="toggleYtVideosSettings(this)">Show Video Buttons</button>
+                <div class="collapsible-content" id="yt-videos-settings-section" style="display: none;">
+                    <h2 class="layer-order-heading">Video Buttons</h2>
+                    <p class="layer-order-hint">Paste any YouTube URL (youtube.com/watch, youtu.be, shorts, or embed). It is automatically converted to the embed+autoplay format needed. Changes take effect immediately.</p>
+                    <div style="display: grid; grid-template-columns: auto auto 1fr; gap: 0.35rem 0.5rem; align-items: center; margin-top: 6px;">
+                        <label style="font-size: 0.85rem; white-space: nowrap;">Button 1 label:</label>
+                        <input type="text" id="yt-video-1-label" value="INTRO" style="width: 8ch;">
+                        <span></span>
+                        <label style="font-size: 0.85rem; white-space: nowrap;">Button 1 URL:</label>
+                        <input type="text" id="yt-video-1-url" value="https://www.youtube.com/watch?v=vt04Xbq57Dk" style="grid-column: 2 / 4;" placeholder="Paste YouTube URL…">
+                        <span></span>
+                        <div id="yt-video-1-resolved" style="grid-column: 2 / 4; font-size: 0.75rem; font-family: monospace; word-break: break-all; min-height: 1em;"></div>
+                        <label style="font-size: 0.85rem; white-space: nowrap;">Button 2 label:</label>
+                        <input type="text" id="yt-video-2-label" value="BREAK" style="width: 8ch;">
+                        <span></span>
+                        <label style="font-size: 0.85rem; white-space: nowrap;">Button 2 URL:</label>
+                        <input type="text" id="yt-video-2-url" value="https://youtu.be/O9lNetcn9Y8?si=FaqwLX5I9KkoJecK" style="grid-column: 2 / 4;" placeholder="Paste YouTube URL…">
+                        <span></span>
+                        <div id="yt-video-2-resolved" style="grid-column: 2 / 4; font-size: 0.75rem; font-family: monospace; word-break: break-all; min-height: 1em;"></div>
+                    </div>
+                </div>
+                <button class="collapsible-btn" id="btn-break-settings" onclick="toggleBreakSettings(this)">Break</button>
+                <div class="collapsible-content" id="break-settings-section" style="display: none;">
+                    <h2 class="layer-order-heading">Break</h2>
+                    <p class="layer-order-hint">Countdown and message shown on top of the BREAK video in the right panel.</p>
+                    <div style="display: flex; flex-direction: column; gap: 0.4rem; margin-top: 6px;">
+                        <div style="display: flex; align-items: center; gap: 0.5rem;">
+                            <label style="font-size: 0.85rem; white-space: nowrap;">Timer (min:sec):</label>
+                            <input type="number" id="break-timer-min" min="0" max="99" value="5" style="width: 4ch; text-align: center;">
+                            <span style="font-size: 0.85rem;">:</span>
+                            <input type="number" id="break-timer-sec" min="0" max="59" value="0" style="width: 4ch; text-align: center;">
+                        </div>
+                        <div style="display: flex; align-items: center; gap: 0.5rem;">
+                            <label style="font-size: 0.85rem; white-space: nowrap;">Message:</label>
+                            <input type="text" id="break-timer-msg" value="be right back..." style="flex: 1; min-width: 0;">
+                        </div>
+                    </div>
+                </div>
                 <button class="collapsible-btn" id="btn-logos-settings" onclick="toggleLogosSettings(this)">Show Positioning settings</button>
                 <div class="collapsible-content" id="logos-settings-section" style="display: none;">
                     <h2>Positional settings</h2>
                     <div class="logos-checkboxes">
                         <label><input type="checkbox" id="logo-s10-cb" data-logo="s10"> FSL S10 logo</label><br>
                         <label><input type="checkbox" id="logo-fsl-small-cb" data-logo="fsl-small"> FSL SC2 logo small</label><br>
-                        <label><input type="checkbox" id="logo-sc2-cb" data-logo="sc2"> SC2</label>
+                        <label><input type="checkbox" id="logo-vdo-large-cb" data-vdo="large" checked> Large VDO</label><br>
+                        <label><input type="checkbox" id="logo-sc2-cb" data-logo="sc2"> Small VDO</label>
                     </div>
                     <div class="logos-edit-actions" style="margin-top: 10px;">
-                        <p class="layer-order-hint">Edit and Move: drag/resize logos, SC2 panel, and the big VDO full panel. Save stores all positions.</p>
+                        <p class="layer-order-hint">Edit and Move: drag/resize logos and VDO panels. SC2 scene shows small VDO; non-SC2 shows large VDO. Save stores all positions.</p>
                         <button type="button" id="logos-edit-save-btn" onclick="toggleLogosEditMode()">Edit and Move</button>
                         <button type="button" id="logos-reset-btn" onclick="resetLogosPositions()">Reset</button>
                     </div>
@@ -215,7 +279,7 @@ header('Pragma: no-cache');
                 <button class="collapsible-btn" id="btn-save-load" onclick="toggleSaveLoad(this)">Show Save/Load setup</button>
                 <div class="collapsible-content" id="save-load-section" style="display: none;">
                     <h2 class="layer-order-heading">Import / Export all settings</h2>
-                    <p class="layer-order-hint">Export saves layer order, volume, Status, Player Ratings, Logos (checkboxes + positions), VDO full and SC2 panel positions, Scenes visibility, and Player Intros names. <strong>Save to server</strong> stores the current setup so anyone opening this link gets the same settings. You can still <strong>Export all</strong> / <strong>Import all</strong> to share via file.</p>
+                    <p class="layer-order-hint">Export saves: layer order, volume, Status, Player Ratings, Logos (checkboxes + positions), VDO full and SC2 panel positions, Scenes visibility, Player Intros names, Chroma key, YT crop, Video button labels/URLs, and Break timer/message. <strong>Save to server</strong> stores the current setup so anyone opening this link gets the same settings. You can still <strong>Export all</strong> / <strong>Import all</strong> to share via file.</p>
                     <div class="layer-order-actions">
                         <button type="button" id="layer-export-btn">Export all</button>
                         <button type="button" id="layer-save-server-btn">Save to server</button>
@@ -226,6 +290,14 @@ header('Pragma: no-cache');
             </div>
 
             <h2>Scenes</h2>
+            <div style="display: flex; align-items: center; gap: 0.25rem; margin-bottom: 0.35rem; flex-wrap: wrap;">
+                <span style="font-size: 0.8rem; font-weight: 600; white-space: nowrap;">Videos:</span>
+                <button type="button" id="scene-btn-yt-intro" onclick="toggleYtIframeScene('intro')">INTRO</button>
+                <button type="button" id="scene-btn-yt-break" onclick="toggleYtIframeScene('break')">BREAK</button>
+                <input type="number" id="break-quick-min" min="0" max="99" value="5" style="width: 3.5ch; text-align: center; padding: 2px;" title="Break timer minutes">
+                <span style="font-size: 0.85rem; line-height: 1;">:</span>
+                <input type="number" id="break-quick-sec" min="0" max="59" value="0" style="width: 3.5ch; text-align: center; padding: 2px;" title="Break timer seconds">
+            </div>
             <div class="scenes-buttons">
                 <button type="button" id="scene-btn-sc2" class="scene-btn-major" onclick="toggleSceneOverlay('sc2')">SC2</button>
                 <button type="button" id="scene-btn-schedule" onclick="toggleSceneOverlay('schedule')">Schedule</button>
@@ -343,6 +415,8 @@ header('Pragma: no-cache');
                     height: 100%;
                     z-index: 1000;
                     pointer-events: none;
+                    justify-content: center;
+                    align-items: center;
                 "></div>
                 <div class="player-name-box" data-layer-id="player-name-box"></div>
             </div>
@@ -382,6 +456,17 @@ header('Pragma: no-cache');
             <div id="scene-overlay-yt" data-layer-id="scene-overlay-yt" style="display: none; position: absolute; top: 0; left: 0; width: 100%; height: 100%; z-index: 99999; background: #000;">
                 <div id="yt-crop-wrap" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; overflow: hidden;">
                     <video id="yt-video" autoplay playsinline muted style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; object-fit: contain; object-position: center center;"></video>
+                </div>
+            </div>
+            <!-- YT iframe scene: shows embedded YouTube video with same crop as YT scene -->
+            <div id="scene-overlay-yt-iframe" data-layer-id="scene-overlay-yt-iframe" style="display: none; position: absolute; top: 0; left: 0; width: 100%; height: 100%; z-index: 99999; background: #000;">
+                <div id="yt-iframe-crop-wrap" style="position: absolute; overflow: hidden;">
+                    <iframe id="yt-iframe-player" style="position: absolute; border: none;" allow="autoplay; fullscreen" allowfullscreen></iframe>
+                </div>
+                <!-- Break countdown: shown on top of the iframe when BREAK scene is active -->
+                <div id="break-countdown-overlay" style="display: none; position: absolute; top: 0; left: 0; width: 100%; z-index: 1; pointer-events: none; text-align: center; padding-top: 28px;">
+                    <div id="break-message-display" style="font-family: Arial, Helvetica, sans-serif; font-size: 2rem; font-weight: bold; color: #ff0; text-shadow: -2px -2px 0 #000, 2px -2px 0 #000, -2px 2px 0 #000, 2px 2px 0 #000; margin-bottom: 6px;">be right back...</div>
+                    <div id="break-timer-display" style="font-family: Arial, Helvetica, sans-serif; font-size: 5rem; font-weight: bold; color: #ff0; text-shadow: -3px -3px 0 #000, 3px -3px 0 #000, -3px 3px 0 #000, 3px 3px 0 #000; letter-spacing: 0.05em; line-height: 1;">5:00</div>
                 </div>
             </div>
             <!-- Fullscreen transition video overlay (fade in/out); used by playTransitionVideo() -->
@@ -458,6 +543,16 @@ header('Pragma: no-cache');
             var el = document.getElementById("yt-video-section");
             if (el.style.display === "none" || !el.style.display) { el.style.display = "block"; } else { el.style.display = "none"; }
             if (btn) btn.textContent = (el.style.display === "block") ? "Hide YT Video" : "Show YT Video";
+        }
+        function toggleYtVideosSettings(btn) {
+            var el = document.getElementById("yt-videos-settings-section");
+            if (el.style.display === "none" || !el.style.display) { el.style.display = "block"; } else { el.style.display = "none"; }
+            if (btn) btn.textContent = (el.style.display === "block") ? "Hide Video Buttons" : "Show Video Buttons";
+        }
+        function toggleBreakSettings(btn) {
+            var el = document.getElementById("break-settings-section");
+            if (el.style.display === "none" || !el.style.display) { el.style.display = "block"; } else { el.style.display = "none"; }
+            if (btn) btn.textContent = (el.style.display === "block") ? "Hide Break" : "Break";
         }
 
         (function() {
@@ -613,14 +708,49 @@ header('Pragma: no-cache');
                 layerOrder: DEFAULT_ORDER.slice(),
                 status: { title: "", teamA: "", teamB: "", valueA: "", valueB: "" },
                 playerRatings: { playerName: "littlereaper", division: "A" },
-                logos: { s10: false, fslSmall: false, sc2: false, positions: {}, sc2Panel: null, vdoFullPanel: { left: 50, top: 100, width: 1180, height: 570 } },
+                logos: { s10: false, fslSmall: false, vdoLarge: true, sc2: false, positions: {}, sc2Panel: null, vdoFullPanel: { left: 50, top: 100, width: 1180, height: 570 } },
                 scenes: { bg: false, vdoFull: false, logos: false, sc2: false },
                 playerIntros: ["DarkMenace", "LittleReaper", "PulledTheBoys", "HyperTurtle", "Harouz", "InfiniteCyclists", "Random Music", "FSL intro", "GG", "Match GG"],
                 chromaKey: true,
-                ytCrop: { top: 150, left: 10, right: 20, bottom: 100 }
+                ytCrop: { top: 150, left: 10, right: 20, bottom: 100 },
+                ytIframeVideos: [
+                    { label: "INTRO", url: "https://www.youtube.com/watch?v=vt04Xbq57Dk" },
+                    { label: "BREAK", url: "https://youtu.be/O9lNetcn9Y8?si=FaqwLX5I9KkoJecK" }
+                ],
+                breakSettings: { min: 5, sec: 0, msg: "be right back..." }
             };
 
+            function persistEditModePositions() {
+                if (typeof logosEditMode === "undefined" || !logosEditMode) return;
+                var overlay = document.getElementById("logos-overlay");
+                var sc2OverlayEl = document.getElementById("sc2-overlay");
+                var sc2PanelEl = document.getElementById("sc2-panel-wrap");
+                var vdoFullOverlayEl = document.getElementById("scene-overlay-vdo-full");
+                var vdoFullPanelEl = document.getElementById("vdo-full-panel-wrap");
+                var saved = getSavedLogoPositions();
+                logoIds.forEach(function(id) {
+                    var el = document.getElementById(id);
+                    var key = logoIdToKey[id];
+                    if (!el || !key || !$(el).data("ui-draggable")) return;
+                    var off = el.getBoundingClientRect();
+                    var par = overlay ? overlay.getBoundingClientRect() : { left: 0, top: 0 };
+                    saved[key] = { left: Math.round(off.left - par.left), top: Math.round(off.top - par.top), width: Math.round(off.width), height: Math.round(off.height) };
+                });
+                setSavedLogoPositions(saved);
+                if (sc2PanelEl && $(sc2PanelEl).data("ui-draggable") && sc2OverlayEl) {
+                    var off = sc2PanelEl.getBoundingClientRect();
+                    var par = sc2OverlayEl.getBoundingClientRect();
+                    setSavedSc2Panel({ left: Math.round(off.left - par.left), top: Math.round(off.top - par.top), width: Math.round(off.width), height: Math.round(off.height) });
+                }
+                if (vdoFullPanelEl && $(vdoFullPanelEl).data("ui-draggable") && vdoFullOverlayEl) {
+                    var off = vdoFullPanelEl.getBoundingClientRect();
+                    var par = vdoFullOverlayEl.getBoundingClientRect();
+                    setSavedVdoFullPanel({ left: Math.round(off.left - par.left), top: Math.round(off.top - par.top), width: Math.round(off.width), height: Math.round(off.height) });
+                }
+            }
+
             function exportAllSettings() {
+                persistEditModePositions();
                 var s = function(id) { var el = document.getElementById(id); return el ? el.value : ""; };
                 var order = getStoredOrder();
                 var logoPositions = {};
@@ -654,11 +784,13 @@ header('Pragma: no-cache');
                     layerOrder: order,
                     status: { title: s("status-title"), teamA: s("status-teamA"), teamB: s("status-teamB"), valueA: s("status-valueA"), valueB: s("status-valueB") },
                     playerRatings: { playerName: s("player-input"), division: s("division-input") },
-                    logos: { s10: !!document.getElementById("logo-s10-cb") && document.getElementById("logo-s10-cb").checked, fslSmall: !!document.getElementById("logo-fsl-small-cb") && document.getElementById("logo-fsl-small-cb").checked, sc2: !!document.getElementById("logo-sc2-cb") && document.getElementById("logo-sc2-cb").checked, positions: logoPositions, sc2Panel: sc2PanelPos, vdoFullPanel: vdoFullPanelPos },
+                    logos: { s10: !!document.getElementById("logo-s10-cb") && document.getElementById("logo-s10-cb").checked, fslSmall: !!document.getElementById("logo-fsl-small-cb") && document.getElementById("logo-fsl-small-cb").checked, vdoLarge: !!document.getElementById("logo-vdo-large-cb") && document.getElementById("logo-vdo-large-cb").checked, sc2: !!document.getElementById("logo-sc2-cb") && document.getElementById("logo-sc2-cb").checked, positions: logoPositions, sc2Panel: sc2PanelPos, vdoFullPanel: vdoFullPanelPos },
                     scenes: { bg: sceneBg && sceneBg.style.display === "block", vdoFull: sceneVdo && sceneVdo.style.display === "block", logos: overlay && overlay.style.display === "block", sc2: sc2OverlayExport && sc2OverlayExport.style.display === "block" },
                     playerIntros: intros,
                     chromaKey: !!document.getElementById("chroma-key-cb") && document.getElementById("chroma-key-cb").checked,
-                    ytCrop: typeof getYtCrop === "function" ? getYtCrop() : { top: 150, left: 10, right: 20, bottom: 100 }
+                    ytCrop: typeof getYtCrop === "function" ? getYtCrop() : { top: 150, left: 10, right: 20, bottom: 100 },
+                    ytIframeVideos: typeof getYtIframeVideos === "function" ? getYtIframeVideos() : DEFAULT_SETTINGS.ytIframeVideos,
+                    breakSettings: typeof getBreakSettings === "function" ? getBreakSettings() : DEFAULT_SETTINGS.breakSettings
                 };
                 return out;
             }
@@ -687,6 +819,7 @@ header('Pragma: no-cache');
                 if (lo) {
                     setCheck("logo-s10-cb", lo.s10);
                     setCheck("logo-fsl-small-cb", lo.fslSmall);
+                    setCheck("logo-vdo-large-cb", lo.vdoLarge !== false);
                     setCheck("logo-sc2-cb", lo.sc2);
                     if (lo.positions && typeof lo.positions === "object") { try { localStorage.setItem("stream_production_logo_positions", JSON.stringify(lo.positions)); } catch (e) {} }
                     if (lo.sc2Panel && typeof lo.sc2Panel === "object" && lo.sc2Panel.left != null) { try { localStorage.setItem("stream_production_sc2_panel", JSON.stringify(lo.sc2Panel)); } catch (e) {} }
@@ -749,6 +882,20 @@ header('Pragma: no-cache');
                     if (typeof setYtCrop === "function") setYtCrop(yc);
                     if (typeof saveYtCrop === "function") saveYtCrop();
                     if (typeof applyYtCropToVideo === "function") applyYtCropToVideo();
+                }
+                var ytv = parsed.ytIframeVideos;
+                if (ytv && Array.isArray(ytv) && ytv.length >= 1) {
+                    if (typeof setYtIframeVideos === "function") {
+                        setYtIframeVideos(ytv);
+                        if (typeof saveYtIframeVideos === "function") saveYtIframeVideos();
+                    }
+                }
+                var bks = parsed.breakSettings;
+                if (bks && typeof bks === "object") {
+                    if (typeof setBreakSettings === "function") {
+                        setBreakSettings(bks);
+                        if (typeof saveBreakSettings === "function") saveBreakSettings();
+                    }
                 }
                 var intros = parsed.playerIntros;
                 if (intros && Array.isArray(intros)) {
@@ -855,27 +1002,177 @@ header('Pragma: no-cache');
                 });
             }
 
+            // --- Scoreboard Score Editor ---
+            var _sbEditorRows = null;
+
+            window.scoreboardEditorLoad = function scoreboardEditorLoad() {
+                var statusEl = document.getElementById('scoreboard-load-status');
+                var contentEl = document.getElementById('scoreboard-editor-content');
+                var btn = document.getElementById('scoreboard-load-btn');
+                if (statusEl) statusEl.textContent = 'Loading…';
+                if (btn) btn.disabled = true;
+                var base = window.location.pathname.replace(/\/[^/]*$/, '') || '';
+                var baseUrl = base ? base + '/' : './';
+                fetch(baseUrl + '2026/scoreboard.csv?_t=' + Date.now())
+                    .then(function(r) { if (!r.ok) throw new Error(r.status); return r.text(); })
+                    .then(function(text) {
+                        var rows = parseCSV(text);
+                        _sbEditorRows = rows;
+                        scoreboardEditorRender(rows);
+                        if (contentEl) contentEl.style.display = 'block';
+                        var nonEmpty = rows.filter(function(r) { return r.some(function(c) { return c !== ''; }); }).length;
+                        if (statusEl) statusEl.textContent = nonEmpty + ' rows loaded.';
+                        var ta = document.getElementById('scoreboard-csv-input');
+                        if (ta) ta.value = text.trim();
+                    })
+                    .catch(function(err) {
+                        if (statusEl) statusEl.textContent = 'Error: ' + err.message;
+                    })
+                    .then(function() {
+                        if (btn) btn.disabled = false;
+                    });
+            }
+
+            window.sbRecalcTotals = function sbRecalcTotals() {
+                var totalA = 0, totalB = 0;
+                document.querySelectorAll('.sb-score-a-input').forEach(function(el) { totalA += parseInt(el.value, 10) || 0; });
+                document.querySelectorAll('.sb-score-b-input').forEach(function(el) { totalB += parseInt(el.value, 10) || 0; });
+                var elA = document.getElementById('sb-score-a');
+                var elB = document.getElementById('sb-score-b');
+                if (elA) elA.textContent = totalA;
+                if (elB) elB.textContent = totalB;
+            }
+
+            function scoreboardEditorRender(rows) {
+                if (!rows || rows.length === 0) return;
+                var r0 = rows[0] || [];
+                var teamA = (r0[2] || '').trim();
+                var teamB = (r0[6] || '').trim();
+                var nameAEl = document.getElementById('sb-team-a-name');
+                var nameBEl = document.getElementById('sb-team-b-name');
+                if (nameAEl) { nameAEl.textContent = teamA; nameAEl.title = teamA; }
+                if (nameBEl) { nameBEl.textContent = teamB; nameBEl.title = teamB; }
+                var container = document.getElementById('scoreboard-matchup-rows');
+                if (!container) return;
+                container.innerHTML = '';
+                for (var i = 2; i < rows.length; i++) {
+                    var row = rows[i];
+                    var isEmpty = !row[1] && !row[2] && !row[3] && !row[4] && !row[6] && !row[7] && !row[8] && !row[10] && !row[11];
+                    if (isEmpty) continue;
+                    var matchType = (row[1] || '').trim();
+                    var pA1 = (row[2] || '').trim();
+                    var pA2 = (row[3] || '').trim();
+                    var sA = row[4] || '';
+                    var pB1 = (row[6] || '').trim();
+                    var pB2 = (row[7] || '').trim();
+                    var sB = row[8] || '';
+                    var map1 = (row[10] || '').trim();
+                    var map2 = (row[11] || '').trim();
+                    var playersA = pA2 ? pA1 + ' / ' + pA2 : pA1;
+                    var playersB = pB2 ? pB1 + ' / ' + pB2 : pB1;
+                    var mapsText = [map1, map2].filter(Boolean).join(' | ');
+                    var div = document.createElement('div');
+                    div.className = 'sb-matchup-row';
+                    div.dataset.rowIdx = i;
+                    div.style.cssText = 'display:flex; align-items:center; gap:6px; padding:5px 8px; background:#111; border-radius:3px; font-size:12px; margin-bottom:3px;';
+                    div.innerHTML =
+                        '<span style="color:#666; min-width:28px; font-size:11px; flex-shrink:0;">' + sbEsc(matchType) + '</span>' +
+                        '<span style="flex:1; text-align:right; color:#bbb; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; padding-right:4px;" title="' + sbEsc(playersA) + '">' + sbEsc(playersA) + '</span>' +
+                        '<input type="number" class="sb-score-a-input" data-row="' + i + '" min="0" max="99" value="' + sbEsc(String(sA)) + '" oninput="sbRecalcTotals()" style="width:44px; text-align:center; background:#1a2a1a; color:#8f8; border:1px solid #484; border-radius:3px; padding:2px 4px; flex-shrink:0;">' +
+                        '<span style="color:#555; flex-shrink:0;">–</span>' +
+                        '<input type="number" class="sb-score-b-input" data-row="' + i + '" min="0" max="99" value="' + sbEsc(String(sB)) + '" oninput="sbRecalcTotals()" style="width:44px; text-align:center; background:#1a1a2a; color:#88f; border:1px solid #448; border-radius:3px; padding:2px 4px; flex-shrink:0;">' +
+                        '<span style="flex:1; text-align:left; color:#bbb; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; padding-left:4px;" title="' + sbEsc(playersB) + '">' + sbEsc(playersB) + '</span>' +
+                        '<span style="color:#555; font-size:11px; min-width:56px; text-align:right; flex-shrink:0;">' + sbEsc(mapsText) + '</span>';
+                    container.appendChild(div);
+                }
+                sbRecalcTotals();
+            }
+
+            function sbEsc(s) {
+                if (s == null) return '';
+                var d = document.createElement('div');
+                d.textContent = String(s);
+                return d.innerHTML;
+            }
+
+            window.scoreboardEditorSave = function scoreboardEditorSave() {
+                if (!_sbEditorRows) { alert('Load the CSV first.'); return; }
+                var statusEl = document.getElementById('scoreboard-save-status');
+                var btn = document.getElementById('scoreboard-score-save-btn');
+                if (btn) btn.disabled = true;
+                if (statusEl) statusEl.textContent = 'Saving…';
+                var rows = _sbEditorRows;
+                var elA = document.getElementById('sb-score-a');
+                var elB = document.getElementById('sb-score-b');
+                if (elA && rows[0]) rows[0][4] = elA.textContent.trim();
+                if (elB && rows[0]) rows[0][8] = elB.textContent.trim();
+                document.querySelectorAll('.sb-matchup-row').forEach(function(el) {
+                    var rowIdx = parseInt(el.dataset.rowIdx, 10);
+                    var inpSA = el.querySelector('.sb-score-a-input');
+                    var inpSB = el.querySelector('.sb-score-b-input');
+                    if (rows[rowIdx]) {
+                        if (inpSA) rows[rowIdx][4] = inpSA.value;
+                        if (inpSB) rows[rowIdx][8] = inpSB.value;
+                    }
+                });
+                var csv = rows.map(function(row) {
+                    return row.map(function(cell) {
+                        var s = String(cell == null ? '' : cell);
+                        if (s === '') return '""';
+                        if (/^\d+(\.\d+)?$/.test(s)) return s;
+                        return '"' + s.replace(/"/g, '""') + '"';
+                    }).join(',');
+                }).join('\n');
+                var ta = document.getElementById('scoreboard-csv-input');
+                if (ta) ta.value = csv;
+                fetch('save_scoreboard.php', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'text/csv; charset=utf-8' },
+                    body: csv
+                }).then(function(r) { return r.json(); }).then(function(res) {
+                    if (res && res.ok) {
+                        if (statusEl) statusEl.textContent = 'Saved!';
+                        if (typeof loadAndRenderScoreboard === 'function') {
+                            var overlay = document.getElementById('scoreboard-overlay');
+                            if (overlay && overlay.style.display === 'block') loadAndRenderScoreboard();
+                        }
+                    } else {
+                        if (statusEl) statusEl.textContent = 'Error saving.';
+                    }
+                    setTimeout(function() { if (statusEl) statusEl.textContent = ''; if (btn) btn.disabled = false; }, 2500);
+                }).catch(function() {
+                    if (statusEl) statusEl.textContent = 'Network error.';
+                    setTimeout(function() { if (statusEl) statusEl.textContent = ''; if (btn) btn.disabled = false; }, 2500);
+                });
+            }
+
+            function doRefreshRankings() {
+                var rankingsRefreshBtn = document.getElementById("rankings-refresh-btn");
+                var rankingsRefreshStatus = document.getElementById("rankings-refresh-status");
+                if (rankingsRefreshBtn && rankingsRefreshStatus) {
+                    rankingsRefreshStatus.textContent = "…";
+                    rankingsRefreshBtn.disabled = true;
+                }
+                fetch("rankings.php", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ refresh: true }) }).then(function(r) { return r.json(); }).then(function(result) {
+                    if (result && result.ok) {
+                        if (typeof window.reloadRankingsCache === "function") window.reloadRankingsCache();
+                        if (rankingsRefreshStatus) rankingsRefreshStatus.textContent = "Updated.";
+                    } else {
+                        if (rankingsRefreshStatus) rankingsRefreshStatus.textContent = result && result.error ? result.error : "Save failed.";
+                    }
+                }).catch(function(e) {
+                    if (rankingsRefreshStatus) rankingsRefreshStatus.textContent = "Error: " + (e.message || "fetch failed");
+                }).finally(function() {
+                    if (rankingsRefreshBtn) rankingsRefreshBtn.disabled = false;
+                    if (rankingsRefreshStatus) setTimeout(function() { rankingsRefreshStatus.textContent = ""; }, 4000);
+                });
+            }
             var rankingsRefreshBtn = document.getElementById("rankings-refresh-btn");
             var rankingsRefreshStatus = document.getElementById("rankings-refresh-status");
             if (rankingsRefreshBtn && rankingsRefreshStatus) {
-                rankingsRefreshBtn.addEventListener("click", function() {
-                    rankingsRefreshStatus.textContent = "…";
-                    rankingsRefreshBtn.disabled = true;
-                    fetch("rankings.php", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ refresh: true }) }).then(function(r) { return r.json(); }).then(function(result) {
-                        if (result && result.ok) {
-                            if (typeof window.reloadRankingsCache === "function") window.reloadRankingsCache();
-                            rankingsRefreshStatus.textContent = "Updated.";
-                        } else {
-                            rankingsRefreshStatus.textContent = result && result.error ? result.error : "Save failed.";
-                        }
-                    }).catch(function(e) {
-                        rankingsRefreshStatus.textContent = "Error: " + (e.message || "fetch failed");
-                    }).finally(function() {
-                        rankingsRefreshBtn.disabled = false;
-                        setTimeout(function() { rankingsRefreshStatus.textContent = ""; }, 4000);
-                    });
-                });
+                rankingsRefreshBtn.addEventListener("click", doRefreshRankings);
             }
+            doRefreshRankings();
 
             applyOrder(getStoredOrder());
             buildLayerList();
@@ -1021,8 +1318,347 @@ header('Pragma: no-cache');
             window.addEventListener("resize", function() {
                 var ytOverlay = document.getElementById("scene-overlay-yt");
                 if (ytOverlay && ytOverlay.style.display === "block") applyYtCropToVideo();
+                var ytIframeOverlay = document.getElementById("scene-overlay-yt-iframe");
+                if (ytIframeOverlay && ytIframeOverlay.style.display === "block") applyYtCropToIframe();
             });
         })();
+        var YT_IFRAME_VIDEOS_KEY = 'stream_production_yt_iframe_videos';
+        var YT_IFRAME_VIDEOS_DEFAULTS = [
+            { label: 'INTRO', url: 'https://www.youtube.com/watch?v=vt04Xbq57Dk' },
+            { label: 'BREAK', url: 'https://youtu.be/O9lNetcn9Y8?si=FaqwLX5I9KkoJecK' }
+        ];
+
+        function normalizeYtUrl(url) {
+            if (!url || !url.trim()) return '';
+            url = url.trim();
+            var videoId = null;
+            var m;
+            /* youtu.be/ID */
+            m = url.match(/youtu\.be\/([a-zA-Z0-9_-]{11})/);
+            if (m) videoId = m[1];
+            /* youtube.com/watch?v=ID */
+            if (!videoId) { m = url.match(/[?&]v=([a-zA-Z0-9_-]{11})/); if (m) videoId = m[1]; }
+            /* youtube.com/embed/ID */
+            if (!videoId) { m = url.match(/\/embed\/([a-zA-Z0-9_-]{11})/); if (m) videoId = m[1]; }
+            /* youtube.com/shorts/ID */
+            if (!videoId) { m = url.match(/\/shorts\/([a-zA-Z0-9_-]{11})/); if (m) videoId = m[1]; }
+            if (videoId) return 'https://www.youtube.com/embed/' + videoId + '?autoplay=1&enablejsapi=1';
+            return url; /* unrecognised – pass through */
+        }
+
+        function updateYtResolvedDisplays() {
+            [1, 2].forEach(function(n) {
+                var u = document.getElementById('yt-video-' + n + '-url');
+                var d = document.getElementById('yt-video-' + n + '-resolved');
+                if (!u || !d) return;
+                var raw = u.value.trim();
+                if (!raw) { d.textContent = ''; return; }
+                var resolved = normalizeYtUrl(raw);
+                var isYt = /youtube\.com|youtu\.be/.test(raw);
+                if (!isYt) {
+                    d.style.color = '#fa8';
+                    d.textContent = '⚠ Not a YouTube URL – used as-is';
+                } else {
+                    d.style.color = '#7c7';
+                    d.textContent = '→ ' + resolved;
+                }
+            });
+        }
+
+        function getYtIframeVideos() {
+            var l1 = document.getElementById('yt-video-1-label');
+            var u1 = document.getElementById('yt-video-1-url');
+            var l2 = document.getElementById('yt-video-2-label');
+            var u2 = document.getElementById('yt-video-2-url');
+            return [
+                { label: (l1 && l1.value.trim()) || YT_IFRAME_VIDEOS_DEFAULTS[0].label, url: normalizeYtUrl((u1 && u1.value.trim()) || YT_IFRAME_VIDEOS_DEFAULTS[0].url) },
+                { label: (l2 && l2.value.trim()) || YT_IFRAME_VIDEOS_DEFAULTS[1].label, url: normalizeYtUrl((u2 && u2.value.trim()) || YT_IFRAME_VIDEOS_DEFAULTS[1].url) }
+            ];
+        }
+
+        function syncYtIframeButtonLabels() {
+            var videos = getYtIframeVideos();
+            var introBtn = document.getElementById('scene-btn-yt-intro');
+            var breakBtn = document.getElementById('scene-btn-yt-break');
+            if (introBtn) introBtn.textContent = videos[0].label;
+            if (breakBtn) breakBtn.textContent = videos[1].label;
+        }
+
+        function saveYtIframeVideos() {
+            var videos = getYtIframeVideos();
+            try { localStorage.setItem(YT_IFRAME_VIDEOS_KEY, JSON.stringify(videos)); } catch (e) {}
+        }
+
+        function loadYtIframeVideos() {
+            try {
+                var raw = localStorage.getItem(YT_IFRAME_VIDEOS_KEY);
+                if (raw) {
+                    var parsed = JSON.parse(raw);
+                    if (Array.isArray(parsed)) { setYtIframeVideos(parsed); return; }
+                }
+            } catch (e) {}
+        }
+
+        function setYtIframeVideos(arr) {
+            var l1 = document.getElementById('yt-video-1-label');
+            var u1 = document.getElementById('yt-video-1-url');
+            var l2 = document.getElementById('yt-video-2-label');
+            var u2 = document.getElementById('yt-video-2-url');
+            var v0 = arr[0] || {};
+            var v1 = arr[1] || {};
+            if (l1) l1.value = v0.label != null ? v0.label : YT_IFRAME_VIDEOS_DEFAULTS[0].label;
+            if (u1) u1.value = v0.url != null ? v0.url : YT_IFRAME_VIDEOS_DEFAULTS[0].url;
+            if (l2) l2.value = v1.label != null ? v1.label : YT_IFRAME_VIDEOS_DEFAULTS[1].label;
+            if (u2) u2.value = v1.url != null ? v1.url : YT_IFRAME_VIDEOS_DEFAULTS[1].url;
+            syncYtIframeButtonLabels();
+            updateYtResolvedDisplays();
+        }
+
+        (function initYtIframeVideos() {
+            loadYtIframeVideos();
+            syncYtIframeButtonLabels();
+            updateYtResolvedDisplays();
+            ['yt-video-1-label', 'yt-video-1-url', 'yt-video-2-label', 'yt-video-2-url'].forEach(function(id) {
+                var el = document.getElementById(id);
+                if (el) el.addEventListener('input', function() {
+                    syncYtIframeButtonLabels();
+                    updateYtResolvedDisplays();
+                    saveYtIframeVideos();
+                });
+            });
+        })();
+
+        /* ── Break countdown ─────────────────────────────────────── */
+        var BREAK_SETTINGS_KEY = 'stream_production_break_settings';
+        var BREAK_DEFAULTS = { min: 5, sec: 0, msg: 'be right back...' };
+        var breakCountdownInterval = null;
+
+        function getBreakSettings() {
+            var m = document.getElementById('break-timer-min');
+            var s = document.getElementById('break-timer-sec');
+            var msg = document.getElementById('break-timer-msg');
+            return {
+                min: m ? Math.max(0, parseInt(m.value, 10) || 0) : BREAK_DEFAULTS.min,
+                sec: s ? Math.max(0, Math.min(59, parseInt(s.value, 10) || 0)) : BREAK_DEFAULTS.sec,
+                msg: msg ? msg.value : BREAK_DEFAULTS.msg
+            };
+        }
+
+        function setBreakSettings(obj) {
+            var m = document.getElementById('break-timer-min');
+            var s = document.getElementById('break-timer-sec');
+            var msg = document.getElementById('break-timer-msg');
+            if (m) m.value = (obj && obj.min != null) ? obj.min : BREAK_DEFAULTS.min;
+            if (s) s.value = (obj && obj.sec != null) ? obj.sec : BREAK_DEFAULTS.sec;
+            if (msg) msg.value = (obj && obj.msg != null) ? obj.msg : BREAK_DEFAULTS.msg;
+            syncBreakQuickFromSettings();
+        }
+
+        function saveBreakSettings() {
+            try { localStorage.setItem(BREAK_SETTINGS_KEY, JSON.stringify(getBreakSettings())); } catch (e) {}
+        }
+
+        function loadBreakSettings() {
+            try {
+                var raw = localStorage.getItem(BREAK_SETTINGS_KEY);
+                if (raw) { var p = JSON.parse(raw); if (p && typeof p === 'object') { setBreakSettings(p); return; } }
+            } catch (e) {}
+        }
+
+        function syncBreakQuickFromSettings() {
+            var m = document.getElementById('break-timer-min');
+            var s = document.getElementById('break-timer-sec');
+            var qm = document.getElementById('break-quick-min');
+            var qs = document.getElementById('break-quick-sec');
+            if (m && qm) qm.value = m.value;
+            if (s && qs) qs.value = s.value;
+        }
+
+        function syncBreakSettingsFromQuick() {
+            var m = document.getElementById('break-timer-min');
+            var s = document.getElementById('break-timer-sec');
+            var qm = document.getElementById('break-quick-min');
+            var qs = document.getElementById('break-quick-sec');
+            if (m && qm) m.value = qm.value;
+            if (s && qs) s.value = qs.value;
+        }
+
+        function formatBreakTime(totalSec) {
+            var m = Math.floor(totalSec / 60);
+            var s = totalSec % 60;
+            return m + ':' + (s < 10 ? '0' : '') + s;
+        }
+
+        function startBreakCountdown() {
+            stopBreakCountdown();
+            var bs = getBreakSettings();
+            var totalSec = bs.min * 60 + bs.sec;
+            var msgEl = document.getElementById('break-message-display');
+            var timerEl = document.getElementById('break-timer-display');
+            var overlayEl = document.getElementById('break-countdown-overlay');
+            if (msgEl) msgEl.textContent = bs.msg;
+            if (timerEl) timerEl.textContent = formatBreakTime(totalSec);
+            if (overlayEl) overlayEl.style.display = 'block';
+            if (totalSec <= 0) {
+                closeYtIframeScene();
+                return;
+            }
+            breakCountdownInterval = setInterval(function() {
+                totalSec--;
+                if (timerEl) timerEl.textContent = formatBreakTime(Math.max(0, totalSec));
+                if (totalSec <= 0) {
+                    stopBreakCountdown();
+                    closeYtIframeScene();
+                }
+            }, 1000);
+        }
+
+        function stopBreakCountdown() {
+            if (breakCountdownInterval !== null) {
+                clearInterval(breakCountdownInterval);
+                breakCountdownInterval = null;
+            }
+            var overlayEl = document.getElementById('break-countdown-overlay');
+            if (overlayEl) overlayEl.style.display = 'none';
+        }
+
+        /* Shared teardown: hide the YT iframe scene and restore the non-SC2 layout */
+        function closeYtIframeScene() {
+            var overlay = document.getElementById('scene-overlay-yt-iframe');
+            var iframe = document.getElementById('yt-iframe-player');
+            var introBtn = document.getElementById('scene-btn-yt-intro');
+            var breakBtn = document.getElementById('scene-btn-yt-break');
+            stopBreakCountdown();
+            if (overlay) { overlay.style.display = 'none'; overlay.removeAttribute('data-yt-which'); }
+            if (iframe) iframe.src = '';
+            if (introBtn) introBtn.classList.remove('active');
+            if (breakBtn) breakBtn.classList.remove('active');
+            applyLayoutFromSc2Button();
+        }
+
+        (function initBreakSettings() {
+            loadBreakSettings();
+            /* Settings inputs → sync quick + save */
+            ['break-timer-min', 'break-timer-sec', 'break-timer-msg'].forEach(function(id) {
+                var el = document.getElementById(id);
+                if (el) el.addEventListener('input', function() { syncBreakQuickFromSettings(); saveBreakSettings(); });
+            });
+            /* Quick inputs → sync settings + save */
+            ['break-quick-min', 'break-quick-sec'].forEach(function(id) {
+                var el = document.getElementById(id);
+                if (el) el.addEventListener('input', function() { syncBreakSettingsFromQuick(); saveBreakSettings(); });
+            });
+        })();
+        /* ── End break countdown ─────────────────────────────────── */
+
+        /* Detect YouTube video end via postMessage (requires enablejsapi=1 in URL).
+           YouTube only broadcasts state events after receiving a 'listening' subscription —
+           see subscribeYtIframe(). State 0 = ended. */
+        window.addEventListener('message', function(e) {
+            if (!e.data) return;
+            var data;
+            try { data = typeof e.data === 'string' ? JSON.parse(e.data) : e.data; } catch (ex) { return; }
+            /* Some builds nest state inside info.playerState; support both shapes */
+            var state = null;
+            if (data.event === 'onStateChange') state = data.info;
+            else if (data.info && typeof data.info === 'object' && 'playerState' in data.info) state = data.info.playerState;
+            if (state !== 0) return;
+            var overlay = document.getElementById('scene-overlay-yt-iframe');
+            if (!overlay || overlay.style.display !== 'block') return;
+            closeYtIframeScene();
+        });
+
+        function subscribeYtIframe(iframe) {
+            if (!iframe || !iframe.contentWindow) return;
+            try {
+                iframe.contentWindow.postMessage(JSON.stringify({ event: 'listening', id: 1 }), 'https://www.youtube.com');
+            } catch (e) {}
+        }
+
+        function applyYtCropToIframe() {
+            var crop = getYtCrop();
+            var overlay = document.getElementById('scene-overlay-yt-iframe');
+            var wrap = document.getElementById('yt-iframe-crop-wrap');
+            var iframe = document.getElementById('yt-iframe-player');
+            if (!overlay || !wrap || !iframe) return;
+            var parent = overlay.parentElement || overlay.offsetParent;
+            var rect = (parent && parent.getBoundingClientRect) ? parent.getBoundingClientRect() : { width: 1280, height: 720 };
+            var w = rect.width || 1280;
+            var h = rect.height || 720;
+            var cropW = Math.max(1, w - crop.left - crop.right);
+            var cropH = Math.max(1, h - crop.top - crop.bottom);
+            var scale = Math.min(w / cropW, h / cropH);
+            wrap.style.left = '50%';
+            wrap.style.top = '50%';
+            wrap.style.width = cropW + 'px';
+            wrap.style.height = cropH + 'px';
+            wrap.style.transform = 'translate(-50%, -50%) scale(' + scale + ')';
+            wrap.style.transformOrigin = 'center center';
+            wrap.style.overflow = 'hidden';
+            iframe.style.position = 'absolute';
+            iframe.style.left = (-crop.left) + 'px';
+            iframe.style.top = (-crop.top) + 'px';
+            iframe.style.width = w + 'px';
+            iframe.style.height = h + 'px';
+        }
+
+        function toggleYtIframeScene(which) {
+            var overlay = document.getElementById('scene-overlay-yt-iframe');
+            var iframe = document.getElementById('yt-iframe-player');
+            var introBtn = document.getElementById('scene-btn-yt-intro');
+            var breakBtn = document.getElementById('scene-btn-yt-break');
+            var isActive = overlay && overlay.style.display === 'block';
+            var currentWhich = overlay ? overlay.getAttribute('data-yt-which') : '';
+
+            if (isActive && currentWhich === which) {
+                closeYtIframeScene();
+            } else {
+                closeYtIframeScene(); /* clear any prior YT iframe state before switching */
+                var videos = getYtIframeVideos();
+                var videoIdx = which === 'intro' ? 0 : 1;
+                var url = videos[videoIdx].url;
+                /* Hide other overlays */
+                VIDEO_OVERLAY_KEYS.forEach(function(k) { var b = document.getElementById('scene-btn-' + k); if (b) b.classList.remove('active'); });
+                var bgOverlay = document.getElementById('scene-overlay-all-vdo');
+                if (bgOverlay) bgOverlay.style.display = 'none';
+                var sharedOverlay = document.getElementById('scene-overlay-shared-window');
+                var sharedBtn = document.getElementById('scene-btn-shared-window');
+                if (sharedOverlay) sharedOverlay.style.display = 'none';
+                if (sharedBtn) sharedBtn.classList.remove('active');
+                var fullSharedOverlay = document.getElementById('scene-overlay-full-shared-panel');
+                var fullSharedBtn = document.getElementById('scene-btn-full-shared');
+                if (fullSharedOverlay) fullSharedOverlay.style.display = 'none';
+                if (fullSharedBtn) fullSharedBtn.classList.remove('active');
+                var ytOverlay = document.getElementById('scene-overlay-yt');
+                var ytBtn = document.getElementById('scene-btn-yt');
+                if (ytOverlay) ytOverlay.style.display = 'none';
+                if (ytBtn) ytBtn.classList.remove('active');
+                var vdoFullOverlay = document.getElementById('scene-overlay-vdo-full');
+                var vdoFullBtn = document.getElementById('scene-btn-vdo-full');
+                if (vdoFullOverlay) vdoFullOverlay.style.display = 'none';
+                if (vdoFullBtn) vdoFullBtn.classList.remove('active');
+                var sc2Overlay = document.getElementById('sc2-overlay');
+                var sc2Panel = document.getElementById('sc2-panel-wrap');
+                var sc2Btn = document.getElementById('scene-btn-sc2');
+                if (sc2Overlay) { sc2Overlay.style.display = 'none'; sc2Overlay.style.zIndex = ''; }
+                if (sc2Panel) sc2Panel.style.display = 'none';
+                if (sc2Btn) sc2Btn.classList.remove('active');
+                /* Show YT iframe overlay */
+                overlay.setAttribute('data-yt-which', which);
+                if (iframe) {
+                    iframe.src = url;
+                    /* Subscribe for state-change messages once the iframe loads */
+                    iframe.onload = function() { subscribeYtIframe(iframe); };
+                }
+                overlay.style.display = 'block';
+                applyYtCropToIframe();
+                if (introBtn) introBtn.classList.toggle('active', which === 'intro');
+                if (breakBtn) breakBtn.classList.toggle('active', which === 'break');
+                /* Start countdown only for BREAK */
+                if (which === 'break') startBreakCountdown();
+            }
+        }
+
         function getDefaultSc2PanelPosition(overlayRect) {
             var ow = overlayRect.width || 1280;
             return { left: Math.round(ow - 420), top: 20, width: 400, height: 300 };
@@ -1126,7 +1762,7 @@ header('Pragma: no-cache');
 
             wrapS10.style.display = (s10Cb && s10Cb.checked) ? "block" : "none";
             wrapFsl.style.display = (fslCb && fslCb.checked) ? "block" : "none";
-            overlay.className = "logos-overlay";
+            overlay.className = "logos-overlay" + (logosEditMode ? " logos-edit-mode" : "");
 
             if (logosEditMode) {
                 makeVisibleLogosDraggable();
@@ -1190,36 +1826,7 @@ header('Pragma: no-cache');
                 $(el).draggable({ containment: "#logos-overlay", scroll: false, cursor: "move" });
                 $(el).resizable({ containment: "#logos-overlay", handles: "all", aspectRatio: ratio });
             });
-            var sc2Cb = document.getElementById("logo-sc2-cb");
-            var sc2Overlay = document.getElementById("sc2-overlay");
-            var sc2Panel = document.getElementById("sc2-panel-wrap");
-            if (sc2Cb && sc2Cb.checked && sc2Overlay && sc2Panel) {
-                sc2Overlay.style.display = "block";
-                sc2Overlay.style.pointerEvents = "auto";
-                sc2Overlay.style.zIndex = "99999";
-                sc2Overlay.classList.add("logos-edit-mode");
-                var saved = getSavedSc2Panel();
-                var overlayRect = sc2Overlay.getBoundingClientRect();
-                var pos = saved || getDefaultSc2PanelPosition(overlayRect);
-                applyPositionToSc2Panel(sc2Panel, pos);
-                sc2Panel.style.display = "block";
-                if (!$(sc2Panel).data("ui-draggable")) {
-                    $(sc2Panel).draggable({ containment: "#sc2-overlay", scroll: false, cursor: "move" });
-                    $(sc2Panel).resizable({ containment: "#sc2-overlay", handles: "all" });
-                }
-            }
-            var vdoFullOverlay = document.getElementById("scene-overlay-vdo-full");
-            var vdoFullPanel = document.getElementById("vdo-full-panel-wrap");
-            if (vdoFullOverlay && vdoFullPanel && vdoFullOverlay.style.display === "block") {
-                var vdoSaved = getSavedVdoFullPanel();
-                var vdoOverlayRect = vdoFullOverlay.getBoundingClientRect();
-                var vdoPos = vdoSaved || getDefaultVdoFullPanelPosition(vdoOverlayRect);
-                applyPositionToVdoFullPanel(vdoFullPanel, vdoPos);
-                if (!$(vdoFullPanel).data("ui-draggable")) {
-                    $(vdoFullPanel).draggable({ containment: "#scene-overlay-vdo-full", scroll: false, cursor: "move" });
-                    $(vdoFullPanel).resizable({ containment: "#scene-overlay-vdo-full", handles: "all" });
-                }
-            }
+            updateVdoPanelsInEditMode();
         }
 
         function resetLogosPositions() {
@@ -1319,7 +1926,11 @@ header('Pragma: no-cache');
                     sc2OverlayEl.style.zIndex = "";
                     sc2OverlayEl.classList.remove("logos-edit-mode");
                     var sceneSc2Btn = document.getElementById("scene-btn-sc2");
-                    if (!sceneSc2Btn || !sceneSc2Btn.classList.contains("active")) sc2OverlayEl.style.display = "none";
+                    if (sceneSc2Btn && sceneSc2Btn.classList.contains("active")) {
+                        sc2OverlayEl.style.display = "block";
+                    } else {
+                        sc2OverlayEl.style.display = "none";
+                    }
                 }
                 if (sc2PanelEl) {
                     var sp = getSavedSc2Panel();
@@ -1334,17 +1945,29 @@ header('Pragma: no-cache');
                     $(vdoFullPanelEl).draggable("destroy");
                     $(vdoFullPanelEl).resizable("destroy");
                 }
+                var sc2BtnSave = document.getElementById("scene-btn-sc2");
+                var sc2IsActiveSave = sc2BtnSave && sc2BtnSave.classList.contains("active");
                 if (vdoFullOverlayEl) {
                     vdoFullOverlayEl.style.pointerEvents = "none";
-                    vdoFullOverlayEl.style.zIndex = "";
                     vdoFullOverlayEl.classList.remove("logos-edit-mode");
-                    var vdoFullBtn = document.getElementById("scene-btn-vdo-full");
-                    if (!vdoFullBtn || !vdoFullBtn.classList.contains("active")) vdoFullOverlayEl.style.display = "none";
+                    if (sc2IsActiveSave) {
+                        vdoFullOverlayEl.style.display = "none";
+                        vdoFullOverlayEl.style.zIndex = "";
+                    } else {
+                        /* Hard rule: VDO full is always visible in non-SC2 mode */
+                        vdoFullOverlayEl.style.display = "block";
+                        vdoFullOverlayEl.style.zIndex = "30000";
+                    }
+                    var vdoFullBtnSave = document.getElementById("scene-btn-vdo-full");
+                    if (vdoFullBtnSave) vdoFullBtnSave.classList.toggle("active", !sc2IsActiveSave);
                 }
                 if (vdoFullPanelEl) {
-                    var vp = getSavedVdoFullPanel();
-                    var vdoRect = vdoFullOverlayEl ? vdoFullOverlayEl.getBoundingClientRect() : { width: 1280, height: 720 };
-                    applyPositionToVdoFullPanel(vdoFullPanelEl, vp || getDefaultVdoFullPanelPosition(vdoRect));
+                    vdoFullPanelEl.style.display = sc2IsActiveSave ? "none" : "block";
+                    if (!sc2IsActiveSave) {
+                        var vp = getSavedVdoFullPanel();
+                        var vdoRect = { width: vdoFullOverlayEl ? vdoFullOverlayEl.offsetWidth || 1280 : 1280, height: vdoFullOverlayEl ? vdoFullOverlayEl.offsetHeight || 720 : 720 };
+                        applyPositionToVdoFullPanel(vdoFullPanelEl, vp || getDefaultVdoFullPanelPosition(vdoRect));
+                    }
                 }
                 logoIds.forEach(function(id) {
                     var el = document.getElementById(id);
@@ -1368,47 +1991,83 @@ header('Pragma: no-cache');
             overlay.style.display = "block";
             document.getElementById("scene-btn-logos").classList.add("active");
             overlay.style.pointerEvents = "none";
-            overlay.style.zIndex = "100001";
+            overlay.style.zIndex = "100002";
             overlay.classList.add("logos-edit-mode");
             logosEditMode = true;
             btn.textContent = "Save";
+            updateVdoPanelsInEditMode();
+            updateLogosOverlay();
+        }
+
+        function updateVdoPanelsInEditMode() {
+            if (!logosEditMode) return;
+            var sceneSc2Btn = document.getElementById("scene-btn-sc2");
+            var sc2Active = sceneSc2Btn && sceneSc2Btn.classList.contains("active");
             var vdoFullOverlayEl = document.getElementById("scene-overlay-vdo-full");
             var vdoFullPanelEl = document.getElementById("vdo-full-panel-wrap");
-            if (vdoFullOverlayEl && vdoFullPanelEl) {
-                vdoFullOverlayEl.style.display = "block";
-                vdoFullOverlayEl.style.pointerEvents = "auto";
-                vdoFullOverlayEl.style.zIndex = "100000";
-                vdoFullOverlayEl.classList.add("logos-edit-mode");
-                var pos = getSavedVdoFullPanel() || getDefaultVdoFullPanelPosition(vdoFullOverlayEl.getBoundingClientRect());
-                applyPositionToVdoFullPanel(vdoFullPanelEl, pos);
-                var vdoIframe = vdoFullPanelEl.querySelector("iframe");
-                ensureVdoIframeLoaded(vdoIframe);
-            }
-            var sc2Cb = document.getElementById("logo-sc2-cb");
-            if (sc2Cb && sc2Cb.checked) {
-                var sc2OverlayEl = document.getElementById("sc2-overlay");
-                if (sc2OverlayEl) {
+            var sc2OverlayEl = document.getElementById("sc2-overlay");
+            var sc2PanelEl = document.getElementById("sc2-panel-wrap");
+            if (sc2Active) {
+                if (vdoFullOverlayEl && vdoFullPanelEl) {
+                    if ($(vdoFullPanelEl).data("ui-draggable")) {
+                        var off = vdoFullPanelEl.getBoundingClientRect();
+                        var par = vdoFullOverlayEl.getBoundingClientRect();
+                        setSavedVdoFullPanel({ left: Math.round(off.left - par.left), top: Math.round(off.top - par.top), width: Math.round(off.width), height: Math.round(off.height) });
+                        $(vdoFullPanelEl).draggable("destroy");
+                        $(vdoFullPanelEl).resizable("destroy");
+                    }
+                    vdoFullOverlayEl.style.display = "none";
+                }
+                if (sc2OverlayEl && sc2PanelEl) {
                     sc2OverlayEl.style.display = "block";
                     sc2OverlayEl.style.pointerEvents = "auto";
-                    sc2OverlayEl.style.zIndex = "99999";
+                    sc2OverlayEl.style.zIndex = "100001";
                     sc2OverlayEl.classList.add("logos-edit-mode");
-                    var sc2PanelEdit = document.getElementById("sc2-panel-wrap");
-                    if (sc2PanelEdit) {
-                        sc2PanelEdit.style.display = "block";
-                        var sc2PosEdit = getSavedSc2Panel() || getDefaultSc2PanelPosition(sc2OverlayEl.getBoundingClientRect());
-                        if (sc2PosEdit) applyPositionToSc2Panel(sc2PanelEdit, sc2PosEdit);
-                        var sc2IframeEdit = sc2PanelEdit.querySelector("iframe");
-                        ensureVdoIframeLoaded(sc2IframeEdit);
+                    var sc2Pos = getSavedSc2Panel() || getDefaultSc2PanelPosition(sc2OverlayEl.getBoundingClientRect());
+                    applyPositionToSc2Panel(sc2PanelEl, sc2Pos);
+                    sc2PanelEl.style.display = "block";
+                    if (!$(sc2PanelEl).data("ui-draggable")) {
+                        $(sc2PanelEl).draggable({ containment: "#sc2-overlay", scroll: false, cursor: "move" });
+                        $(sc2PanelEl).resizable({ containment: "#sc2-overlay", handles: "all" });
                     }
+                    var sc2Iframe = sc2PanelEl.querySelector("iframe");
+                    ensureVdoIframeLoaded(sc2Iframe);
+                }
+            } else {
+                if (vdoFullOverlayEl && vdoFullPanelEl) {
+                    vdoFullOverlayEl.style.display = "block";
+                    vdoFullOverlayEl.style.pointerEvents = "auto";
+                    vdoFullOverlayEl.style.zIndex = "100001";
+                    vdoFullOverlayEl.classList.add("logos-edit-mode");
+                    var vdoFullBtnEdit = document.getElementById("scene-btn-vdo-full");
+                    if (vdoFullBtnEdit) vdoFullBtnEdit.classList.add("active");
+                    var pos = getSavedVdoFullPanel() || getDefaultVdoFullPanelPosition(vdoFullOverlayEl.getBoundingClientRect());
+                    applyPositionToVdoFullPanel(vdoFullPanelEl, pos);
+                    vdoFullPanelEl.style.display = "block";
+                    if (!$(vdoFullPanelEl).data("ui-draggable")) {
+                        $(vdoFullPanelEl).draggable({ containment: "#scene-overlay-vdo-full", scroll: false, cursor: "move" });
+                        $(vdoFullPanelEl).resizable({ containment: "#scene-overlay-vdo-full", handles: "all" });
+                    }
+                    var vdoIframe = vdoFullPanelEl.querySelector("iframe");
+                    ensureVdoIframeLoaded(vdoIframe);
+                }
+                if (sc2OverlayEl && sc2PanelEl) {
+                    if ($(sc2PanelEl).data("ui-draggable")) {
+                        var off = sc2PanelEl.getBoundingClientRect();
+                        var par = sc2OverlayEl.getBoundingClientRect();
+                        setSavedSc2Panel({ left: Math.round(off.left - par.left), top: Math.round(off.top - par.top), width: Math.round(off.width), height: Math.round(off.height) });
+                        $(sc2PanelEl).draggable("destroy");
+                        $(sc2PanelEl).resizable("destroy");
+                    }
+                    sc2OverlayEl.style.display = "none";
                 }
             }
-            updateLogosOverlay();
         }
 
         (function wireLogosSettings() {
             document.getElementById("logo-s10-cb").addEventListener("change", updateLogosOverlay);
             document.getElementById("logo-fsl-small-cb").addEventListener("change", updateLogosOverlay);
-            document.getElementById("logo-sc2-cb").addEventListener("change", function() { updateSc2Panel(); });
+            document.getElementById("logo-sc2-cb").addEventListener("change", function() { if (!logosEditMode) updateSc2Panel(); });
         })();
         window.updateSc2Panel = updateSc2Panel;
 
@@ -1730,6 +2389,15 @@ header('Pragma: no-cache');
                     if (fullSharedBtn) fullSharedBtn.classList.remove('active');
                     if (ytOverlay) ytOverlay.style.display = 'none';
                     if (ytBtn) ytBtn.classList.remove('active');
+                    var ytIframeOverlayAl = document.getElementById('scene-overlay-yt-iframe');
+                    var ytIframePlayerAl = document.getElementById('yt-iframe-player');
+                    var ytIframeIntroBtnAl = document.getElementById('scene-btn-yt-intro');
+                    var ytIframeBreakBtnAl = document.getElementById('scene-btn-yt-break');
+                    stopBreakCountdown();
+                    if (ytIframeOverlayAl) ytIframeOverlayAl.style.display = 'none';
+                    if (ytIframePlayerAl) ytIframePlayerAl.src = '';
+                    if (ytIframeIntroBtnAl) ytIframeIntroBtnAl.classList.remove('active');
+                    if (ytIframeBreakBtnAl) ytIframeBreakBtnAl.classList.remove('active');
                     if (sc2Overlay) sc2Overlay.style.display = 'block';
                     if (sc2Panel) {
                         sc2Panel.style.display = 'block';
@@ -1967,12 +2635,21 @@ header('Pragma: no-cache');
                             var fullSharedBtn = document.getElementById('scene-btn-full-shared');
                             var ytOverlay = document.getElementById('scene-overlay-yt');
                             var ytBtn = document.getElementById('scene-btn-yt');
+                            var ytIframeOverlay = document.getElementById('scene-overlay-yt-iframe');
+                            var ytIframeIntroBtn = document.getElementById('scene-btn-yt-intro');
+                            var ytIframeBreakBtn = document.getElementById('scene-btn-yt-break');
+                            var ytIframePlayer = document.getElementById('yt-iframe-player');
                             if (sharedOverlay) sharedOverlay.style.display = 'none';
                             if (sharedBtn) sharedBtn.classList.remove('active');
                             if (fullSharedOverlay) fullSharedOverlay.style.display = 'none';
                             if (fullSharedBtn) fullSharedBtn.classList.remove('active');
                             if (ytOverlay) ytOverlay.style.display = 'none';
                             if (ytBtn) ytBtn.classList.remove('active');
+                            stopBreakCountdown();
+                            if (ytIframeOverlay) ytIframeOverlay.style.display = 'none';
+                            if (ytIframePlayer) ytIframePlayer.src = '';
+                            if (ytIframeIntroBtn) ytIframeIntroBtn.classList.remove('active');
+                            if (ytIframeBreakBtn) ytIframeBreakBtn.classList.remove('active');
                             sc2Overlay.style.display = 'block';
                             btn.classList.add('active');
                             if (sc2Panel) {
@@ -1982,6 +2659,7 @@ header('Pragma: no-cache');
                                 var sc2Iframe = sc2Panel.querySelector('iframe');
                                 ensureVdoIframeLoaded(sc2Iframe);
                             }
+                            if (typeof logosEditMode !== 'undefined' && logosEditMode) updateVdoPanelsInEditMode();
                         }
                     });
                 } else {
@@ -2005,12 +2683,21 @@ header('Pragma: no-cache');
                     var fullSharedBtn = document.getElementById('scene-btn-full-shared');
                     var ytOverlay = document.getElementById('scene-overlay-yt');
                     var ytBtn = document.getElementById('scene-btn-yt');
+                    var ytIframeOverlaySc2Off = document.getElementById('scene-overlay-yt-iframe');
+                    var ytIframePlayerSc2Off = document.getElementById('yt-iframe-player');
+                    var ytIframeIntroBtnSc2Off = document.getElementById('scene-btn-yt-intro');
+                    var ytIframeBreakBtnSc2Off = document.getElementById('scene-btn-yt-break');
                     if (sharedOverlay) sharedOverlay.style.display = 'none';
                     if (sharedBtn) sharedBtn.classList.remove('active');
                     if (fullSharedOverlay) fullSharedOverlay.style.display = 'none';
                     if (fullSharedBtn) fullSharedBtn.classList.remove('active');
                     if (ytOverlay) ytOverlay.style.display = 'none';
                     if (ytBtn) ytBtn.classList.remove('active');
+                    stopBreakCountdown();
+                    if (ytIframeOverlaySc2Off) ytIframeOverlaySc2Off.style.display = 'none';
+                    if (ytIframePlayerSc2Off) ytIframePlayerSc2Off.src = '';
+                    if (ytIframeIntroBtnSc2Off) ytIframeIntroBtnSc2Off.classList.remove('active');
+                    if (ytIframeBreakBtnSc2Off) ytIframeBreakBtnSc2Off.classList.remove('active');
                     if (bgBtn) bgBtn.classList.add('active');
                     if (vdoFullOverlay) vdoFullOverlay.style.display = 'block';
                     if (vdoFullBtn) vdoFullBtn.classList.add('active');
@@ -2023,6 +2710,7 @@ header('Pragma: no-cache');
                     }
                     sc2Overlay.style.display = 'none';
                     btn.classList.remove('active');
+                    if (typeof logosEditMode !== 'undefined' && logosEditMode) updateVdoPanelsInEditMode();
                 }
             } else if (sceneId === 'shared-window') {
                 var sharedOverlay = document.getElementById('scene-overlay-shared-window');
@@ -2238,31 +2926,47 @@ header('Pragma: no-cache');
                 const baseUrl = window.spiderChartBaseUrl || "http://localhost/psistorm.com/fsl/view_spider_chart_player.php";
                 const chartUrl = `${baseUrl}?name=${encodeURIComponent(playerName)}&division=${encodeURIComponent(division)}`;
                 
-                // Get positioning from JS variables  
-                const pos = window.displayPositions ? window.displayPositions.externalChart : {left: '-20%', top: '20%', scale: '1.2'};
+                const pos = window.displayPositions ? window.displayPositions.externalChart : {scale: '1.1'};
+                const scale = pos.scale || '1.1';
                 
-                // Create iframe in dedicated overlay div
+                // Create iframe in dedicated overlay div, centered in right panel. Shorter height crops bottom black space.
                 chartOverlay.innerHTML = `
                     <div style="
-                        position: relative;
-                        left: ${pos.left};
-                        top: ${pos.top};
-                        transform: scale(${pos.scale});
-                        transform-origin: top left;
+                        display: flex;
+                        flex-direction: column;
+                        justify-content: center;
+                        align-items: center;
                         width: 100%;
+                        height: 100%;
                     ">
-                        <iframe 
-                            src="${chartUrl}" 
-                            width="800" 
-                            height="800" 
-                            frameborder="0"
-                            scrolling="no"
-                            style="border: none; overflow: hidden; pointer-events: auto;">
-                        </iframe>
+                        <div class="external-chart-player-label" style="
+                            flex-shrink: 0;
+                            margin-bottom: 8px;
+                            pointer-events: auto;
+                        "></div>
+                        <div style="
+                            transform: scale(${scale});
+                            transform-origin: center center;
+                            overflow: hidden;
+                        ">
+                            <iframe 
+                                src="${chartUrl}" 
+                                width="800" 
+                                height="600"
+                                frameborder="0"
+                                scrolling="no"
+                                style="border: none; overflow: hidden; pointer-events: auto; display: block;">
+                            </iframe>
+                        </div>
                     </div>
                 `;
                 
-                chartOverlay.style.display = 'block';
+                const labelBox = chartOverlay.querySelector('.external-chart-player-label');
+                if (labelBox && typeof window.setPlayerLabelContent === 'function') {
+                    window.setPlayerLabelContent(labelBox, playerName);
+                }
+                
+                chartOverlay.style.display = 'flex';
                 chartDisplayed = true;
                 chartButton.textContent = "Hide External Chart";
                 document.getElementById("error-message").textContent = "";

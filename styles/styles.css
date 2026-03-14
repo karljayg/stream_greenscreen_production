@@ -263,13 +263,8 @@ body.layer-outline-debug [data-layer-id].layer-outline-active {
 }
 
 /* FSL-style esports text badge: bright fill so text is always readable on green/dark */
-.player-name-box {
-    position: absolute;
-    bottom: 10%;
-    left: 50%;
-    transform: translateX(-50%);
-    display: none;
-    z-index: 9999;
+.player-name-box,
+.external-chart-player-label {
     text-align: center;
     box-sizing: border-box;
     padding: 18px 26px;
@@ -277,10 +272,20 @@ body.layer-outline-debug [data-layer-id].layer-outline-active {
     border-radius: 10px;
     width: auto;
     max-width: 90%;
+    position: relative;
+}
+.player-name-box {
+    position: absolute;
+    bottom: 10%;
+    left: 50%;
+    transform: translateX(-50%);
+    display: none;
+    z-index: 9999;
 }
 
 /* Angled plate behind the text */
-.player-name-box::before {
+.player-name-box::before,
+.external-chart-player-label::before {
     content: "";
     position: absolute;
     inset: 6px;
@@ -293,7 +298,8 @@ body.layer-outline-debug [data-layer-id].layer-outline-active {
 }
 
 /* "Speed lines" */
-.player-name-box::after {
+.player-name-box::after,
+.external-chart-player-label::after {
     content: "";
     position: absolute;
     right: -28px;
@@ -311,7 +317,8 @@ body.layer-outline-debug [data-layer-id].layer-outline-active {
     z-index: 0;
 }
 
-.player-name-box .player-intro-name {
+.player-name-box .player-intro-name,
+.external-chart-player-label .player-intro-name {
     position: relative;
     z-index: 1;
     display: block;
@@ -344,17 +351,20 @@ body.layer-outline-debug [data-layer-id].layer-outline-active {
         0 0 22px rgba(150, 50, 255, 0.35);
 }
 
-.player-name-box .player-intro-rank {
+.player-name-box .player-intro-rank,
+.external-chart-player-label .player-intro-rank {
     font-size: 0.72em;
     color: #add8e6;
 }
 
-.player-name-box .player-intro-group {
+.player-name-box .player-intro-group,
+.external-chart-player-label .player-intro-group {
     font-size: 0.72em;
     color: #d3d3d3;
 }
 
-.player-name-box .player-intro-stats {
+.player-name-box .player-intro-stats,
+.external-chart-player-label .player-intro-stats {
     position: relative;
     z-index: 1;
     display: block;
@@ -385,7 +395,8 @@ body.layer-outline-debug [data-layer-id].layer-outline-active {
 }
 
 /* Optional: extra pop for an accent span (e.g. stats or part of name) */
-.player-name-box .accent {
+.player-name-box .accent,
+.external-chart-player-label .accent {
     text-shadow:
         4px 0 0 #22002e,
         -4px 0 0 #22002e,
