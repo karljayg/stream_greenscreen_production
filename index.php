@@ -50,45 +50,45 @@ header('Pragma: no-cache');
         .scoreboard-overlay-wrap { background: transparent; }
         /* Centered horizontally; top edge 300px; bottom leaves room for small VDO */
         #scoreboard-content.scoreboard-content-wrap {
-            position: absolute; left: 50%; top: 100px; bottom: 80px;
-            width: calc(100% - 200px); max-width: calc(100vw - 200px);
+            position: absolute; left: 50%; top: 120px; bottom: 40px;
+            width: calc(100% - 60px); max-width: calc(100vw - 60px);
             transform: translateX(-50%);
             display: flex; flex-direction: column; align-items: center; justify-content: flex-start;
             overflow: auto; box-sizing: border-box;
         }
-        .scoreboard-panel { padding: 0.35rem 0.4rem; color: #fff; font-family: 'Exo 2', sans-serif; box-sizing: border-box; width: 100%; max-width: 100%; min-width: 0; }
+        .scoreboard-panel { padding: 0.6rem 0.8rem; color: #fff; font-family: 'Exo 2', sans-serif; box-sizing: border-box; width: 100%; max-width: 100%; min-width: 0; }
         .scoreboard-panel-inner { max-width: 100%; min-width: 0; margin: 0 auto; }
-        .scoreboard-header { display: flex; justify-content: center; align-items: center; gap: 0.6rem; margin-bottom: 0.45rem; padding-bottom: 0.4rem; border-bottom: 2px solid rgba(108, 92, 231, 0.3); flex-wrap: nowrap; }
+        .scoreboard-header { display: flex; justify-content: center; align-items: center; gap: 0.6rem; margin-bottom: 0.65rem; padding-bottom: 0.6rem; border-bottom: 2px solid rgba(108, 92, 231, 0.3); flex-wrap: nowrap; }
         .scoreboard-team-block { min-width: 0; flex: 1; }
         .scoreboard-team-a { text-align: center; }
         .scoreboard-team-b { text-align: center; }
-        .scoreboard-team-name { display: block; font-size: 2.525rem; font-weight: 600; line-height: 1.2; color: #e0e0e0; font-family: 'Exo 2', sans-serif; }
+        .scoreboard-team-name { display: block; font-size: 3.8rem; font-weight: 600; line-height: 1.2; color: #e0e0e0; font-family: 'Exo 2', sans-serif; }
         .scoreboard-team-a .scoreboard-team-name { color: #e0e0e0; }
         .scoreboard-team-b .scoreboard-team-name { color: #e0e0e0; }
-        .scoreboard-vs-block { display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 0 0.4rem; flex-shrink: 0; }
-        .scoreboard-score-main { font-size: 2.625rem; font-weight: 700; color: #FFFF99; font-family: 'Rajdhani', sans-serif; }
-        .scoreboard-score-label { font-size: 0.825rem; color: #00b894; text-transform: uppercase; letter-spacing: 0.06em; margin-top: 0.08rem; font-weight: 600; font-family: 'Rajdhani', sans-serif; }
-        .scoreboard-table-wrap { background: rgba(0, 0, 0, 0.25); border-radius: 8px; overflow: hidden; border: 1px solid rgba(108, 92, 231, 0.2); margin-top: 0.35rem; width: 100%; max-width: 100%; min-width: 0; }
-        .scoreboard-table { width: 100%; max-width: 100%; min-width: 0; table-layout: auto; border-collapse: collapse; font-size: 1.045rem; font-family: 'Exo 2', sans-serif; }
+        .scoreboard-vs-block { display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 0 0.8rem; flex-shrink: 0; }
+        .scoreboard-score-main { font-size: 4rem; font-weight: 700; color:rgb(248, 134, 3); font-family: 'Rajdhani', sans-serif; }
+        .scoreboard-score-label { font-size: 1.2rem; color: #00b894; text-transform: uppercase; letter-spacing: 0.06em; margin-top: 0.08rem; font-weight: 600; font-family: 'Rajdhani', sans-serif; }
+        .scoreboard-table-wrap { background: rgba(0, 0, 0, 0.25); border-radius: 8px; overflow: hidden; border: 1px solid rgba(108, 92, 231, 0.2); margin-top: 0.6rem; width: 100%; max-width: 100%; min-width: 0; }
+        .scoreboard-table { width: 100%; max-width: 100%; min-width: 0; table-layout: auto; border-collapse: collapse; font-size: 1.6rem; font-family: 'Exo 2', sans-serif; }
         /* Narrow columns shrink to content; team/map columns autosize (no width = fit content) */
         .scoreboard-table col:nth-child(1), .scoreboard-table col:nth-child(6), .scoreboard-table col:nth-child(10) { width: 0.1%; }
         .scoreboard-table col:nth-child(2) { width: 1%; min-width: 2.8em; }
         .scoreboard-table col:nth-child(5), .scoreboard-table col:nth-child(9) { width: 1%; min-width: 2em; }
         .scoreboard-table thead { border-bottom: none; }
-        .scoreboard-table th { padding: 0.28rem 0.35rem; text-align: center; color: #fff; font-weight: 600; font-size: 1.005rem; background: rgba(108, 92, 231, 0.25); border-bottom: 1px solid rgba(255,255,255,0.08); white-space: nowrap; }
+        .scoreboard-table th { padding: 0.5rem 0.65rem; text-align: center; color: #fff; font-weight: 600; font-size: 1.5rem; background: rgba(108, 92, 231, 0.25); border-bottom: 1px solid rgba(255,255,255,0.08); white-space: nowrap; }
         .scoreboard-table th.scoreboard-th-empty { padding-left: 4px; padding-right: 4px; background: rgba(108, 92, 231, 0.15); }
-        .scoreboard-table th.scoreboard-th-map { color: #a29bfe; font-weight: 500; font-size: 0.82rem; }
+        .scoreboard-table th.scoreboard-th-map { color: #a29bfe; font-weight: 500; font-size: 1.2rem; }
         .scoreboard-table th.scoreboard-th-group { text-align: center; }
-        .scoreboard-table td { padding: 0.25rem 0.35rem; border-bottom: 1px solid rgba(255,255,255,0.08); color: #e0e0e0; text-align: center; font-size: 1.025rem; }
+        .scoreboard-table td { padding: 0.5rem 0.65rem; border-bottom: 1px solid rgba(255,255,255,0.08); color: #e0e0e0; text-align: center; font-size: 1.55rem; }
         .scoreboard-table tr:last-child td { border-bottom: none; }
         .scoreboard-table tr:nth-child(even) td { background: rgba(255,255,255,0.03); }
         .scoreboard-table td.scoreboard-empty-cell { padding-left: 4px; padding-right: 4px; overflow: hidden; border-color: rgba(255,255,255,0.06); }
-        .scoreboard-table td.scoreboard-type { font-size: 1.025rem; }
-        .scoreboard-table td.scoreboard-num { color: #FFD700; font-size: 1.1rem; font-weight: 700; text-align: center; white-space: nowrap; }
+        .scoreboard-table td.scoreboard-type { font-size: 1.55rem; }
+        .scoreboard-table td.scoreboard-num { color: #FFD700; font-size: 1.75rem; font-weight: 700; text-align: center; white-space: nowrap; }
         .scoreboard-table tbody tr:hover td { background: rgba(108, 92, 231, 0.12); }
         .scoreboard-type { color: #00b894; font-weight: 600; font-family: 'Rajdhani', sans-serif; text-align: center; white-space: nowrap; }
         .scoreboard-num { color: #FFD700; font-weight: 700; text-align: center; white-space: nowrap; }
-        .scoreboard-table td.scoreboard-map { color: #a29bfe; font-size: 0.82rem; text-align: center; overflow: hidden; text-overflow: ellipsis; max-width: 100%; }
+        .scoreboard-table td.scoreboard-map { color: #a29bfe; font-size: 1.2rem; text-align: center; overflow: hidden; text-overflow: ellipsis; max-width: 100%; }
         .scoreboard-map { color: #a29bfe; text-align: center; overflow: hidden; text-overflow: ellipsis; max-width: 100%; }
         .scoreboard-cell { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; text-align: center; }
         .scoreboard-table td.scoreboard-cell-team { padding-left: 0.5rem; padding-right: 0.5rem; white-space: normal; overflow-wrap: break-word; text-overflow: clip; }
@@ -166,7 +166,7 @@ header('Pragma: no-cache');
                     <h2>Player Intros</h2>
                     <label><input type="checkbox" id="chroma-key-cb" checked> Chroma key (green transparent)</label>
                 </div>
-                <button type="button" id="btn-reload-vdo" class="collapsible-btn" onclick="reloadVdo()">Reload VDO</button>
+
                 <button class="collapsible-btn" id="btn-player-ratings" onclick="togglePlayerRatings(this)">Show Spider Ratings</button>
                 <div class="collapsible-content" id="player-ratings-section" style="display: none;">
                     <h2>Spider Ratings</h2>
@@ -223,6 +223,9 @@ header('Pragma: no-cache');
                         <input type="text" id="yt-video-1-url" value="https://www.youtube.com/watch?v=vt04Xbq57Dk" style="grid-column: 2 / 4;" placeholder="Paste YouTube URL…">
                         <span></span>
                         <div id="yt-video-1-resolved" style="grid-column: 2 / 4; font-size: 0.75rem; font-family: monospace; word-break: break-all; min-height: 1em;"></div>
+                        <label style="font-size: 0.85rem; white-space: nowrap;">Button 1 volume:</label>
+                        <input type="number" id="yt-video-1-vol" min="0" max="100" value="100" style="width: 5ch; text-align: center;">
+                        <span style="font-size: 0.85rem;">%</span>
                         <label style="font-size: 0.85rem; white-space: nowrap;">Button 2 label:</label>
                         <input type="text" id="yt-video-2-label" value="BREAK" style="width: 8ch;">
                         <span></span>
@@ -230,6 +233,9 @@ header('Pragma: no-cache');
                         <input type="text" id="yt-video-2-url" value="https://youtu.be/O9lNetcn9Y8?si=FaqwLX5I9KkoJecK" style="grid-column: 2 / 4;" placeholder="Paste YouTube URL…">
                         <span></span>
                         <div id="yt-video-2-resolved" style="grid-column: 2 / 4; font-size: 0.75rem; font-family: monospace; word-break: break-all; min-height: 1em;"></div>
+                        <label style="font-size: 0.85rem; white-space: nowrap;">Button 2 volume:</label>
+                        <input type="number" id="yt-video-2-vol" min="0" max="100" value="100" style="width: 5ch; text-align: center;">
+                        <span style="font-size: 0.85rem;">%</span>
                     </div>
                 </div>
                 <button class="collapsible-btn" id="btn-break-settings" onclick="toggleBreakSettings(this)">Break</button>
@@ -298,6 +304,8 @@ header('Pragma: no-cache');
                 <span style="font-size: 0.85rem; line-height: 1;">:</span>
                 <input type="number" id="break-quick-sec" min="0" max="59" value="0" style="width: 3.5ch; text-align: center; padding: 2px;" title="Break timer seconds">
             </div>
+            <hr style="border-color: rgba(255,255,255,0.15); margin: 4px 0;">
+            <button type="button" id="btn-reload-vdo" onclick="reloadVdo()" style="width: 100%; padding: 5px 8px; font-size: 0.8rem; background: #2a2a3a; color: #99eeff; border: 1px solid rgba(153,238,255,0.3); border-radius: 4px; cursor: pointer; margin-bottom: 4px;">Reload VDO</button>
             <div class="scenes-buttons">
                 <button type="button" id="scene-btn-sc2" class="scene-btn-major" onclick="toggleSceneOverlay('sc2')">SC2</button>
                 <button type="button" id="scene-btn-schedule" onclick="toggleSceneOverlay('schedule')">Schedule</button>
@@ -466,7 +474,7 @@ header('Pragma: no-cache');
                 <!-- Break countdown: shown on top of the iframe when BREAK scene is active -->
                 <div id="break-countdown-overlay" style="display: none; position: absolute; top: 0; left: 0; width: 100%; z-index: 1; pointer-events: none; text-align: center; padding-top: 28px;">
                     <div id="break-message-display" style="font-family: Arial, Helvetica, sans-serif; font-size: 2rem; font-weight: bold; color: #ff0; text-shadow: -2px -2px 0 #000, 2px -2px 0 #000, -2px 2px 0 #000, 2px 2px 0 #000; margin-bottom: 6px;">be right back...</div>
-                    <div id="break-timer-display" style="font-family: Arial, Helvetica, sans-serif; font-size: 5rem; font-weight: bold; color: #ff0; text-shadow: -3px -3px 0 #000, 3px -3px 0 #000, -3px 3px 0 #000, 3px 3px 0 #000; letter-spacing: 0.05em; line-height: 1;">5:00</div>
+                    <div id="break-timer-display" style="font-family: Arial, Helvetica, sans-serif; font-size: 5rem; font-weight: bold; color: #99eeff; text-shadow: -3px -3px 0 #000, 3px -3px 0 #000, -3px 3px 0 #000, 3px 3px 0 #000; letter-spacing: 0.05em; line-height: 1;">5:00</div>
                 </div>
             </div>
             <!-- Fullscreen transition video overlay (fade in/out); used by playTransitionVideo() -->
@@ -714,8 +722,8 @@ header('Pragma: no-cache');
                 chromaKey: true,
                 ytCrop: { top: 150, left: 10, right: 20, bottom: 100 },
                 ytIframeVideos: [
-                    { label: "INTRO", url: "https://www.youtube.com/watch?v=vt04Xbq57Dk" },
-                    { label: "BREAK", url: "https://youtu.be/O9lNetcn9Y8?si=FaqwLX5I9KkoJecK" }
+                    { label: "INTRO", url: "https://www.youtube.com/watch?v=vt04Xbq57Dk", vol: 100 },
+                    { label: "BREAK", url: "https://youtu.be/O9lNetcn9Y8?si=FaqwLX5I9KkoJecK", vol: 100 }
                 ],
                 breakSettings: { min: 5, sec: 0, msg: "be right back..." }
             };
@@ -1324,8 +1332,8 @@ header('Pragma: no-cache');
         })();
         var YT_IFRAME_VIDEOS_KEY = 'stream_production_yt_iframe_videos';
         var YT_IFRAME_VIDEOS_DEFAULTS = [
-            { label: 'INTRO', url: 'https://www.youtube.com/watch?v=vt04Xbq57Dk' },
-            { label: 'BREAK', url: 'https://youtu.be/O9lNetcn9Y8?si=FaqwLX5I9KkoJecK' }
+            { label: 'INTRO', url: 'https://www.youtube.com/watch?v=vt04Xbq57Dk', vol: 100 },
+            { label: 'BREAK', url: 'https://youtu.be/O9lNetcn9Y8?si=FaqwLX5I9KkoJecK', vol: 100 }
         ];
 
         function normalizeYtUrl(url) {
@@ -1368,11 +1376,13 @@ header('Pragma: no-cache');
         function getYtIframeVideos() {
             var l1 = document.getElementById('yt-video-1-label');
             var u1 = document.getElementById('yt-video-1-url');
+            var v1 = document.getElementById('yt-video-1-vol');
             var l2 = document.getElementById('yt-video-2-label');
             var u2 = document.getElementById('yt-video-2-url');
+            var v2 = document.getElementById('yt-video-2-vol');
             return [
-                { label: (l1 && l1.value.trim()) || YT_IFRAME_VIDEOS_DEFAULTS[0].label, url: normalizeYtUrl((u1 && u1.value.trim()) || YT_IFRAME_VIDEOS_DEFAULTS[0].url) },
-                { label: (l2 && l2.value.trim()) || YT_IFRAME_VIDEOS_DEFAULTS[1].label, url: normalizeYtUrl((u2 && u2.value.trim()) || YT_IFRAME_VIDEOS_DEFAULTS[1].url) }
+                { label: (l1 && l1.value.trim()) || YT_IFRAME_VIDEOS_DEFAULTS[0].label, url: normalizeYtUrl((u1 && u1.value.trim()) || YT_IFRAME_VIDEOS_DEFAULTS[0].url), vol: v1 ? Math.max(0, Math.min(100, parseInt(v1.value, 10) || 100)) : 100 },
+                { label: (l2 && l2.value.trim()) || YT_IFRAME_VIDEOS_DEFAULTS[1].label, url: normalizeYtUrl((u2 && u2.value.trim()) || YT_IFRAME_VIDEOS_DEFAULTS[1].url), vol: v2 ? Math.max(0, Math.min(100, parseInt(v2.value, 10) || 100)) : 100 }
             ];
         }
 
@@ -1402,14 +1412,18 @@ header('Pragma: no-cache');
         function setYtIframeVideos(arr) {
             var l1 = document.getElementById('yt-video-1-label');
             var u1 = document.getElementById('yt-video-1-url');
+            var vol1 = document.getElementById('yt-video-1-vol');
             var l2 = document.getElementById('yt-video-2-label');
             var u2 = document.getElementById('yt-video-2-url');
+            var vol2 = document.getElementById('yt-video-2-vol');
             var v0 = arr[0] || {};
             var v1 = arr[1] || {};
             if (l1) l1.value = v0.label != null ? v0.label : YT_IFRAME_VIDEOS_DEFAULTS[0].label;
             if (u1) u1.value = v0.url != null ? v0.url : YT_IFRAME_VIDEOS_DEFAULTS[0].url;
+            if (vol1) vol1.value = v0.vol != null ? v0.vol : YT_IFRAME_VIDEOS_DEFAULTS[0].vol;
             if (l2) l2.value = v1.label != null ? v1.label : YT_IFRAME_VIDEOS_DEFAULTS[1].label;
             if (u2) u2.value = v1.url != null ? v1.url : YT_IFRAME_VIDEOS_DEFAULTS[1].url;
+            if (vol2) vol2.value = v1.vol != null ? v1.vol : YT_IFRAME_VIDEOS_DEFAULTS[1].vol;
             syncYtIframeButtonLabels();
             updateYtResolvedDisplays();
         }
@@ -1425,6 +1439,10 @@ header('Pragma: no-cache');
                     updateYtResolvedDisplays();
                     saveYtIframeVideos();
                 });
+            });
+            ['yt-video-1-vol', 'yt-video-2-vol'].forEach(function(id) {
+                var el = document.getElementById(id);
+                if (el) el.addEventListener('input', function() { saveYtIframeVideos(); });
             });
         })();
 
@@ -1568,10 +1586,18 @@ header('Pragma: no-cache');
             closeYtIframeScene();
         });
 
-        function subscribeYtIframe(iframe) {
+        function subscribeYtIframe(iframe, vol) {
             if (!iframe || !iframe.contentWindow) return;
             try {
                 iframe.contentWindow.postMessage(JSON.stringify({ event: 'listening', id: 1 }), 'https://www.youtube.com');
+                if (vol != null && vol !== 100) {
+                    /* Small delay so the player is ready to receive commands */
+                    setTimeout(function() {
+                        try {
+                            iframe.contentWindow.postMessage(JSON.stringify({ event: 'command', func: 'setVolume', args: [vol] }), 'https://www.youtube.com');
+                        } catch (e) {}
+                    }, 800);
+                }
             } catch (e) {}
         }
 
@@ -1647,8 +1673,9 @@ header('Pragma: no-cache');
                 overlay.setAttribute('data-yt-which', which);
                 if (iframe) {
                     iframe.src = url;
-                    /* Subscribe for state-change messages once the iframe loads */
-                    iframe.onload = function() { subscribeYtIframe(iframe); };
+                    var volForVideo = videos[videoIdx].vol;
+                    /* Subscribe for state-change messages and apply volume once the iframe loads */
+                    iframe.onload = function() { subscribeYtIframe(iframe, volForVideo); };
                 }
                 overlay.style.display = 'block';
                 applyYtCropToIframe();
@@ -2341,7 +2368,19 @@ header('Pragma: no-cache');
             }
 
             /** Force reload of VDO Ninja iframes (SC2 and VDO full). Use when camera feed is stuck. */
+            var _reloadVdoLastMs = 0;
+            var _reloadVdoCooldownTimer = null;
             function reloadVdo() {
+                var btn = document.getElementById('btn-reload-vdo');
+                var now = Date.now();
+                var cooldown = 30000;
+                var elapsed = now - _reloadVdoLastMs;
+                if (elapsed < cooldown) {
+                    var remaining = Math.ceil((cooldown - elapsed) / 1000);
+                    if (btn) btn.textContent = 'Wait ' + remaining + 's';
+                    return;
+                }
+                _reloadVdoLastMs = now;
                 var vdoPanel = document.getElementById('vdo-full-panel-wrap');
                 var sc2Panel = document.getElementById('sc2-panel-wrap');
                 [vdoPanel, sc2Panel].forEach(function(panel) {
@@ -2352,6 +2391,22 @@ header('Pragma: no-cache');
                     iframe.src = '';
                     iframe.src = dataSrc;
                 });
+                if (btn) {
+                    btn.disabled = true;
+                    btn.textContent = 'Reloaded!';
+                    clearInterval(_reloadVdoCooldownTimer);
+                    var remaining = 30;
+                    _reloadVdoCooldownTimer = setInterval(function() {
+                        remaining--;
+                        if (remaining <= 0) {
+                            clearInterval(_reloadVdoCooldownTimer);
+                            btn.disabled = false;
+                            btn.textContent = 'Reload VDO';
+                        } else {
+                            btn.textContent = 'Reload VDO (' + remaining + 's)';
+                        }
+                    }, 1000);
+                }
             }
 
             /**
@@ -2489,12 +2544,16 @@ header('Pragma: no-cache');
                     var fullSharedBtn = document.getElementById('scene-btn-full-shared');
                     var ytOverlay = document.getElementById('scene-overlay-yt');
                     var ytBtn = document.getElementById('scene-btn-yt');
+                    var scoreboardOverlay = document.getElementById('scoreboard-overlay');
+                    var scoreboardBtn = document.getElementById('scene-btn-scoreboard');
                     if (sharedOverlay) sharedOverlay.style.display = 'none';
                     if (sharedBtn) sharedBtn.classList.remove('active');
                     if (fullSharedOverlay) fullSharedOverlay.style.display = 'none';
                     if (fullSharedBtn) fullSharedBtn.classList.remove('active');
                     if (ytOverlay) ytOverlay.style.display = 'none';
                     if (ytBtn) ytBtn.classList.remove('active');
+                    if (scoreboardOverlay) { scoreboardOverlay.style.display = 'none'; scoreboardOverlay.style.zIndex = ''; }
+                    if (scoreboardBtn) scoreboardBtn.classList.remove('active');
                     var url = (file.indexOf('.html') !== -1) ? ('2026/' + file) : ('2026/video_player.php?v=' + encodeURIComponent(file) + '&_t=' + Date.now());
                     if (useFront && file.indexOf('.html') === -1) url += '&front=true';
                     iframe.src = url;
@@ -2650,6 +2709,10 @@ header('Pragma: no-cache');
                             if (ytIframePlayer) ytIframePlayer.src = '';
                             if (ytIframeIntroBtn) ytIframeIntroBtn.classList.remove('active');
                             if (ytIframeBreakBtn) ytIframeBreakBtn.classList.remove('active');
+                            var scoreboardOverlaySc2 = document.getElementById('scoreboard-overlay');
+                            var scoreboardBtnSc2 = document.getElementById('scene-btn-scoreboard');
+                            if (scoreboardOverlaySc2) { scoreboardOverlaySc2.style.display = 'none'; scoreboardOverlaySc2.style.zIndex = ''; }
+                            if (scoreboardBtnSc2) scoreboardBtnSc2.classList.remove('active');
                             sc2Overlay.style.display = 'block';
                             btn.classList.add('active');
                             if (sc2Panel) {
@@ -2740,6 +2803,10 @@ header('Pragma: no-cache');
                     if (ytBtn) ytBtn.classList.remove('active');
                     if (sc2Overlay) { sc2Overlay.style.display = 'none'; sc2Overlay.style.zIndex = ''; }
                     if (sc2Panel) sc2Panel.style.display = 'none';
+                    var scoreboardOverlayShared = document.getElementById('scoreboard-overlay');
+                    var scoreboardBtnShared = document.getElementById('scene-btn-scoreboard');
+                    if (scoreboardOverlayShared) { scoreboardOverlayShared.style.display = 'none'; scoreboardOverlayShared.style.zIndex = ''; }
+                    if (scoreboardBtnShared) scoreboardBtnShared.classList.remove('active');
                     sharedOverlay.style.display = 'block';
                     sharedBtn.classList.add('active');
                 } else {
@@ -2863,6 +2930,10 @@ header('Pragma: no-cache');
                     updateLogosOverlay();
                     if (vdoFullOverlay) vdoFullOverlay.style.display = 'none';
                     if (vdoFullBtn) vdoFullBtn.classList.remove('active');
+                    var scoreboardOverlayFullShared = document.getElementById('scoreboard-overlay');
+                    var scoreboardBtnFullShared = document.getElementById('scene-btn-scoreboard');
+                    if (scoreboardOverlayFullShared) { scoreboardOverlayFullShared.style.display = 'none'; scoreboardOverlayFullShared.style.zIndex = ''; }
+                    if (scoreboardBtnFullShared) scoreboardBtnFullShared.classList.remove('active');
                     if (sc2Overlay) { sc2Overlay.style.display = 'block'; sc2Overlay.style.zIndex = '60000'; }
                     if (sc2Panel) {
                         sc2Panel.style.display = 'block';
@@ -2895,6 +2966,10 @@ header('Pragma: no-cache');
                     if (sharedBtn) sharedBtn.classList.remove('active');
                     if (fullSharedOverlay) fullSharedOverlay.style.display = 'none';
                     if (fullSharedBtn) fullSharedBtn.classList.remove('active');
+                    var scoreboardOverlayYt = document.getElementById('scoreboard-overlay');
+                    var scoreboardBtnYt = document.getElementById('scene-btn-scoreboard');
+                    if (scoreboardOverlayYt) { scoreboardOverlayYt.style.display = 'none'; scoreboardOverlayYt.style.zIndex = ''; }
+                    if (scoreboardBtnYt) scoreboardBtnYt.classList.remove('active');
                     ytVideo.srcObject = sharedVideo.srcObject;
                     ytVideo.play();
                     applyYtCropToVideo();

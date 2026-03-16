@@ -9,11 +9,11 @@
         "sc2-overlay",
         "container",
         "gif-container",
+        "scoreboard-overlay",
         "chart-container",
         "video-container",
         "right-column-result",
         "external-chart-overlay",
-        "matchup-suggestions",
         "player-name-box"
     ],
     "status": {
@@ -23,16 +23,6 @@
         "valueA": "",
         "valueB": ""
     },
-    "matchup": {
-        "teamAName": "Team A",
-        "teamA1": "DarkMenace",
-        "teamA2": "Neutrophil",
-        "teamAComment": "",
-        "teamBName": "Team B",
-        "teamB1": "LittleReaper",
-        "teamB2": "HyperTurtle",
-        "teamBComment": ""
-    },
     "playerRatings": {
         "playerName": "littlereaper",
         "division": "A"
@@ -40,47 +30,48 @@
     "logos": {
         "s10": true,
         "fslSmall": true,
+        "vdoLarge": true,
         "sc2": true,
         "positions": {
             "s10": {
-                "left": 509,
-                "top": 7,
-                "width": 249,
-                "height": 84
+                "left": 546,
+                "top": 3,
+                "width": 154,
+                "height": 52
             },
             "fsl-small": {
-                "left": 1126,
-                "top": 39,
-                "width": 119,
-                "height": 51
+                "left": 1465,
+                "top": 6,
+                "width": 84,
+                "height": 36
             }
         },
         "sc2Panel": {
-            "left": 186,
-            "top": 526,
+            "left": 212,
+            "top": 660,
             "width": 214,
             "height": 126
         },
         "vdoFullPanel": {
-            "left": 56,
-            "top": 117,
-            "width": 1173,
-            "height": 565
+            "left": 46,
+            "top": 77,
+            "width": 1506,
+            "height": 780
         }
     },
     "scenes": {
         "bg": false,
         "vdoFull": false,
         "logos": true,
-        "sc2": true
+        "sc2": false
     },
     "playerIntros": [
-        "DarkMenace",
-        "LittleReaper",
-        "PulledTheBoys",
-        "HyperTurtle",
-        "Harouz",
-        "InfiniteCyclists",
+        "NukLeo",
+        "CrankyToaster",
+        "Special Tactics",
+        "Warbunnies",
+        "Pacha",
+        "AngrySpaceHares",
         "Random Music",
         "FSL intro",
         "GG",
@@ -88,9 +79,26 @@
     ],
     "chromaKey": true,
     "ytCrop": {
-        "top": 130,
-        "left": 210,
-        "right": 120,
-        "bottom": 130
+        "top": 140,
+        "left": 215,
+        "right": 215,
+        "bottom": 120
+    },
+    "ytIframeVideos": [
+        {
+            "label": "INTRO",
+            "url": "https://www.youtube.com/embed/4MdAj7McuSU?autoplay=1&enablejsapi=1",
+            "vol": 100
+        },
+        {
+            "label": "BREAK",
+            "url": "https://www.youtube.com/embed/7pRh7ohhXrk?autoplay=1&enablejsapi=1",
+            "vol": 20
+        }
+    ],
+    "breakSettings": {
+        "min": 5,
+        "sec": 0,
+        "msg": "be right back..."
     }
 }
