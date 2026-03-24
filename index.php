@@ -2385,8 +2385,23 @@ if (file_exists($sceneMoodMapFile)) {
 
             if (isActive && currentWhich === which) {
                 closeYtIframeScene();
+                if (typeof window.mxResumeForYt === 'function') window.mxResumeForYt();
             } else {
                 closeYtIframeScene(); /* clear any prior YT iframe state before switching */
+                if (typeof window.mxPauseForYt === 'function') window.mxPauseForYt();
+                /* Deactivate all other scenes */
+                VIDEO_OVERLAY_KEYS.forEach(function(k) {
+                    var b = document.getElementById('scene-btn-' + k);
+                    if (b) b.classList.remove('active');
+                });
+                var sbEl = document.getElementById('scoreboard-overlay');
+                var sbBtn = document.getElementById('scene-btn-scoreboard');
+                if (sbEl) { sbEl.style.display = 'none'; sbEl.style.zIndex = ''; }
+                if (sbBtn) sbBtn.classList.remove('active');
+                var csbEl = document.getElementById('custom-scoreboard-overlay');
+                var csbBtn = document.getElementById('scene-btn-custom-scoreboard');
+                if (csbEl) { csbEl.style.display = 'none'; csbEl.style.zIndex = ''; }
+                if (csbBtn) csbBtn.classList.remove('active');
                 var videos = getYtIframeVideos();
                 var videoIdx = which === 'intro' ? 0 : 1;
                 var url = videos[videoIdx].url;
@@ -3447,6 +3462,11 @@ if (file_exists($sceneMoodMapFile)) {
                 var scoreboardBtnSc2 = document.getElementById('scene-btn-scoreboard');
                 if (scoreboardOverlaySc2) { scoreboardOverlaySc2.style.display = 'none'; scoreboardOverlaySc2.style.zIndex = ''; }
                 if (scoreboardBtnSc2) scoreboardBtnSc2.classList.remove('active');
+                var csbOverlaySc2 = document.getElementById('custom-scoreboard-overlay');
+                var csbBtnSc2 = document.getElementById('scene-btn-custom-scoreboard');
+                if (csbOverlaySc2) { csbOverlaySc2.style.display = 'none'; csbOverlaySc2.style.zIndex = ''; }
+                if (csbBtnSc2) csbBtnSc2.classList.remove('active');
+                VIDEO_OVERLAY_KEYS.forEach(function(k) { var b = document.getElementById('scene-btn-' + k); if (b) b.classList.remove('active'); });
                 if (sc2Overlay) sc2Overlay.style.display = 'block';
                 setSc2ButtonsActive(true);
                 if (sc2Panel) {
@@ -3862,8 +3882,20 @@ if (file_exists($sceneMoodMapFile)) {
                     btn.classList.remove('active');
                 }
             } else if (sceneId === 'sc2' || sceneId === 'sc2-quick') {
+                /* Always hide scoreboard overlays on any SC2/Quick press */
+                (function() {
+                    var sbEl = document.getElementById('scoreboard-overlay');
+                    var sbBtn = document.getElementById('scene-btn-scoreboard');
+                    if (sbEl) { sbEl.style.display = 'none'; sbEl.style.zIndex = ''; }
+                    if (sbBtn) sbBtn.classList.remove('active');
+                    var csbEl = document.getElementById('custom-scoreboard-overlay');
+                    var csbBtn = document.getElementById('scene-btn-custom-scoreboard');
+                    if (csbEl) { csbEl.style.display = 'none'; csbEl.style.zIndex = ''; }
+                    if (csbBtn) csbBtn.classList.remove('active');
+                })();
                 var sc2Overlay = document.getElementById('sc2-overlay');
-                if (sc2Overlay.style.display === 'none' || !sc2Overlay.style.display) {
+                var sc2ActiveBtn = document.getElementById('scene-btn-sc2');
+                if (!sc2ActiveBtn || !sc2ActiveBtn.classList.contains('active')) {
                     if (sceneId === 'sc2') {
                         /* SC2 on: 1) Random Music, 2) stinger + FSL Intro simultaneously, 3) activate */
                         var randomMusicForm = document.getElementById('media-form-7');
@@ -4829,6 +4861,34 @@ if (file_exists($sceneMoodMapFile)) {
         }
         window.mxOnSceneChange = mxOnSceneChange;
         window.mxBuildGrid    = mxBuildGrid;
+
+        var mxWasPausedByYt = false;
+        window.mxPauseForYt = function() {
+            if (mxCur && !mxPaused) {
+                mxWasPausedByYt = true;
+                mxClearTimer();
+                mxCur.audio.pause();
+                mxPaused = true;
+                ppBtn.innerHTML = '&#9654;';
+                ppBtn.classList.add('lp-mx-paused');
+                mxSetStatus('\u23f8 ' + mxTrack);
+            } else {
+                mxWasPausedByYt = false;
+            }
+        };
+        window.mxResumeForYt = function() {
+            if (!mxWasPausedByYt) return;
+            mxWasPausedByYt = false;
+            if (!mxCur || !mxPaused) return;
+            mxEnsure().then(function() {
+                mxCur.audio.play().then(function() {
+                    mxPaused = false;
+                    ppBtn.innerHTML = '&#x23F8;';
+                    ppBtn.classList.remove('lp-mx-paused');
+                    mxSchedule(mxMood, mxTrack, mxSongIdx);
+                });
+            });
+        };
 
         // Unlock listener registered SYNCHRONOUSLY before the async play attempt,
         // so it's always in place regardless of timing.
