@@ -1,6 +1,22 @@
 <?php
 session_start();
 require_once __DIR__ . '/asset_version.php';
+
+// ── Music config save endpoint ───────────────────────────────────────────────
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_GET['save_music_config'])) {
+    if (empty($_SESSION['username'])) { http_response_code(403); echo json_encode(['error'=>'Not authenticated']); exit; }
+    $which = $_GET['save_music_config'];
+    $allowed = ['mood_songs', 'scene_mood_map'];
+    if (!in_array($which, $allowed, true)) { http_response_code(400); echo json_encode(['error'=>'Unknown config']); exit; }
+    $body = file_get_contents('php://input');
+    $parsed = json_decode($body, true);
+    if ($parsed === null) { http_response_code(400); echo json_encode(['error'=>'Invalid JSON']); exit; }
+    $path = __DIR__ . '/data/' . $which . '.json';
+    $written = file_put_contents($path, json_encode($parsed, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE));
+    echo json_encode($written !== false ? ['ok'=>true] : ['error'=>'Write failed']);
+    exit;
+}
+
 header('Cache-Control: no-cache, no-store, must-revalidate');
 header('Pragma: no-cache');
 
@@ -134,20 +150,21 @@ if (empty($_SESSION['username'])) {
 $currentUser = htmlspecialchars($_SESSION['username'], ENT_QUOTES, 'UTF-8');
 require_once __DIR__ . '/config.local.php';
 
-$musicTracks = [
-    'opening_high'   => ['sc2_opening_high_heroic_01_A.mp3',    'sc2_opening_high_heroic_01_B.mp3'],
-    'opening_alert'  => ['sc2_opening_alert_suspense_01_A.mp3', 'sc2_opening_alert_suspense_01_B.mp3'],
-    'combat_mid'     => ['sc2_combat_mid_driving_01_A.mp3',     'sc2_combat_mid_driving_01_B.mp3'],
-    'combat_high'    => ['sc2_combat_high_aggressive_01_A.mp3', 'sc2_combat_high_aggressive_01_B.mp3'],
-    'combat_extreme' => ['sc2_combat_extreme_clutch_01_A.mp3',  'sc2_combat_extreme_clutch_01_B.mp3'],
-    'climax'         => ['sc2_climax_finalpush_01_A.mp3',       'sc2_climax_finalpush_01_B.mp3'],
-    'analysis'       => ['sc2_analysis_light_clean_01_A.mp3',   'sc2_analysis_light_clean_01_B.mp3'],
-    'chill'          => ['sc2_chill_upbeat_warm_01_A.mp3',      'sc2_chill_upbeat_warm_01_B.mp3'],
-    'replay'         => ['sc2_replay_clean_focused_01_A.mp3',   'sc2_replay_clean_focused_01_B.mp3'],
-    'victory'        => ['sc2_victory_high_triumphant_01_A.mp3','sc2_victory_high_triumphant_01_B.mp3'],
-    'defeat'         => ['sc2_defeat_neutral_reset_01_A.mp3',   'sc2_defeat_neutral_reset_01_B.mp3'],
-    'suspense'       => ['sc2_suspense_mid_dark_01_A.mp3',      'sc2_suspense_mid_dark_01_B.mp3'],
-];
+// Load mood→songs mapping
+$moodSongsFile = __DIR__ . '/data/mood_songs.json';
+$moodSongs = [];
+if (file_exists($moodSongsFile)) {
+    $raw = @file_get_contents($moodSongsFile);
+    if ($raw) $moodSongs = json_decode($raw, true) ?: [];
+}
+
+// Load scene→moods mapping
+$sceneMoodMapFile = __DIR__ . '/data/scene_mood_map.json';
+$sceneMoodMap = [];
+if (file_exists($sceneMoodMapFile)) {
+    $raw = @file_get_contents($sceneMoodMapFile);
+    if ($raw) $sceneMoodMap = json_decode($raw, true) ?: [];
+}
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -640,26 +657,6 @@ $musicTracks = [
         }
         .lp-mx-song.playing { color: #15803d; font-style: normal; font-weight: 600; }
         .lp-mx-song.lp-mx-err { color: #b91c1c; font-style: normal; }
-        /* Autoplay blocked banner */
-        #mx-autoplay-banner {
-            display: none;
-            background: #b45309;
-            color: #fff;
-            font-size: 0.68rem;
-            font-weight: 800;
-            text-transform: uppercase;
-            letter-spacing: .07em;
-            padding: 8px 10px;
-            text-align: center;
-            cursor: pointer;
-            border-bottom: 2px solid #92400e;
-            animation: mx-pulse 1.4s ease-in-out infinite;
-        }
-        #mx-autoplay-banner:hover { background: #92400e; }
-        @keyframes mx-pulse {
-            0%, 100% { opacity: 1; }
-            50%       { opacity: 0.7; }
-        }
         /* Mood grid */
         .lp-music-grid {
             display: grid;
@@ -708,7 +705,6 @@ $musicTracks = [
                 <button class="collapsible-btn" id="btn-settings" onclick="toggleSettings(this)">&#9881; Settings</button>
                 <button id="user-bar-logout">Logout</button>
             </div>
-            <div id="mx-autoplay-banner">&#9654; Click anywhere to start music</div>
             <div class="collapsible-content" id="settings-section" style="display: none;">
                 <h3 class="settings-group-heading">Onscreen Messages</h3>
                 <button class="collapsible-btn" id="btn-status" onclick="toggleStatus(this)">Status Message</button>
@@ -821,6 +817,23 @@ $musicTracks = [
                     <div style="display: flex; flex-direction: column; gap: 0.35rem; margin-top: 6px;">
                         <label><input type="radio" name="music-mode" value="sequence" checked> Sequence &mdash; plays in order, loops back to start</label>
                         <label><input type="radio" name="music-mode" value="random"> Random</label>
+                    </div>
+                    <h2 style="margin-top:10px;">Scene → Moods</h2>
+                    <p class="layer-order-hint">Maps each scene to an ordered list of moods. When a scene activates, a random mood is picked; after all songs in that mood finish, the next mood in the list plays (cycling). Edit JSON, then Apply or Save.</p>
+                    <textarea id="mx-scene-map-editor" rows="12" style="width:100%;font-family:monospace;font-size:10px;background:#1e293b;color:#e2e8f0;border:1px solid #475569;border-radius:4px;padding:6px;box-sizing:border-box;resize:vertical;"></textarea>
+                    <div style="display:flex;gap:6px;align-items:center;margin-top:4px;">
+                        <button type="button" id="mx-scene-map-apply-btn">Apply</button>
+                        <button type="button" id="mx-scene-map-save-btn">Save to Server</button>
+                        <span id="mx-scene-map-status" style="font-size:0.78rem;color:#64748b;"></span>
+                    </div>
+
+                    <h2 style="margin-top:14px;">Mood → Songs</h2>
+                    <p class="layer-order-hint">Maps each mood to its song files (in <code>music/</code>). Songs play in order; when the list ends the next mood in the scene begins. Edit JSON, then Apply or Save.</p>
+                    <textarea id="mx-mood-songs-editor" rows="18" style="width:100%;font-family:monospace;font-size:10px;background:#1e293b;color:#e2e8f0;border:1px solid #475569;border-radius:4px;padding:6px;box-sizing:border-box;resize:vertical;"></textarea>
+                    <div style="display:flex;gap:6px;align-items:center;margin-top:4px;">
+                        <button type="button" id="mx-mood-songs-apply-btn">Apply</button>
+                        <button type="button" id="mx-mood-songs-save-btn">Save to Server</button>
+                        <span id="mx-mood-songs-status" style="font-size:0.78rem;color:#64748b;"></span>
                     </div>
                 </div>
                 <button class="collapsible-btn" id="btn-layer-order" onclick="toggleLayerOrder(this)">Layer Order</button>
@@ -1529,7 +1542,9 @@ $musicTracks = [
                     breakSettings: typeof getBreakSettings === "function" ? getBreakSettings() : DEFAULT_SETTINGS.breakSettings,
                     musicMode: (function() { var el = document.querySelector('input[name="music-mode"]:checked'); return el ? el.value : 'sequence'; })(),
                 musicVol: (function() { var el = document.getElementById('lpMusicVol'); return el ? parseFloat(el.value) : 22; })(),
-                musicFade: (function() { var el = document.getElementById('lpMusicFade'); return el ? parseFloat(el.value) : 4; })()
+                musicFade: (function() { var el = document.getElementById('lpMusicFade'); return el ? parseFloat(el.value) : 4; })(),
+                sceneMoodMap: (typeof MX_SCENE_MAP !== 'undefined' ? MX_SCENE_MAP : {}),
+                moodSongs:    (typeof MX_TRACKS    !== 'undefined' ? MX_TRACKS    : {})
                 };
                 return out;
             }
@@ -1661,6 +1676,17 @@ $musicTracks = [
                     if (parsed.musicVol !== undefined) fireChange('lpMusicVol', parsed.musicVol);
                     if (parsed.musicFade !== undefined) fireChange('lpMusicFade', parsed.musicFade);
                 })();
+                if (parsed.sceneMoodMap && typeof parsed.sceneMoodMap === 'object') {
+                    MX_SCENE_MAP = parsed.sceneMoodMap;
+                    var smmEd = document.getElementById('mx-scene-map-editor');
+                    if (smmEd) smmEd.value = JSON.stringify(MX_SCENE_MAP, null, 2);
+                }
+                if (parsed.moodSongs && typeof parsed.moodSongs === 'object') {
+                    MX_TRACKS = parsed.moodSongs;
+                    var mseEd = document.getElementById('mx-mood-songs-editor');
+                    if (mseEd) mseEd.value = JSON.stringify(MX_TRACKS, null, 2);
+                    if (typeof mxBuildGrid === 'function') mxBuildGrid();
+                }
                 if (window.updateLogosOverlay) window.updateLogosOverlay();
                 if (window.updateSc2Panel) window.updateSc2Panel();
                 if (window.reapplyLayerOrder) window.reapplyLayerOrder();
@@ -2889,6 +2915,7 @@ $musicTracks = [
         var VIDEO_OVERLAY_KEYS = ['all-vdo', 'schedule', 'ash', 'pog', 'ptb', 'st'];
             var VIDEO_OVERLAY_FILES = { 'all-vdo': '2026_FSL_BG.mp4', 'schedule': '2026_FSL_schedule_now.mp4', 'ash': 'ASH.mp4', 'pog': 'POG.mp4', 'ptb': 'PTB.mp4', 'st': 'ST.mp4' };
             var VIDEO_OVERLAY_FRONT = ['schedule', 'ash', 'pog', 'ptb', 'st'];
+            var VIDEO_OVERLAY_AUDIO = { 'ash': 'angry_space_hares.wav', 'pog': 'FSL_PSISOP_Gaming.wav', 'ptb': 'pulled_the_boys.wav', 'st': 'FSL_SpecialTactics2.wav' };
 
             function getVideoOverlayDefaultZIndex() {
                 try {
@@ -3638,12 +3665,27 @@ $musicTracks = [
                     if (ytBtn) ytBtn.classList.remove('active');
                     if (scoreboardOverlay) { scoreboardOverlay.style.display = 'none'; scoreboardOverlay.style.zIndex = ''; }
                     if (scoreboardBtn) scoreboardBtn.classList.remove('active');
+                    var csbOverlayVo = document.getElementById('custom-scoreboard-overlay');
+                    var csbBtnVo = document.getElementById('scene-btn-custom-scoreboard');
+                    if (csbOverlayVo) { csbOverlayVo.style.display = 'none'; csbOverlayVo.style.zIndex = ''; }
+                    if (csbBtnVo) csbBtnVo.classList.remove('active');
                     var url = (file.indexOf('.html') !== -1) ? ('2026/' + file) : ('2026/video_player.php?v=' + encodeURIComponent(file) + '&_t=' + Date.now());
                     if (useFront && file.indexOf('.html') === -1) url += '&front=true';
                     iframe.src = url;
                     overlay.style.zIndex = useFront ? '99999' : getVideoOverlayDefaultZIndex();
                     overlay.style.display = 'block';
                     btn.classList.add('active');
+                    var teamAudio = VIDEO_OVERLAY_AUDIO[sceneId];
+                    if (teamAudio) {
+                        var ap = document.querySelector('#audio-player');
+                        if (ap) {
+                            ap.src = 'production_files/audio/' + teamAudio;
+                            var vol = document.getElementById('volume-slider');
+                            ap.volume = vol ? vol.value / 100 : 1;
+                            ap.load();
+                            ap.play();
+                        }
+                    }
                 }
                 if (useFront) {
                     fetch('2026/' + file, { method: 'HEAD' })
@@ -3683,6 +3725,10 @@ $musicTracks = [
                     applyLayoutFromSc2Button();
                 } else {
                     VIDEO_OVERLAY_KEYS.forEach(function(k) { var b = document.getElementById('scene-btn-' + k); if (b) b.classList.remove('active'); });
+                    var csbOverlaySb = document.getElementById('custom-scoreboard-overlay');
+                    var csbBtnSb = document.getElementById('scene-btn-custom-scoreboard');
+                    if (csbOverlaySb) { csbOverlaySb.style.display = 'none'; csbOverlaySb.style.zIndex = ''; }
+                    if (csbBtnSb) csbBtnSb.classList.remove('active');
                     var bgOverlay = document.getElementById('scene-overlay-all-vdo');
                     var videoIframe = document.getElementById('scene-overlay-all-vdo-iframe');
                     var bgBtn = document.getElementById('scene-btn-all-vdo');
@@ -3739,6 +3785,10 @@ $musicTracks = [
                     applyLayoutFromSc2Button();
                 } else {
                     VIDEO_OVERLAY_KEYS.forEach(function(k) { var b = document.getElementById('scene-btn-' + k); if (b) b.classList.remove('active'); });
+                    var sbOverlayCsb = document.getElementById('scoreboard-overlay');
+                    var sbBtnCsb = document.getElementById('scene-btn-scoreboard');
+                    if (sbOverlayCsb) { sbOverlayCsb.style.display = 'none'; sbOverlayCsb.style.zIndex = ''; }
+                    if (sbBtnCsb) sbBtnCsb.classList.remove('active');
                     var bgOverlayCsb = document.getElementById('scene-overlay-all-vdo');
                     var videoIframeCsb = document.getElementById('scene-overlay-all-vdo-iframe');
                     var bgBtnCsb = document.getElementById('scene-btn-all-vdo');
@@ -4303,22 +4353,31 @@ $musicTracks = [
         socket.on('disconnect', function() { console.log('[SE] Disconnected'); });
     })();
 
+    // ── Music config globals (editable via Settings) ─────────────────────────
+    var MX_TRACKS    = <?php echo json_encode($moodSongs,    JSON_UNESCAPED_SLASHES); ?>;
+    var MX_SCENE_MAP = <?php echo json_encode($sceneMoodMap, JSON_UNESCAPED_SLASHES); ?>;
+
     // ── Music Player ────────────────────────────────────────────────
     (function () {
-        var MX_TRACKS = <?php echo json_encode($musicTracks, JSON_UNESCAPED_SLASHES); ?>;
         var MX_LABELS = {
-            opening_high:   'Open Hi',  opening_alert:  'Alert',
-            combat_mid:     'Combat',   combat_high:    'Combat+',
-            combat_extreme: 'Extreme',  climax:         'Climax',
-            analysis:       'Analysis', chill:          'Chill',
-            replay:         'Replay',   victory:        'Victory',
-            defeat:         'Defeat',   suspense:       'Suspense',
+            opening_high:      'Open Hi',    opening_alert:     'Alert',
+            combat_mid:        'Combat',      combat_high:       'Combat+',
+            combat_extreme:    'Extreme',     climax:            'Climax',
+            analysis:          'Analysis',    analysis_low:      'Analyze Lo',
+            chill:             'Chill',       chill_low:         'Chill Lo',
+            replay:            'Replay',      replay_reflective: 'Replay Lo',
+            victory:           'Victory',     defeat:            'Defeat',
+            defeat_somber:     'Defeat Lo',   suspense:          'Suspense',
         };
 
         var mx = null, mxGain = null;
         var mxCur = null, mxNxt = null;
         var mxPaused = false, mxMood = null, mxTrack = null, mxTimer = null;
-        var mxMoodPlayCount = 0; // tracks played in current mood session
+        // Scene-aware playback state
+        var mxSongIdx = 0;         // current song index within active mood
+        var mxCurScene = null;     // current scene key
+        var mxSceneMoods = null;   // mood list for current scene
+        var mxSceneMoodIdx = 0;    // current index into mxSceneMoods
 
         var statusEl  = document.getElementById('lpMusicStatus');
         var volInput  = document.getElementById('lpMusicVol');
@@ -4339,12 +4398,17 @@ $musicTracks = [
 
         function mxBuildGrid() {
             var grid = document.getElementById('lpMusicGrid');
+            grid.innerHTML = '';
             Object.keys(MX_TRACKS).forEach(function (mood) {
                 var btn = document.createElement('button');
                 btn.textContent = MX_LABELS[mood] || mood;
                 btn.dataset.mood = mood;
                 btn.title = mood;
-                btn.addEventListener('click', function () { mxSwitch(mood); });
+                btn.addEventListener('click', function () {
+                    // Manual select — clears scene context so mood loops itself
+                    mxCurScene = null; mxSceneMoods = null; mxSceneMoodIdx = 0;
+                    mxSwitch(mood, 0);
+                });
                 grid.appendChild(btn);
             });
         }
@@ -4364,25 +4428,6 @@ $musicTracks = [
             }
             if (mx.state === 'suspended') return mx.resume();
             return Promise.resolve();
-        }
-
-        function mxAlt(mood, cur) {
-            var f = MX_TRACKS[mood] || [];
-            if (!f.length) return null;
-            if (f.length === 1) return f[0];
-            if (!cur) return f[Math.floor(Math.random() * f.length)];
-            return f.find(function (x) { return x !== cur; }) || f[0];
-        }
-
-        function mxInit(mood) {
-            var f = MX_TRACKS[mood] || [];
-            return f.length ? f[Math.floor(Math.random() * f.length)] : null;
-        }
-
-        function mxNextMood() {
-            var keys = Object.keys(MX_TRACKS);
-            var idx  = keys.indexOf(mxMood);
-            return keys[(idx + 1) % keys.length];
         }
 
         function mxMakeDeck(file) {
@@ -4410,48 +4455,78 @@ $musicTracks = [
             if (mxTimer) { clearTimeout(mxTimer); mxTimer = null; }
         }
 
-        function mxSchedule(mood, file) {
+        // Advance to the next mood in the scene list (or loop current mood if no scene).
+        function mxAdvanceMood() {
+            if (mxSceneMoods && mxSceneMoods.length > 0) {
+                mxSceneMoodIdx = (mxSceneMoodIdx + 1) % mxSceneMoods.length;
+                mxSwitch(mxSceneMoods[mxSceneMoodIdx], 0, true);
+            } else {
+                mxSwitch(mxMood, 0, true); // no scene → loop this mood
+            }
+        }
+
+        // Derive start offset and crossfade duration from the FADE knob value (0–10).
+        // fade=0 → skip 20s into song, crossfade 0.5s
+        // fade=10 → start at 0s, crossfade 2s
+        function mxGetFadeParams() {
+            var fade = Math.max(0, Math.min(10, Number(fadeInput.value)));
+            return {
+                startOffset:       40 * (1 - fade / 10),
+                crossfadeDuration: 0.5 + 1.5 * (fade / 10)
+            };
+        }
+
+        // Schedule the auto-advance timer for when the current track ends.
+        function mxSchedule(mood, file, songIdx) {
             mxClearTimer();
             if (!mxCur || mxPaused) return;
-            var fade = Number(fadeInput.value);
+            var fade = mxGetFadeParams().crossfadeDuration;
             var dur  = mxCur.audio.duration;
             if (!isFinite(dur) || dur <= 0) return;
             var wait = Math.max(0, dur - mxCur.audio.currentTime - fade - 0.15);
             mxTimer = setTimeout(function () {
                 if (mxMood !== mood || !mxCur || mxCur.file !== file || mxPaused) return;
-                if (mxMoodPlayCount >= 2) {
-                    // Both tracks for this mood played — advance to next mood
-                    mxSwitch(mxNextMood(), { auto: true });
+                var songs = MX_TRACKS[mood] || [];
+                var nextIdx = songIdx + 1;
+                if (nextIdx < songs.length) {
+                    // More songs left in this mood — play next
+                    mxSwitch(mood, nextIdx, true);
                 } else {
-                    var next = mxAlt(mood, file);
-                    if (!next || next === file) {
-                        mxSwitch(mxNextMood(), { auto: true });
-                    } else {
-                        mxSwitch(mood, { forceFile: next, auto: true });
-                    }
+                    // Mood's song set finished — advance to next mood
+                    mxAdvanceMood();
                 }
             }, wait * 1000);
         }
 
-        function mxSwitch(mood, opts) {
-            opts = opts || {};
+        // Switch to mood at songIdx.
+        // keepScene=true: preserve scene tracking (internal auto-advance calls).
+        // keepScene=false/undefined: manual selection, clears scene context.
+        function mxSwitch(mood, songIdx, keepScene) {
+            if (songIdx === undefined || songIdx === null) songIdx = 0;
+            if (!keepScene) {
+                mxCurScene = null; mxSceneMoods = null; mxSceneMoodIdx = 0;
+            }
+            var songs = MX_TRACKS[mood] || [];
+            var file = songs[songIdx] || null;
+            if (!file) { mxSetStatus('No tracks: ' + mood, 'err'); return; }
+
             mxEnsure().then(function () {
                 mxClearTimer();
-                var file = opts.forceFile || null;
-                if (!file) file = mxMood === mood ? mxAlt(mood, mxTrack) : mxInit(mood);
-                if (!file) { mxSetStatus('No tracks: ' + mood, 'err'); return; }
-
-                var fade = Number(fadeInput.value);
+                var fp = mxGetFadeParams();
+                var startOffset = fp.startOffset;
+                var fade = fp.crossfadeDuration;
                 mxSetStatus('Loading\u2026');
                 var deck = mxMakeDeck(file);
                 mxWaitReady(deck.audio).then(function () {
+                    if (startOffset > 0 && isFinite(deck.audio.duration) && startOffset < deck.audio.duration) {
+                        deck.audio.currentTime = startOffset;
+                    }
                     var now = mx.currentTime;
                     deck.gain.gain.cancelScheduledValues(now);
                     deck.gain.gain.setValueAtTime(0, now);
                     deck.audio.play().then(function () {
-                        if (!mxCur || fade === 0) {
+                        if (!mxCur) {
                             deck.gain.gain.linearRampToValueAtTime(1, now + 0.05);
-                            if (mxCur) { try { mxCur.audio.pause(); mxCur.audio.currentTime = 0; } catch(e){} }
                             mxCur = deck;
                         } else {
                             mxCur.gain.gain.cancelScheduledValues(now);
@@ -4463,18 +4538,23 @@ $musicTracks = [
                             mxCur = deck;
                         }
                         mxNxt = null;
-                        mxMoodPlayCount = (mxMood === mood) ? mxMoodPlayCount + 1 : 1;
-                        mxMood = mood; mxTrack = file;
+                        mxMood = mood; mxTrack = file; mxSongIdx = songIdx;
                         mxUpdateActive();
                         mxPaused = false;
                         ppBtn.innerHTML = '&#x23F8;';
                         ppBtn.classList.remove('lp-mx-dim', 'lp-mx-paused');
-                        mxSchedule(mood, file);
+                        mxSchedule(mood, file, songIdx);
                         mxSetStatus(file, 'playing');
                     }).catch(function (err) {
                         if (err.name === 'NotAllowedError') {
-                            mxStop();
-                            mxShowBanner();
+                            // Chrome blocked play — preserve mood state so the
+                            // pre-registered unlock listener can resume transparently.
+                            mxMood = mood; mxTrack = file; mxSongIdx = songIdx;
+                            mxUpdateActive();
+                            mxPaused = true;
+                            ppBtn.innerHTML = '&#9654;';
+                            ppBtn.classList.add('lp-mx-dim', 'lp-mx-paused');
+                            mxSetStatus('\u25b6 click play to start');
                         } else {
                             mxSetStatus(err.message, 'err');
                         }
@@ -4490,7 +4570,7 @@ $musicTracks = [
                 if (mxNxt) { mxNxt.audio.pause(); mxNxt.audio.currentTime = 0; }
             } catch(e) {}
             mxCur = mxNxt = null; mxMood = mxTrack = null; mxPaused = false;
-            mxMoodPlayCount = 0;
+            mxSongIdx = 0; mxCurScene = null; mxSceneMoods = null; mxSceneMoodIdx = 0;
             ppBtn.innerHTML = '&#9654;';
             ppBtn.classList.add('lp-mx-dim');
             ppBtn.classList.remove('lp-mx-paused');
@@ -4500,9 +4580,8 @@ $musicTracks = [
 
         function mxTogglePlay() {
             if (!mxCur) {
-                // Nothing loaded — auto-select first mood and start playing
-                var firstMood = Object.keys(MX_TRACKS)[0];
-                if (firstMood) mxSwitch(firstMood);
+                var mood = mxMood || Object.keys(MX_TRACKS)[0];
+                if (mood) mxSwitch(mood, mxSongIdx, mxSceneMoods !== null);
                 return;
             }
             mxEnsure().then(function () {
@@ -4511,7 +4590,7 @@ $musicTracks = [
                         mxPaused = false;
                         ppBtn.innerHTML = '&#x23F8;';
                         ppBtn.classList.remove('lp-mx-paused');
-                        mxSchedule(mxMood, mxTrack);
+                        mxSchedule(mxMood, mxTrack, mxSongIdx);
                         mxSetStatus(mxTrack, 'playing');
                     });
                 } else {
@@ -4655,32 +4734,154 @@ $musicTracks = [
         new MusicKnob('lpMusicVolKnob',  'lpMusicVol',  0, 100, 1);
         new MusicKnob('lpMusicFadeKnob', 'lpMusicFade', 0, 10,  0.5);
 
-        // ── Auto-start + autoplay-blocked banner ─────────────────────
-        function mxShowBanner() {
-            var banner = document.getElementById('mx-autoplay-banner');
-            if (!banner) return;
-            banner.style.display = 'block';
-            // Any click anywhere starts the music and hides the banner
-            function onFirstClick() {
-                document.removeEventListener('click', onFirstClick, true);
-                banner.style.display = 'none';
-                var firstMood = Object.keys(MX_TRACKS)[0];
-                if (firstMood) mxSwitch(firstMood);
+        // ── Config editors (Scene→Moods and Mood→Songs) ──────────────
+        (function () {
+            function mxSaveConfig(which, data, statusEl) {
+                fetch('?save_music_config=' + which, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(data)
+                }).then(function (r) { return r.json(); }).then(function (res) {
+                    statusEl.textContent = res.ok ? 'Saved!' : ('Error: ' + res.error);
+                    setTimeout(function () { statusEl.textContent = ''; }, 3000);
+                }).catch(function (e) {
+                    statusEl.textContent = 'Network error';
+                    setTimeout(function () { statusEl.textContent = ''; }, 3000);
+                });
             }
-            document.addEventListener('click', onFirstClick, true);
-            banner.addEventListener('click', function () {
-                document.removeEventListener('click', onFirstClick, true);
-                banner.style.display = 'none';
-                var firstMood = Object.keys(MX_TRACKS)[0];
-                if (firstMood) mxSwitch(firstMood);
-            }, { once: true });
-        }
 
-        // Try to auto-start; browser may block until user gesture
+            // Scene → Moods editor
+            var smmEd  = document.getElementById('mx-scene-map-editor');
+            var smmApp = document.getElementById('mx-scene-map-apply-btn');
+            var smmSav = document.getElementById('mx-scene-map-save-btn');
+            var smmSts = document.getElementById('mx-scene-map-status');
+            if (smmEd) smmEd.value = JSON.stringify(MX_SCENE_MAP, null, 2);
+            if (smmApp && smmEd) {
+                smmApp.addEventListener('click', function () {
+                    try {
+                        MX_SCENE_MAP = JSON.parse(smmEd.value);
+                        smmSts.textContent = 'Applied!';
+                        setTimeout(function () { smmSts.textContent = ''; }, 2000);
+                    } catch (e) { smmSts.textContent = 'JSON error: ' + e.message; }
+                });
+            }
+            if (smmSav && smmEd) {
+                smmSav.addEventListener('click', function () {
+                    try {
+                        var data = JSON.parse(smmEd.value);
+                        MX_SCENE_MAP = data;
+                        mxSaveConfig('scene_mood_map', data, smmSts);
+                    } catch (e) { smmSts.textContent = 'JSON error: ' + e.message; }
+                });
+            }
+
+            // Mood → Songs editor
+            var mseEd  = document.getElementById('mx-mood-songs-editor');
+            var mseApp = document.getElementById('mx-mood-songs-apply-btn');
+            var mseSav = document.getElementById('mx-mood-songs-save-btn');
+            var mseSts = document.getElementById('mx-mood-songs-status');
+            if (mseEd) mseEd.value = JSON.stringify(MX_TRACKS, null, 2);
+            if (mseApp && mseEd) {
+                mseApp.addEventListener('click', function () {
+                    try {
+                        MX_TRACKS = JSON.parse(mseEd.value);
+                        mxBuildGrid();
+                        mseSts.textContent = 'Applied!';
+                        setTimeout(function () { mseSts.textContent = ''; }, 2000);
+                    } catch (e) { mseSts.textContent = 'JSON error: ' + e.message; }
+                });
+            }
+            if (mseSav && mseEd) {
+                mseSav.addEventListener('click', function () {
+                    try {
+                        var data = JSON.parse(mseEd.value);
+                        MX_TRACKS = data;
+                        mxBuildGrid();
+                        mxSaveConfig('mood_songs', data, mseSts);
+                    } catch (e) { mseSts.textContent = 'JSON error: ' + e.message; }
+                });
+            }
+        })();
+
+        // ── Scene → Mood handler ─────────────────────────────────────
+        function mxOnSceneChange(key) {
+            var moods = MX_SCENE_MAP[key];
+            if (!moods || !moods.length) return;
+            // Pick a random starting mood from the scene's list
+            var randomIdx = Math.floor(Math.random() * moods.length);
+            var newMood   = moods[randomIdx];
+            // If same mood is already active, just update scene tracking — don't restart
+            if (newMood === mxMood) {
+                mxCurScene = key; mxSceneMoods = moods; mxSceneMoodIdx = randomIdx;
+                return;
+            }
+            mxCurScene = key; mxSceneMoods = moods; mxSceneMoodIdx = randomIdx;
+            if (mxCur && !mxPaused) {
+                mxSwitch(newMood, 0, true);
+            } else {
+                mxMood = newMood; mxSongIdx = 0;
+                mxUpdateActive();
+                mxSetStatus(mxPaused
+                    ? ('\u23f8 ' + (mxTrack || newMood))
+                    : ('ready \u2014 ' + newMood)
+                );
+            }
+        }
+        window.mxOnSceneChange = mxOnSceneChange;
+        window.mxBuildGrid    = mxBuildGrid;
+
+        // Unlock listener registered SYNCHRONOUSLY before the async play attempt,
+        // so it's always in place regardless of timing.
+        // Fires on first click anywhere → resumes AudioContext and starts music.
+        document.addEventListener('click', function mxUnlockOnce(e) {
+            // ppBtn's own handler calls mxTogglePlay; let it do so
+            if (e.target === ppBtn) return;
+            if (!mxCur) mxTogglePlay();
+        }, { once: true, capture: true });
+
+        // Auto-start on page load (works immediately if browser allows;
+        // falls back to the unlock listener above on Chrome policy blocks)
         (function () {
             var firstMood = Object.keys(MX_TRACKS)[0];
-            if (firstMood) mxSwitch(firstMood);
+            if (firstMood) mxSwitch(firstMood, 0);
         })();
+    })();
+
+    // ── Scene → Music: wrap toggleSceneOverlay ───────────────────────────
+    (function () {
+        function doWrap() {
+            var orig = window.toggleSceneOverlay;
+            if (typeof orig !== 'function') return;
+            window.toggleSceneOverlay = function (key) {
+                // For SC2 scenes, the overlay is activated asynchronously (transition video),
+                // so capture the pre-toggle state to know if we're turning ON.
+                var sc2WasOff = false;
+                if (key === 'sc2' || key === 'sc2-quick') {
+                    var sc2ov = document.getElementById('sc2-overlay');
+                    sc2WasOff = !sc2ov || !sc2ov.style.display || sc2ov.style.display === 'none';
+                }
+
+                orig.apply(this, arguments);
+
+                if (typeof window.mxOnSceneChange !== 'function') return;
+
+                if ((key === 'sc2' || key === 'sc2-quick') && sc2WasOff) {
+                    window.mxOnSceneChange(key);
+                    return;
+                }
+                // For all other scenes, check button active class (set synchronously)
+                var btn = document.getElementById('scene-btn-' + key);
+                if (btn && btn.classList.contains('active')) {
+                    window.mxOnSceneChange(key);
+                }
+            };
+        }
+        // Run after DOM+scripts fully ready
+        if (document.readyState === 'complete') {
+            doWrap();
+        } else {
+            window.addEventListener('load', doWrap);
+        }
     })();
     </script>
 
