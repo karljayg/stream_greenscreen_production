@@ -1,7 +1,138 @@
 <?php
+session_start();
 require_once __DIR__ . '/asset_version.php';
 header('Cache-Control: no-cache, no-store, must-revalidate');
 header('Pragma: no-cache');
+
+// Gate: show login screen if not authenticated
+if (empty($_SESSION['username'])) {
+?>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Stream Production Tool – Login</title>
+    <link rel="icon" href="production_files/images/favicon.ico" type="image/x-icon">
+    <style>
+        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+        body {
+            background: #111;
+            color: #eee;
+            font-family: 'Segoe UI', Arial, sans-serif;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+        }
+        .login-box {
+            background: #1c1c1c;
+            border: 1px solid #333;
+            border-radius: 8px;
+            padding: 2.5rem 2rem;
+            width: 320px;
+            box-shadow: 0 8px 32px rgba(0,0,0,0.6);
+        }
+        .login-box h1 {
+            font-size: 1.3rem;
+            text-align: center;
+            margin-bottom: 1.8rem;
+            color: #f0a500;
+            letter-spacing: 1px;
+            text-transform: uppercase;
+        }
+        .login-box label {
+            display: block;
+            font-size: 0.78rem;
+            color: #aaa;
+            margin-bottom: 4px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        .login-box input[type="text"],
+        .login-box input[type="password"] {
+            width: 100%;
+            padding: 9px 10px;
+            background: #2a2a2a;
+            border: 1px solid #444;
+            border-radius: 4px;
+            color: #eee;
+            font-size: 0.95rem;
+            margin-bottom: 1rem;
+            outline: none;
+        }
+        .login-box input:focus { border-color: #f0a500; }
+        .login-box button {
+            width: 100%;
+            padding: 10px;
+            background: #f0a500;
+            color: #111;
+            font-weight: 700;
+            font-size: 1rem;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-top: 0.4rem;
+        }
+        .login-box button:hover { background: #ffc72c; }
+        #login-error {
+            color: #e44;
+            font-size: 0.85rem;
+            min-height: 1.2em;
+            margin-top: 0.8rem;
+            text-align: center;
+        }
+    </style>
+</head>
+<body>
+    <div class="login-box">
+        <h1>Stream Production Tool</h1>
+        <label for="l-user">Username</label>
+        <input type="text" id="l-user" autocomplete="username" autofocus>
+        <label for="l-pass">Password</label>
+        <input type="password" id="l-pass" autocomplete="current-password">
+        <button id="l-btn">Sign In</button>
+        <div id="login-error"></div>
+    </div>
+    <script>
+        function doLogin() {
+            var user = document.getElementById('l-user').value.trim();
+            var pass = document.getElementById('l-pass').value;
+            var err  = document.getElementById('login-error');
+            var btn  = document.getElementById('l-btn');
+            if (!user || !pass) { err.textContent = 'Enter username and password.'; return; }
+            btn.disabled = true;
+            btn.textContent = 'Signing in…';
+            var fd = new FormData();
+            fd.append('action', 'login');
+            fd.append('username', user);
+            fd.append('password', pass);
+            fetch('auth.php', { method: 'POST', body: fd })
+                .then(function(r){ return r.json(); })
+                .then(function(res) {
+                    if (res.ok) {
+                        window.location.reload();
+                    } else {
+                        err.textContent = res.error || 'Login failed.';
+                        btn.disabled = false;
+                        btn.textContent = 'Sign In';
+                    }
+                })
+                .catch(function(){ err.textContent = 'Network error.'; btn.disabled = false; btn.textContent = 'Sign In'; });
+        }
+        document.getElementById('l-btn').addEventListener('click', doLogin);
+        document.getElementById('l-pass').addEventListener('keydown', function(e){ if (e.key === 'Enter') doLogin(); });
+        document.getElementById('l-user').addEventListener('keydown', function(e){ if (e.key === 'Enter') document.getElementById('l-pass').focus(); });
+    </script>
+</body>
+</html>
+<?php
+    exit;
+}
+$currentUser = htmlspecialchars($_SESSION['username'], ENT_QUOTES, 'UTF-8');
+require_once __DIR__ . '/config.local.php';
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -26,6 +157,48 @@ header('Pragma: no-cache');
     <script src="https://code.jquery.com/ui/1.13.1/jquery-ui.min.js"></script>
 
     <style>
+        /* ── User bar (left column only) ── */
+        #user-bar {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            padding: 4px 6px;
+            background: #1a1a1a;
+            border-bottom: 1px solid #333;
+        }
+        #user-bar-name {
+            background: none;
+            border: 1px solid #555;
+            color: #f0a500;
+            font-size: 0.75rem;
+            font-weight: 700;
+            padding: 2px 8px;
+            border-radius: 4px;
+            cursor: pointer;
+            letter-spacing: 0.5px;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            max-width: 130px;
+        }
+        #user-bar-name:hover { border-color: #f0a500; background: rgba(240,165,0,0.1); }
+        #user-bar-logout {
+            background: none;
+            border: 1px solid #444;
+            color: #888;
+            font-size: 0.72rem;
+            padding: 2px 8px;
+            border-radius: 4px;
+            cursor: pointer;
+            white-space: nowrap;
+        }
+        #user-bar-logout:hover { border-color: #888; color: #ccc; }
+
+        #chpw-error { color: #e44; font-size: 0.8rem; min-height: 1.1em; margin-top: 0.5rem; }
+        #chpw-ok    { color: #4c4; font-size: 0.8rem; min-height: 1.1em; margin-top: 0.5rem; }
+        #chpw-save  { background: #f0a500; color: #111; font-weight: 700; border-color: #f0a500; }
+        #chpw-save:hover { background: #ffc72c; }
+
         .collapsible-content {
             display: none;
             margin-top: 10px;
@@ -49,51 +222,52 @@ header('Pragma: no-cache');
 
         .scoreboard-overlay-wrap { background: transparent; }
         /* Centered horizontally; top edge 300px; bottom leaves room for small VDO */
-        #scoreboard-content.scoreboard-content-wrap {
+        #scoreboard-content.scoreboard-content-wrap,
+        #custom-scoreboard-content.scoreboard-content-wrap {
             position: absolute; left: 50%; top: 120px; bottom: 40px;
             width: calc(100% - 60px); max-width: calc(100vw - 60px);
             transform: translateX(-50%);
             display: flex; flex-direction: column; align-items: center; justify-content: flex-start;
             overflow: auto; box-sizing: border-box;
         }
-        .scoreboard-panel { padding: 0.6rem 0.8rem; color: #fff; font-family: 'Exo 2', sans-serif; box-sizing: border-box; width: 100%; max-width: 100%; min-width: 0; }
+        .scoreboard-panel { padding: 0.35rem 0.5rem; color: #fff; font-family: 'Exo 2', sans-serif; box-sizing: border-box; width: 100%; max-width: 100%; min-width: 0; }
         .scoreboard-panel-inner { max-width: 100%; min-width: 0; margin: 0 auto; }
-        .scoreboard-header { display: flex; justify-content: center; align-items: center; gap: 0.6rem; margin-bottom: 0.65rem; padding-bottom: 0.6rem; border-bottom: 2px solid rgba(108, 92, 231, 0.3); flex-wrap: nowrap; }
+        .scoreboard-header { display: flex; justify-content: center; align-items: center; gap: 0.5rem; margin-bottom: 0.4rem; padding-bottom: 0.35rem; border-bottom: 2px solid rgba(108, 92, 231, 0.3); flex-wrap: nowrap; }
         .scoreboard-team-block { min-width: 0; flex: 1; }
         .scoreboard-team-a { text-align: center; }
         .scoreboard-team-b { text-align: center; }
-        .scoreboard-team-name { display: block; font-size: 3.8rem; font-weight: 600; line-height: 1.2; color: #e0e0e0; font-family: 'Exo 2', sans-serif; }
+        .scoreboard-team-name { display: block; font-size: 2.6rem; font-weight: 600; line-height: 1.2; color: #e0e0e0; font-family: 'Exo 2', sans-serif; }
         .scoreboard-team-a .scoreboard-team-name { color: #e0e0e0; }
         .scoreboard-team-b .scoreboard-team-name { color: #e0e0e0; }
-        .scoreboard-vs-block { display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 0 0.8rem; flex-shrink: 0; }
-        .scoreboard-score-main { font-size: 4rem; font-weight: 700; color:rgb(248, 134, 3); font-family: 'Rajdhani', sans-serif; }
-        .scoreboard-score-label { font-size: 1.2rem; color: #00b894; text-transform: uppercase; letter-spacing: 0.06em; margin-top: 0.08rem; font-weight: 600; font-family: 'Rajdhani', sans-serif; }
-        .scoreboard-table-wrap { background: rgba(0, 0, 0, 0.25); border-radius: 8px; overflow: hidden; border: 1px solid rgba(108, 92, 231, 0.2); margin-top: 0.6rem; width: 100%; max-width: 100%; min-width: 0; }
-        .scoreboard-table { width: 100%; max-width: 100%; min-width: 0; table-layout: auto; border-collapse: collapse; font-size: 1.6rem; font-family: 'Exo 2', sans-serif; }
+        .scoreboard-vs-block { display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 0 0.5rem; flex-shrink: 0; }
+        .scoreboard-score-main { font-size: 2.75rem; font-weight: 700; color: #99eeff; font-family: 'Rajdhani', sans-serif; }
+        .scoreboard-score-label { font-size: 0.9rem; color: #00b894; text-transform: uppercase; letter-spacing: 0.06em; margin-top: 0.08rem; font-weight: 600; font-family: 'Rajdhani', sans-serif; }
+        .scoreboard-table-wrap { background: rgba(0, 0, 0, 0.25); border-radius: 8px; overflow: hidden; border: 1px solid rgba(108, 92, 231, 0.2); margin-top: 0.35rem; width: 100%; max-width: 100%; min-width: 0; }
+        .scoreboard-table { width: 100%; max-width: 100%; min-width: 0; table-layout: auto; border-collapse: collapse; font-size: 1.15rem; font-family: 'Exo 2', sans-serif; }
         /* Narrow columns shrink to content; team/map columns autosize (no width = fit content) */
         .scoreboard-table col:nth-child(1), .scoreboard-table col:nth-child(6), .scoreboard-table col:nth-child(10) { width: 0.1%; }
         .scoreboard-table col:nth-child(2) { width: 1%; min-width: 2.8em; }
         .scoreboard-table col:nth-child(5), .scoreboard-table col:nth-child(9) { width: 1%; min-width: 2em; }
         .scoreboard-table thead { border-bottom: none; }
-        .scoreboard-table th { padding: 0.5rem 0.65rem; text-align: center; color: #fff; font-weight: 600; font-size: 1.5rem; background: rgba(108, 92, 231, 0.25); border-bottom: 1px solid rgba(255,255,255,0.08); white-space: nowrap; }
+        .scoreboard-table th { padding: 0.3rem 0.4rem; text-align: center; color: #fff; font-weight: 600; font-size: 1.1rem; background: rgba(108, 92, 231, 0.25); border-bottom: 1px solid rgba(255,255,255,0.08); white-space: nowrap; }
         .scoreboard-table th.scoreboard-th-empty { padding-left: 4px; padding-right: 4px; background: rgba(108, 92, 231, 0.15); }
-        .scoreboard-table th.scoreboard-th-map { color: #a29bfe; font-weight: 500; font-size: 1.2rem; }
+        .scoreboard-table th.scoreboard-th-map { color: #a29bfe; font-weight: 500; font-size: 0.88rem; }
         .scoreboard-table th.scoreboard-th-group { text-align: center; }
-        .scoreboard-table td { padding: 0.5rem 0.65rem; border-bottom: 1px solid rgba(255,255,255,0.08); color: #e0e0e0; text-align: center; font-size: 1.55rem; }
+        .scoreboard-table td { padding: 0.28rem 0.4rem; border-bottom: 1px solid rgba(255,255,255,0.08); color: #e0e0e0; text-align: center; font-size: 1.12rem; }
         .scoreboard-table tr:last-child td { border-bottom: none; }
         .scoreboard-table tr:nth-child(even) td { background: rgba(255,255,255,0.03); }
         .scoreboard-table td.scoreboard-empty-cell { padding-left: 4px; padding-right: 4px; overflow: hidden; border-color: rgba(255,255,255,0.06); }
-        .scoreboard-table td.scoreboard-type { font-size: 1.55rem; }
-        .scoreboard-table td.scoreboard-num { color: #FFD700; font-size: 1.75rem; font-weight: 700; text-align: center; white-space: nowrap; }
+        .scoreboard-table td.scoreboard-type { font-size: 1.12rem; }
+        .scoreboard-table td.scoreboard-num { color: #FFD700; font-size: 1.25rem; font-weight: 700; text-align: center; white-space: nowrap; }
         .scoreboard-table tbody tr:hover td { background: rgba(108, 92, 231, 0.12); }
         .scoreboard-type { color: #00b894; font-weight: 600; font-family: 'Rajdhani', sans-serif; text-align: center; white-space: nowrap; }
         .scoreboard-num { color: #FFD700; font-weight: 700; text-align: center; white-space: nowrap; }
-        .scoreboard-table td.scoreboard-map { color: #a29bfe; font-size: 1.2rem; text-align: center; overflow: hidden; text-overflow: ellipsis; max-width: 100%; }
+        .scoreboard-table td.scoreboard-map { color: #a29bfe; font-size: 0.88rem; text-align: center; overflow: hidden; text-overflow: ellipsis; max-width: 100%; }
         .scoreboard-map { color: #a29bfe; text-align: center; overflow: hidden; text-overflow: ellipsis; max-width: 100%; }
         .scoreboard-cell { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; text-align: center; }
-        .scoreboard-table td.scoreboard-cell-team { padding-left: 0.5rem; padding-right: 0.5rem; white-space: normal; overflow-wrap: break-word; text-overflow: clip; }
-        .scoreboard-table td.scoreboard-cell-team-a { text-align: left; padding-right: 0.85rem; }
-        .scoreboard-table td.scoreboard-cell-team-b { text-align: left; padding-left: 0.85rem; padding-right: 0.5rem; }
+        .scoreboard-table td.scoreboard-cell-team { padding-left: 0.4rem; padding-right: 0.4rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .scoreboard-table td.scoreboard-cell-team-a { text-align: left; padding-right: 0.6rem; }
+        .scoreboard-table td.scoreboard-cell-team-b { text-align: left; padding-left: 0.6rem; padding-right: 0.4rem; }
         .scoreboard-slot { font-size: 0.75em; color: #a29bfe; font-weight: 600; }
         .scoreboard-race-icon { width: 1em; height: 1em; vertical-align: middle; }
         .scoreboard-empty { color: #a29bfe; text-align: center; padding: 1rem; font-size: 1.075rem; }
@@ -103,6 +277,11 @@ header('Pragma: no-cache');
 <body>
     <div class="container" data-layer-id="container">
         <div class="left-column">
+            <!-- User bar -->
+            <div id="user-bar">
+                <button id="user-bar-name" title="Click to change password"><?php echo $currentUser; ?></button>
+                <button id="user-bar-logout">Logout</button>
+            </div>
             <button class="collapsible-btn" id="btn-settings" onclick="toggleSettings(this)">Show Settings</button>
             <div class="collapsible-content" id="settings-section" style="display: none;">
                 <h3 class="settings-group-heading">Onscreen Messages</h3>
@@ -161,6 +340,26 @@ header('Pragma: no-cache');
                         </div>
                     </details>
                 </div>
+                <button class="collapsible-btn" id="btn-custom-scoreboard-settings" onclick="toggleCustomScoreboardSettings(this)">Custom Scoreboard</button>
+                <div class="collapsible-content" id="custom-scoreboard-settings-section" style="display: none;">
+                    <h2>Custom Scoreboard</h2>
+                    <div style="display:grid; grid-template-columns:auto 1fr; gap:4px 6px; align-items:center; margin-bottom:10px;">
+                        <label style="font-size:12px; color:#8f8;">Side A label:</label>
+                        <input type="text" id="csb-label-a" placeholder="Side A" style="background:#1a2a1a; color:#8f8; border:1px solid #484; border-radius:3px; padding:3px 6px; font-size:12px;">
+                        <label style="font-size:12px; color:#88f;">Side B label:</label>
+                        <input type="text" id="csb-label-b" placeholder="Side B" style="background:#1a1a2a; color:#88f; border:1px solid #448; border-radius:3px; padding:3px 6px; font-size:12px;">
+                        <label style="font-size:12px; color:#aaa;">Matches:</label>
+                        <div style="display:flex; gap:6px; align-items:center;">
+                            <input type="number" id="csb-num-matches" min="1" max="20" value="5" style="width:52px; text-align:center; padding:3px 4px;">
+                            <button type="button" onclick="csbSetNumMatches(parseInt(document.getElementById('csb-num-matches').value,10)||1)">Set</button>
+                        </div>
+                    </div>
+                    <div id="csb-rows-container"></div>
+                    <div style="margin-top:8px; display:flex; gap:6px; align-items:center;">
+                        <button type="button" id="csb-save-btn" onclick="csbSave()">Save Custom Scoreboard</button>
+                        <span id="csb-save-status" style="font-size:12px; color:#aaa;"></span>
+                    </div>
+                </div>
                 <button class="collapsible-btn" id="btn-player-intros" onclick="togglePlayerIntros(this)">Show Player Chroma</button>
                 <div class="collapsible-content" id="player-intros-settings-section" style="display: none;">
                     <h2>Player Intros</h2>
@@ -187,6 +386,15 @@ header('Pragma: no-cache');
                     <div>
                         <label for="volume-slider">Volume: </label>
                         <input type="range" id="volume-slider" min="0" max="100" value="50">
+                    </div>
+                </div>
+                <button class="collapsible-btn" id="btn-music" onclick="toggleMusic(this)">Music</button>
+                <div class="collapsible-content" id="music-section" style="display: none;">
+                    <h2>Music Mode</h2>
+                    <p class="layer-order-hint">Controls how "Random Music" picks its clips.</p>
+                    <div style="display: flex; flex-direction: column; gap: 0.35rem; margin-top: 6px;">
+                        <label><input type="radio" name="music-mode" value="sequence" checked> Sequence &mdash; plays in order, loops back to start</label>
+                        <label><input type="radio" name="music-mode" value="random"> Random</label>
                     </div>
                 </div>
                 <button class="collapsible-btn" id="btn-layer-order" onclick="toggleLayerOrder(this)">Show Layer order</button>
@@ -245,9 +453,9 @@ header('Pragma: no-cache');
                     <div style="display: flex; flex-direction: column; gap: 0.4rem; margin-top: 6px;">
                         <div style="display: flex; align-items: center; gap: 0.5rem;">
                             <label style="font-size: 0.85rem; white-space: nowrap;">Timer (min:sec):</label>
-                            <input type="number" id="break-timer-min" min="0" max="99" value="5" style="width: 4ch; text-align: center;">
+                            <input type="number" id="break-timer-min" min="0" max="99" value="5" style="width: 5ch; text-align: center;">
                             <span style="font-size: 0.85rem;">:</span>
-                            <input type="number" id="break-timer-sec" min="0" max="59" value="0" style="width: 4ch; text-align: center;">
+                            <input type="number" id="break-timer-sec" min="0" max="59" value="0" style="width: 5ch; text-align: center;">
                         </div>
                         <div style="display: flex; align-items: center; gap: 0.5rem;">
                             <label style="font-size: 0.85rem; white-space: nowrap;">Message:</label>
@@ -293,27 +501,61 @@ header('Pragma: no-cache');
                         <button type="button" id="layer-import-btn">Import all</button>
                     </div>
                 </div>
-            </div>
 
-            <h2>Scenes</h2>
-            <div style="display: flex; align-items: center; gap: 0.25rem; margin-bottom: 0.35rem; flex-wrap: wrap;">
-                <span style="font-size: 0.8rem; font-weight: 600; white-space: nowrap;">Videos:</span>
-                <button type="button" id="scene-btn-yt-intro" onclick="toggleYtIframeScene('intro')">INTRO</button>
-                <button type="button" id="scene-btn-yt-break" onclick="toggleYtIframeScene('break')">BREAK</button>
-                <input type="number" id="break-quick-min" min="0" max="99" value="5" style="width: 3.5ch; text-align: center; padding: 2px;" title="Break timer minutes">
-                <span style="font-size: 0.85rem; line-height: 1;">:</span>
-                <input type="number" id="break-quick-sec" min="0" max="59" value="0" style="width: 3.5ch; text-align: center; padding: 2px;" title="Break timer seconds">
+                <h3 class="settings-group-heading">Account</h3>
+                <button class="collapsible-btn" id="btn-account" onclick="toggleAccount(this)">Change Password</button>
+                <div class="collapsible-content" id="account-section" style="display: none;">
+                    <p class="layer-order-hint">Logged in as <strong><?php echo $currentUser; ?></strong></p>
+                    <div style="display: flex; flex-direction: column; gap: 0.5rem; margin-top: 8px;">
+                        <label style="font-size: 0.78rem; color: #aaa; text-transform: uppercase; letter-spacing: 0.4px;">Current password</label>
+                        <input type="password" id="chpw-current" autocomplete="current-password" style="padding: 7px 9px; background: #2a2a2a; border: 1px solid #444; border-radius: 4px; color: #eee; font-size: 0.9rem; outline: none; width: 100%;">
+                        <label style="font-size: 0.78rem; color: #aaa; text-transform: uppercase; letter-spacing: 0.4px;">New password</label>
+                        <input type="password" id="chpw-new" autocomplete="new-password" style="padding: 7px 9px; background: #2a2a2a; border: 1px solid #444; border-radius: 4px; color: #eee; font-size: 0.9rem; outline: none; width: 100%;">
+                        <label style="font-size: 0.78rem; color: #aaa; text-transform: uppercase; letter-spacing: 0.4px;">Confirm new password</label>
+                        <input type="password" id="chpw-confirm" autocomplete="new-password" style="padding: 7px 9px; background: #2a2a2a; border: 1px solid #444; border-radius: 4px; color: #eee; font-size: 0.9rem; outline: none; width: 100%;">
+                        <div id="chpw-error" style="color: #e44; font-size: 0.8rem; min-height: 1em;"></div>
+                        <div id="chpw-ok" style="color: #4c4; font-size: 0.8rem; min-height: 1em; display: none;">Password changed.</div>
+                        <button type="button" id="chpw-save" style="padding: 7px 14px; background: #f0a500; color: #111; font-weight: 700; border: none; border-radius: 4px; cursor: pointer; font-size: 0.9rem; text-transform: uppercase; letter-spacing: 0.5px; align-self: flex-start;">Save Password</button>
+                    </div>
+                </div>
             </div>
-            <hr style="border-color: rgba(255,255,255,0.15); margin: 4px 0;">
-            <button type="button" id="btn-reload-vdo" onclick="reloadVdo()" style="width: 100%; padding: 5px 8px; font-size: 0.8rem; background: #2a2a3a; color: #99eeff; border: 1px solid rgba(153,238,255,0.3); border-radius: 4px; cursor: pointer; margin-bottom: 4px;">Reload VDO</button>
+            <hr>
+            <br>
+            <div style="display: flex; gap: 4px; margin-bottom: 6px;">
+                <button type="button" id="btn-hide-vdo" onclick="toggleVdoVisibility()" style="flex: 1; padding: 5px 4px; font-size: 0.8rem; background: #2a2a3a; color: #99eeff; border: 1px solid rgba(153,238,255,0.3); border-radius: 4px; cursor: pointer;">Hide VDO</button>
+                <button type="button" id="btn-reload-vdo" onclick="reloadVdo()" style="flex: 1; padding: 5px 4px; font-size: 0.8rem; background: #2a2a3a; color: #99eeff; border: 1px solid rgba(153,238,255,0.3); border-radius: 4px; cursor: pointer;">Reload VDO</button>
+                <button type="button" id="btn-refresh-panel" onclick="refreshProductionPanel()" style="flex: 1; padding: 5px 4px; font-size: 0.8rem; background: #2a2a3a; color: #99eeff; border: 1px solid rgba(153,238,255,0.3); border-radius: 4px; cursor: pointer;">Refresh Right Panel</button>
+            </div>
+            <h2>Scenes</h2>
+            <div style="margin-bottom: 0.35rem;">
+                <div style="display: flex; align-items: center; gap: 0.25rem; margin-bottom: 0.2rem;">
+                    <span style="font-size: 0.8rem; font-weight: 600; white-space: nowrap;">Videos:</span>
+                    <button type="button" id="scene-btn-yt-intro" onclick="toggleYtIframeScene('intro')">INTRO</button>
+                </div>
+                <div style="display: flex; align-items: center; gap: 0.25rem;">
+                    <button type="button" id="scene-btn-yt-break" onclick="toggleYtIframeScene('break')">BREAK</button>
+                    <input type="text" inputmode="numeric" id="break-quick-min" maxlength="2" value="05" style="width: 4.5ch; text-align: center; padding: 2px;" title="Break timer minutes">
+                    <span style="font-size: 0.85rem; line-height: 1;">:</span>
+                    <input type="text" inputmode="numeric" id="break-quick-sec" maxlength="2" value="00" style="width: 4.5ch; text-align: center; padding: 2px;" title="Break timer seconds">
+                    <span style="font-size: 0.7rem; color: #aaa; white-space: nowrap;">mm:ss</span>
+                </div>
+            </div>
             <div class="scenes-buttons">
-                <button type="button" id="scene-btn-sc2" class="scene-btn-major" onclick="toggleSceneOverlay('sc2')">SC2</button>
+                <div style="display:flex; gap:4px; width:100%;">
+                    <button type="button" id="scene-btn-sc2" class="scene-btn-major" onclick="toggleSceneOverlay('sc2')" style="flex:5;">SC2 (animated)</button>
+                    <button type="button" id="scene-btn-sc2-quick" class="scene-btn-major" onclick="toggleSceneOverlay('sc2-quick')" style="flex:1;">Quick</button>
+                </div>
                 <button type="button" id="scene-btn-schedule" onclick="toggleSceneOverlay('schedule')">Schedule</button>
-                <button type="button" id="scene-btn-scoreboard" onclick="toggleSceneOverlay('scoreboard')">Scoreboard</button>
-                <button type="button" id="scene-btn-ash" onclick="toggleSceneOverlay('ash')">ASH</button>
-                <button type="button" id="scene-btn-pog" onclick="toggleSceneOverlay('pog')">POG</button>
-                <button type="button" id="scene-btn-ptb" onclick="toggleSceneOverlay('ptb')">PTB</button>
-                <button type="button" id="scene-btn-st" onclick="toggleSceneOverlay('st')">ST</button>
+                <div style="display:flex; gap:8px;">
+                    <button type="button" id="scene-btn-scoreboard" onclick="toggleSceneOverlay('scoreboard')">FSL Scoreboard</button>
+                    <button type="button" id="scene-btn-custom-scoreboard" onclick="toggleSceneOverlay('custom-scoreboard')">Custom Scoreboard</button>
+                </div>
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px;">
+                    <button type="button" id="scene-btn-ash" onclick="toggleSceneOverlay('ash')">ASH</button>
+                    <button type="button" id="scene-btn-pog" onclick="toggleSceneOverlay('pog')">POG</button>
+                    <button type="button" id="scene-btn-ptb" onclick="toggleSceneOverlay('ptb')">PTB</button>
+                    <button type="button" id="scene-btn-st" onclick="toggleSceneOverlay('st')">ST</button>
+                </div>
                 <span class="scenes-shared-group" style="display: inline-flex; align-items: center; gap: 0.25rem;">
                     <button type="button" id="scene-btn-shared-window" onclick="toggleSceneOverlay('shared-window')">Shared Window</button>
                     <button type="button" id="scene-btn-full-shared" onclick="toggleSceneOverlay('full-shared')" style="display: none;">Shared (Partial)</button>
@@ -322,7 +564,7 @@ header('Pragma: no-cache');
             </div>
             <div id="scene-video-error" class="scene-video-error" style="display: none; font-size: 0.8rem; color: #c00; margin-top: 4px;"></div>
 
-            <h2>Player Intros, Memes & Effects</h2>
+            <h2>Player Intros & Effects</h2>
 
             <button class="collapsible-btn" id="btn-forms" onclick="toggleForms(this)">Show More</button>
 
@@ -407,6 +649,9 @@ header('Pragma: no-cache');
                 <div id="scoreboard-overlay" data-layer-id="scoreboard-overlay" class="scoreboard-overlay-wrap" style="display: none; position: absolute; top: 0; left: 0; width: 100%; height: 100%; overflow: auto; pointer-events: none;">
                     <div id="scoreboard-content" class="scoreboard-panel scoreboard-content-wrap"></div>
                 </div>
+                <div id="custom-scoreboard-overlay" class="scoreboard-overlay-wrap" style="display: none; position: absolute; top: 0; left: 0; width: 100%; height: 100%; overflow: auto; pointer-events: none;">
+                    <div id="custom-scoreboard-content" class="scoreboard-panel scoreboard-content-wrap"></div>
+                </div>
                 <div id="gif-container" data-layer-id="gif-container">
                     <img id="gif-image" src="production_files/images/transparent_greenscreen.gif?v=<?php echo $v; ?>" alt="GIF">
                     <canvas id="gif-chroma-canvas" style="display:none; position:absolute; pointer-events:none;"></canvas>
@@ -449,7 +694,7 @@ header('Pragma: no-cache');
             <!-- SC2: smaller VDO panel; when SC2 scene is on, BG is hidden and this overlay is shown. Panel is draggable/resizable like logos. -->
             <div id="sc2-overlay" data-layer-id="sc2-overlay" class="sc2-overlay" style="display: none; position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none;">
                 <div id="sc2-panel-wrap" class="sc2-panel-wrap logo-wrap" style="display: none; position: absolute; overflow: hidden; background: #000;">
-                    <iframe data-src="https://vdo.ninja/?scene=1&room=KJNinjaRoom123&password=FSL&sl&cover&autostart" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; border: none;" allow="autoplay; fullscreen"></iframe>
+                    <iframe data-src="https://vdo.ninja/?scene=0&room=KJNinjaRoom123&password=FSL&sl&cover&916" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; border: none;" allow="autoplay; fullscreen"></iframe>
                 </div>
             </div>
             <!-- Shared Window: shows getDisplayMedia() stream (browser tab/window). Works like other non-SC2 scenes. -->
@@ -466,15 +711,15 @@ header('Pragma: no-cache');
                     <video id="yt-video" autoplay playsinline muted style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; object-fit: contain; object-position: center center;"></video>
                 </div>
             </div>
-            <!-- YT iframe scene: shows embedded YouTube video with same crop as YT scene -->
+            <!-- YT iframe scene: shows embedded YouTube video filling the right panel -->
             <div id="scene-overlay-yt-iframe" data-layer-id="scene-overlay-yt-iframe" style="display: none; position: absolute; top: 0; left: 0; width: 100%; height: 100%; z-index: 99999; background: #000;">
-                <div id="yt-iframe-crop-wrap" style="position: absolute; overflow: hidden;">
-                    <iframe id="yt-iframe-player" style="position: absolute; border: none;" allow="autoplay; fullscreen" allowfullscreen></iframe>
+                <div id="yt-iframe-crop-wrap" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; overflow: hidden;">
+                    <iframe id="yt-iframe-player" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; border: none;" allow="autoplay; fullscreen" allowfullscreen></iframe>
                 </div>
                 <!-- Break countdown: shown on top of the iframe when BREAK scene is active -->
                 <div id="break-countdown-overlay" style="display: none; position: absolute; top: 0; left: 0; width: 100%; z-index: 1; pointer-events: none; text-align: center; padding-top: 28px;">
                     <div id="break-message-display" style="font-family: Arial, Helvetica, sans-serif; font-size: 2rem; font-weight: bold; color: #ff0; text-shadow: -2px -2px 0 #000, 2px -2px 0 #000, -2px 2px 0 #000, 2px 2px 0 #000; margin-bottom: 6px;">be right back...</div>
-                    <div id="break-timer-display" style="font-family: Arial, Helvetica, sans-serif; font-size: 5rem; font-weight: bold; color: #99eeff; text-shadow: -3px -3px 0 #000, 3px -3px 0 #000, -3px 3px 0 #000, 3px 3px 0 #000; letter-spacing: 0.05em; line-height: 1;">5:00</div>
+                    <div id="break-timer-display" style="font-family: Arial, Helvetica, sans-serif; font-size: 5rem; font-weight: bold; color: #99eeff; text-shadow: -3px -3px 0 #000, 3px -3px 0 #000, -3px 3px 0 #000, 3px 3px 0 #000; letter-spacing: 0.05em; line-height: 1;">05:00</div>
                 </div>
             </div>
             <!-- Fullscreen transition video overlay (fade in/out); used by playTransitionVideo() -->
@@ -517,6 +762,11 @@ header('Pragma: no-cache');
             }
             if (btn) btn.textContent = (el.style.display === "block") ? "Hide Settings" : "Show Settings";
         }
+        function toggleMusic(btn) {
+            var el = document.getElementById("music-section");
+            if (el.style.display === "none" || !el.style.display) { el.style.display = "block"; } else { el.style.display = "none"; }
+            if (btn) btn.textContent = (el.style.display === "block") ? "Hide Music" : "Music";
+        }
         function toggleVolume(btn) {
             var el = document.getElementById("volume-section");
             if (el.style.display === "none" || !el.style.display) { el.style.display = "block"; } else { el.style.display = "none"; }
@@ -526,6 +776,16 @@ header('Pragma: no-cache');
             var el = document.getElementById("scoreboard-settings-section");
             if (el.style.display === "none" || !el.style.display) { el.style.display = "block"; } else { el.style.display = "none"; }
             if (btn) btn.textContent = (el.style.display === "block") ? "Hide Scoreboard" : "Scoreboard";
+        }
+        function toggleCustomScoreboardSettings(btn) {
+            var el = document.getElementById("custom-scoreboard-settings-section");
+            if (el.style.display === "none" || !el.style.display) {
+                el.style.display = "block";
+                csbLoad();
+            } else {
+                el.style.display = "none";
+            }
+            if (btn) btn.textContent = (el.style.display === "block") ? "Hide Custom Scoreboard" : "Custom Scoreboard";
         }
         function togglePlayerIntros(btn) {
             var el = document.getElementById("player-intros-settings-section");
@@ -725,7 +985,8 @@ header('Pragma: no-cache');
                     { label: "INTRO", url: "https://www.youtube.com/watch?v=vt04Xbq57Dk", vol: 100 },
                     { label: "BREAK", url: "https://youtu.be/O9lNetcn9Y8?si=FaqwLX5I9KkoJecK", vol: 100 }
                 ],
-                breakSettings: { min: 5, sec: 0, msg: "be right back..." }
+                breakSettings: { min: 5, sec: 0, msg: "be right back..." },
+                musicMode: 'sequence'
             };
 
             function persistEditModePositions() {
@@ -798,7 +1059,8 @@ header('Pragma: no-cache');
                     chromaKey: !!document.getElementById("chroma-key-cb") && document.getElementById("chroma-key-cb").checked,
                     ytCrop: typeof getYtCrop === "function" ? getYtCrop() : { top: 150, left: 10, right: 20, bottom: 100 },
                     ytIframeVideos: typeof getYtIframeVideos === "function" ? getYtIframeVideos() : DEFAULT_SETTINGS.ytIframeVideos,
-                    breakSettings: typeof getBreakSettings === "function" ? getBreakSettings() : DEFAULT_SETTINGS.breakSettings
+                    breakSettings: typeof getBreakSettings === "function" ? getBreakSettings() : DEFAULT_SETTINGS.breakSettings,
+                    musicMode: (function() { var el = document.querySelector('input[name="music-mode"]:checked'); return el ? el.value : 'sequence'; })()
                 };
                 return out;
             }
@@ -868,10 +1130,10 @@ header('Pragma: no-cache');
                     }
                     var o3 = document.getElementById("logos-overlay"); var b3 = document.getElementById("scene-btn-logos");
                     if (o3 && b3) { o3.style.display = sc.logos ? "block" : "none"; b3.classList.toggle("active", !!sc.logos); }
-                    var o4 = document.getElementById("sc2-overlay"); var b4 = document.getElementById("scene-btn-sc2");
-                    if (o4 && b4) {
+                    var o4 = document.getElementById("sc2-overlay");
+                    if (o4) {
                         o4.style.display = sc.sc2 ? "block" : "none";
-                        b4.classList.toggle("active", !!sc.sc2);
+                        setSc2ButtonsActive(!!sc.sc2);
                         if (sc.sc2 && o1) o1.style.display = "none";
                         if (sc.sc2) {
                             var sc2PanelImport = document.getElementById("sc2-panel-wrap");
@@ -915,6 +1177,10 @@ header('Pragma: no-cache');
                 }
                 var chromaCb = document.getElementById("chroma-key-cb");
                 if (chromaCb && parsed.chromaKey !== undefined) chromaCb.checked = !!parsed.chromaKey;
+                if (parsed.musicMode) {
+                    var modeEl = document.querySelector('input[name="music-mode"][value="' + parsed.musicMode + '"]');
+                    if (modeEl) modeEl.checked = true;
+                }
                 if (window.updateLogosOverlay) window.updateLogosOverlay();
                 if (window.updateSc2Panel) window.updateSc2Panel();
                 if (window.reapplyLayerOrder) window.reapplyLayerOrder();
@@ -1326,8 +1592,6 @@ header('Pragma: no-cache');
             window.addEventListener("resize", function() {
                 var ytOverlay = document.getElementById("scene-overlay-yt");
                 if (ytOverlay && ytOverlay.style.display === "block") applyYtCropToVideo();
-                var ytIframeOverlay = document.getElementById("scene-overlay-yt-iframe");
-                if (ytIframeOverlay && ytIframeOverlay.style.display === "block") applyYtCropToIframe();
             });
         })();
         var YT_IFRAME_VIDEOS_KEY = 'stream_production_yt_iframe_videos';
@@ -1350,7 +1614,7 @@ header('Pragma: no-cache');
             if (!videoId) { m = url.match(/\/embed\/([a-zA-Z0-9_-]{11})/); if (m) videoId = m[1]; }
             /* youtube.com/shorts/ID */
             if (!videoId) { m = url.match(/\/shorts\/([a-zA-Z0-9_-]{11})/); if (m) videoId = m[1]; }
-            if (videoId) return 'https://www.youtube.com/embed/' + videoId + '?autoplay=1&enablejsapi=1';
+            if (videoId) return 'https://www.youtube.com/embed/' + videoId + '?autoplay=1&enablejsapi=1&controls=0';
             return url; /* unrecognised – pass through */
         }
 
@@ -1488,8 +1752,8 @@ header('Pragma: no-cache');
             var s = document.getElementById('break-timer-sec');
             var qm = document.getElementById('break-quick-min');
             var qs = document.getElementById('break-quick-sec');
-            if (m && qm) qm.value = m.value;
-            if (s && qs) qs.value = s.value;
+            if (m && qm) qm.value = String(Math.max(0, parseInt(m.value, 10) || 0)).padStart(2, '0');
+            if (s && qs) qs.value = String(Math.max(0, Math.min(59, parseInt(s.value, 10) || 0))).padStart(2, '0');
         }
 
         function syncBreakSettingsFromQuick() {
@@ -1504,7 +1768,7 @@ header('Pragma: no-cache');
         function formatBreakTime(totalSec) {
             var m = Math.floor(totalSec / 60);
             var s = totalSec % 60;
-            return m + ':' + (s < 10 ? '0' : '') + s;
+            return (m < 10 ? '0' : '') + m + ':' + (s < 10 ? '0' : '') + s;
         }
 
         function startBreakCountdown() {
@@ -1602,30 +1866,7 @@ header('Pragma: no-cache');
         }
 
         function applyYtCropToIframe() {
-            var crop = getYtCrop();
-            var overlay = document.getElementById('scene-overlay-yt-iframe');
-            var wrap = document.getElementById('yt-iframe-crop-wrap');
-            var iframe = document.getElementById('yt-iframe-player');
-            if (!overlay || !wrap || !iframe) return;
-            var parent = overlay.parentElement || overlay.offsetParent;
-            var rect = (parent && parent.getBoundingClientRect) ? parent.getBoundingClientRect() : { width: 1280, height: 720 };
-            var w = rect.width || 1280;
-            var h = rect.height || 720;
-            var cropW = Math.max(1, w - crop.left - crop.right);
-            var cropH = Math.max(1, h - crop.top - crop.bottom);
-            var scale = Math.min(w / cropW, h / cropH);
-            wrap.style.left = '50%';
-            wrap.style.top = '50%';
-            wrap.style.width = cropW + 'px';
-            wrap.style.height = cropH + 'px';
-            wrap.style.transform = 'translate(-50%, -50%) scale(' + scale + ')';
-            wrap.style.transformOrigin = 'center center';
-            wrap.style.overflow = 'hidden';
-            iframe.style.position = 'absolute';
-            iframe.style.left = (-crop.left) + 'px';
-            iframe.style.top = (-crop.top) + 'px';
-            iframe.style.width = w + 'px';
-            iframe.style.height = h + 'px';
+            /* No-op: the iframe fills the overlay via CSS (100%×100%). No crop needed. */
         }
 
         function toggleYtIframeScene(which) {
@@ -1665,10 +1906,9 @@ header('Pragma: no-cache');
                 if (vdoFullBtn) vdoFullBtn.classList.remove('active');
                 var sc2Overlay = document.getElementById('sc2-overlay');
                 var sc2Panel = document.getElementById('sc2-panel-wrap');
-                var sc2Btn = document.getElementById('scene-btn-sc2');
                 if (sc2Overlay) { sc2Overlay.style.display = 'none'; sc2Overlay.style.zIndex = ''; }
                 if (sc2Panel) sc2Panel.style.display = 'none';
-                if (sc2Btn) sc2Btn.classList.remove('active');
+                setSc2ButtonsActive(false);
                 /* Show YT iframe overlay */
                 overlay.setAttribute('data-yt-which', which);
                 if (iframe) {
@@ -2349,6 +2589,216 @@ header('Pragma: no-cache');
                 });
             };
 
+            /* ---- Custom Scoreboard ---- */
+
+            var _csbData = { matches: [] };
+
+            var CSB_EXAMPLES = [
+                { a: 'hyperturtle',              b: 'sgtabc',                desc: 'monobattles' },
+                { a: 'nachoz/nukleo/chienpwn',   b: 'adastra/pebble/harouz', desc: '3v3' },
+                { a: 'papella',                  b: 'neutrophil',            desc: 'random vs random' },
+                { a: 'hyperturtle',              b: 'sgtabc',                desc: 'monobattles' },
+                { a: 'nachoz/nukleo/chienpwn',   b: 'adastra/pebble/harouz', desc: '3v3' }
+            ];
+
+            function csbMakeRow(idx, m) {
+                var ex = CSB_EXAMPLES[idx % CSB_EXAMPLES.length];
+                var row = document.createElement('div');
+                row.className = 'sb-matchup-row';
+                row.style.cssText = 'padding:6px 8px; background:#111; border-radius:4px; font-size:12px; margin-bottom:6px; border:1px solid #222;';
+                row.dataset.csbIdx = idx;
+                row.innerHTML =
+                    '<div style="font-size:10px; color:#555; margin-bottom:4px; letter-spacing:0.5px;">MATCH ' + (idx + 1) + '</div>' +
+                    /* Side A row */
+                    '<div style="display:flex; align-items:center; gap:4px; margin-bottom:3px;">' +
+                        '<input type="text" class="csb-a" placeholder="' + csbEsc(ex.a) + '" value="' + csbEsc(m.a || '') + '" style="flex:1; min-width:0; background:#1a2a1a; color:#8f8; border:1px solid #484; border-radius:3px; padding:3px 5px;">' +
+                        '<button type="button" onclick="csbAdj(this,-1,\'a\')" style="width:22px; height:22px; line-height:1; padding:0; font-size:14px; flex-shrink:0; background:#1a2a1a; color:#8f8; border:1px solid #484; border-radius:3px;">−</button>' +
+                        '<input type="number" class="csb-score-a" min="0" max="99" value="' + (m.scoreA != null ? m.scoreA : 0) + '" style="width:40px; text-align:center; flex-shrink:0; background:#1a2a1a; color:#8f8; border:1px solid #484; border-radius:3px; padding:2px 3px;">' +
+                        '<button type="button" onclick="csbAdj(this,1,\'a\')" style="width:22px; height:22px; line-height:1; padding:0; font-size:14px; flex-shrink:0; background:#1a2a1a; color:#8f8; border:1px solid #484; border-radius:3px;">+</button>' +
+                    '</div>' +
+                    /* Side B row */
+                    '<div style="display:flex; align-items:center; gap:4px; margin-bottom:3px;">' +
+                        '<input type="text" class="csb-b" placeholder="' + csbEsc(ex.b) + '" value="' + csbEsc(m.b || '') + '" style="flex:1; min-width:0; background:#1a1a2a; color:#88f; border:1px solid #448; border-radius:3px; padding:3px 5px;">' +
+                        '<button type="button" onclick="csbAdj(this,-1,\'b\')" style="width:22px; height:22px; line-height:1; padding:0; font-size:14px; flex-shrink:0; background:#1a1a2a; color:#88f; border:1px solid #448; border-radius:3px;">−</button>' +
+                        '<input type="number" class="csb-score-b" min="0" max="99" value="' + (m.scoreB != null ? m.scoreB : 0) + '" style="width:40px; text-align:center; flex-shrink:0; background:#1a1a2a; color:#88f; border:1px solid #448; border-radius:3px; padding:2px 3px;">' +
+                        '<button type="button" onclick="csbAdj(this,1,\'b\')" style="width:22px; height:22px; line-height:1; padding:0; font-size:14px; flex-shrink:0; background:#1a1a2a; color:#88f; border:1px solid #448; border-radius:3px;">+</button>' +
+                    '</div>' +
+                    /* Description row */
+                    '<input type="text" class="csb-desc" placeholder="' + csbEsc(ex.desc) + '" value="' + csbEsc(m.desc || '') + '" style="width:100%; box-sizing:border-box; background:#1a1a1a; color:#aaa; border:1px solid #333; border-radius:3px; padding:3px 5px;">';
+                return row;
+            }
+
+            function csbEsc(s) {
+                if (s == null) return '';
+                var d = document.createElement('div');
+                d.textContent = String(s);
+                return d.innerHTML.replace(/"/g, '&quot;');
+            }
+
+            window.csbAdj = function(btn, delta, side) {
+                var row = btn.closest('.sb-matchup-row') || btn.parentNode.parentNode;
+                var inp = row.querySelector(side === 'a' ? '.csb-score-a' : '.csb-score-b');
+                if (!inp) return;
+                var v = parseInt(inp.value, 10) || 0;
+                inp.value = Math.max(0, v + delta);
+            };
+
+            window.csbSetNumMatches = function(n) {
+                n = Math.max(1, Math.min(20, n || 1));
+                var existing = _csbData.matches.slice();
+                while (existing.length < n) existing.push({ a: '', b: '', scoreA: 0, scoreB: 0, desc: '' });
+                existing = existing.slice(0, n);
+                _csbData.matches = existing;
+                csbRenderRows();
+            };
+
+            function csbRenderRows() {
+                var container = document.getElementById('csb-rows-container');
+                if (!container) return;
+                container.innerHTML = '';
+                _csbData.matches.forEach(function(m, i) {
+                    container.appendChild(csbMakeRow(i, m));
+                });
+                var numInp = document.getElementById('csb-num-matches');
+                if (numInp) numInp.value = _csbData.matches.length;
+            }
+
+            function csbCollect() {
+                var rows = document.querySelectorAll('#csb-rows-container .sb-matchup-row');
+                var matches = [];
+                rows.forEach(function(row) {
+                    matches.push({
+                        a: (row.querySelector('.csb-a') || {}).value || '',
+                        b: (row.querySelector('.csb-b') || {}).value || '',
+                        scoreA: parseInt((row.querySelector('.csb-score-a') || {}).value, 10) || 0,
+                        scoreB: parseInt((row.querySelector('.csb-score-b') || {}).value, 10) || 0,
+                        desc: (row.querySelector('.csb-desc') || {}).value || ''
+                    });
+                });
+                return {
+                    labelA: (document.getElementById('csb-label-a') || {}).value || '',
+                    labelB: (document.getElementById('csb-label-b') || {}).value || '',
+                    matches: matches
+                };
+            }
+
+            window.csbSave = function() {
+                var collected = csbCollect();
+                _csbData.labelA = collected.labelA;
+                _csbData.labelB = collected.labelB;
+                _csbData.matches = collected.matches;
+                var btn = document.getElementById('csb-save-btn');
+                var status = document.getElementById('csb-save-status');
+                if (btn) btn.disabled = true;
+                if (status) status.textContent = 'Saving…';
+                fetch('save_custom_scoreboard.php', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(_csbData)
+                }).then(function(r) { return r.json(); }).then(function(res) {
+                    if (res && res.ok) {
+                        if (status) status.textContent = 'Saved!';
+                        var overlay = document.getElementById('custom-scoreboard-overlay');
+                        if (overlay && overlay.style.display === 'block') loadAndRenderCustomScoreboard();
+                    } else {
+                        if (status) status.textContent = 'Error saving.';
+                    }
+                    setTimeout(function() { if (status) status.textContent = ''; if (btn) btn.disabled = false; }, 2500);
+                }).catch(function() {
+                    if (status) status.textContent = 'Network error.';
+                    setTimeout(function() { if (status) status.textContent = ''; if (btn) btn.disabled = false; }, 2500);
+                });
+            };
+
+            window.csbLoad = function() {
+                fetch('save_custom_scoreboard.php?_t=' + Date.now())
+                    .then(function(r) { return r.json(); })
+                    .then(function(data) {
+                        _csbData = data && Array.isArray(data.matches) ? data : { matches: [] };
+                        if (_csbData.matches.length === 0) {
+                            var n = parseInt((document.getElementById('csb-num-matches') || {}).value, 10) || 5;
+                            for (var i = 0; i < n; i++) _csbData.matches.push({ a: '', b: '', scoreA: 0, scoreB: 0, desc: '' });
+                        }
+                        var inpA = document.getElementById('csb-label-a');
+                        var inpB = document.getElementById('csb-label-b');
+                        if (inpA) inpA.value = _csbData.labelA || '';
+                        if (inpB) inpB.value = _csbData.labelB || '';
+                        csbRenderRows();
+                    })
+                    .catch(function() {
+                        if (_csbData.matches.length === 0) {
+                            for (var i = 0; i < 5; i++) _csbData.matches.push({ a: '', b: '', scoreA: 0, scoreB: 0, desc: '' });
+                        }
+                        csbRenderRows();
+                    });
+            };
+
+            function buildCustomScoreboardHTML(data) {
+                var matches = (data && Array.isArray(data.matches)) ? data.matches : [];
+                var active = matches.filter(function(m) { return m.a || m.b || m.scoreA || m.scoreB || m.desc; });
+                if (!active.length) return '<div class="scoreboard-panel-inner"><p class="scoreboard-empty">No custom scoreboard data. Edit in Settings &rarr; Custom Scoreboard.</p></div>';
+
+                var labelA = (data && data.labelA && data.labelA.trim()) ? data.labelA.trim() : 'Side A';
+                var labelB = (data && data.labelB && data.labelB.trim()) ? data.labelB.trim() : 'Side B';
+
+                var totalA = 0, totalB = 0;
+                active.forEach(function(m) { totalA += (parseInt(m.scoreA, 10) || 0); totalB += (parseInt(m.scoreB, 10) || 0); });
+
+                var hasDesc = active.some(function(m) { return m.desc && m.desc.trim(); });
+
+                var sb = [];
+                sb.push('<div class="scoreboard-panel-inner">');
+                /* Header */
+                sb.push('<div class="scoreboard-header">');
+                sb.push('<div class="scoreboard-team-block scoreboard-team-a"><span class="scoreboard-team-name" style="font-size:2rem;">' + escapeHtml(labelA) + '</span></div>');
+                sb.push('<div class="scoreboard-vs-block"><span class="scoreboard-score-main">' + totalA + ' &ndash; ' + totalB + '</span></div>');
+                sb.push('<div class="scoreboard-team-block scoreboard-team-b"><span class="scoreboard-team-name" style="font-size:2rem;">' + escapeHtml(labelB) + '</span></div>');
+                sb.push('</div>');
+                /* Table — 5 cols: # | Side A | Score | Side B | Desc(optional) */
+                var colGroup = '<colgroup><col style="width:0.1%"><col><col style="width:7em"><col>' + (hasDesc ? '<col style="width:16%">' : '') + '</colgroup>';
+                sb.push('<div class="scoreboard-table-wrap"><table class="scoreboard-table">' + colGroup);
+                sb.push('<thead><tr>');
+                sb.push('<th class="scoreboard-th-empty"></th>');
+                sb.push('<th class="scoreboard-th-team" style="text-align:left; padding-left:0.7rem;">' + escapeHtml(labelA) + '</th>');
+                sb.push('<th style="text-align:center; background:rgba(108,92,231,0.25); color:#a29bfe; font-size:0.85rem; font-weight:500; white-space:nowrap;">Score</th>');
+                sb.push('<th class="scoreboard-th-team" style="text-align:right; padding-right:0.7rem;">' + escapeHtml(labelB) + '</th>');
+                if (hasDesc) sb.push('<th class="scoreboard-th-map" style="text-align:center;">Map / Desc</th>');
+                sb.push('</tr></thead><tbody>');
+                active.forEach(function(m, i) {
+                    var sA = parseInt(m.scoreA, 10) || 0;
+                    var sB = parseInt(m.scoreB, 10) || 0;
+                    var winA = sA > sB, winB = sB > sA;
+                    var scoreCell =
+                        '<span style="font-size:1.35rem; font-weight:700; color:' + (winA ? '#ffe082' : '#FFD700') + ';">' + sA + '</span>' +
+                        '<span style="color:#444; font-size:1rem; margin:0 0.35em;">&ndash;</span>' +
+                        '<span style="font-size:1.35rem; font-weight:700; color:' + (winB ? '#ffe082' : '#a29bfe') + ';">' + sB + '</span>';
+                    sb.push('<tr>');
+                    sb.push('<td class="scoreboard-empty-cell" style="font-size:0.8rem; color:#555; padding-right:6px;">' + escapeHtml(String(i + 1)) + '</td>');
+                    sb.push('<td class="scoreboard-cell scoreboard-cell-team" style="text-align:left; padding-left:0.7rem;' + (winA ? 'font-weight:700; color:#ffe082;' : '') + '">' + escapeHtml(m.a || '') + '</td>');
+                    sb.push('<td style="text-align:center; white-space:nowrap; padding:0.28rem 0.5rem;">' + scoreCell + '</td>');
+                    sb.push('<td class="scoreboard-cell scoreboard-cell-team" style="text-align:right; padding-right:0.7rem;' + (winB ? 'font-weight:700; color:#ffe082;' : '') + '">' + escapeHtml(m.b || '') + '</td>');
+                    if (hasDesc) sb.push('<td class="scoreboard-map" style="text-align:center;">' + escapeHtml(m.desc || '') + '</td>');
+                    sb.push('</tr>');
+                });
+                sb.push('</tbody></table></div></div>');
+                return sb.join('');
+            }
+
+            window.loadAndRenderCustomScoreboard = function() {
+                var container = document.getElementById('custom-scoreboard-content');
+                if (!container) return;
+                fetch('save_custom_scoreboard.php?_t=' + Date.now())
+                    .then(function(r) { return r.json(); })
+                    .then(function(data) {
+                        container.innerHTML = buildCustomScoreboardHTML(data);
+                    })
+                    .catch(function(err) {
+                        container.innerHTML = '<div class="scoreboard-panel-inner"><p class="scoreboard-empty">Could not load custom scoreboard.</p></div>';
+                    });
+            };
+
+            /* ---- End Custom Scoreboard ---- */
+
             /** Set VDO iframe src from data-src only if not already loaded (vdo.ninja), to avoid reload and preserve camera state. */
             function ensureVdoIframeLoaded(iframe) {
                 if (!iframe) return;
@@ -2365,6 +2815,18 @@ header('Pragma: no-cache');
                 var sc2Panel = document.getElementById('sc2-panel-wrap');
                 if (vdoPanel) ensureVdoIframeLoaded(vdoPanel.querySelector('iframe'));
                 if (sc2Panel) ensureVdoIframeLoaded(sc2Panel.querySelector('iframe'));
+            }
+
+            /** Toggle visibility of both VDO panels (large + small) without affecting scene state. */
+            var _vdoHidden = false;
+            function toggleVdoVisibility() {
+                _vdoHidden = !_vdoHidden;
+                var largePanel = document.getElementById('vdo-full-panel-wrap');
+                var smallPanel = document.getElementById('sc2-panel-wrap');
+                var btn = document.getElementById('btn-hide-vdo');
+                if (largePanel) largePanel.style.visibility = _vdoHidden ? 'hidden' : '';
+                if (smallPanel) smallPanel.style.visibility = _vdoHidden ? 'hidden' : '';
+                if (btn) btn.textContent = _vdoHidden ? 'Show VDO' : 'Hide VDO';
             }
 
             /** Force reload of VDO Ninja iframes (SC2 and VDO full). Use when camera feed is stuck. */
@@ -2407,6 +2869,142 @@ header('Pragma: no-cache');
                         }
                     }, 1000);
                 }
+            }
+
+            /** Force-reload all iframes in the stream frame (VDO, BG overlay, YT, etc.). */
+            var _refreshPanelTimer = null;
+            function refreshProductionPanel() {
+                var btn = document.getElementById('btn-refresh-panel');
+                var frame = document.querySelector('.stream-frame');
+                if (!frame) return;
+                frame.querySelectorAll('iframe').forEach(function(iframe) {
+                    var dataSrc = iframe.getAttribute('data-src');
+                    if (dataSrc) {
+                        iframe.src = '';
+                        iframe.src = dataSrc;
+                    } else if (iframe.src) {
+                        var s = iframe.src;
+                        iframe.src = '';
+                        iframe.src = s;
+                    }
+                });
+                if (btn) {
+                    btn.disabled = true;
+                    btn.textContent = 'Refreshed!';
+                    clearTimeout(_refreshPanelTimer);
+                    _refreshPanelTimer = setTimeout(function() {
+                        btn.disabled = false;
+                        btn.textContent = 'Refresh Right Panel';
+                    }, 5000);
+                }
+            }
+
+            function activateSc2Scene() {
+                var bgOverlay = document.getElementById('scene-overlay-all-vdo');
+                var vdoFullOverlay = document.getElementById('scene-overlay-vdo-full');
+                var vdoFullBtn = document.getElementById('scene-btn-vdo-full');
+                var sc2Overlay = document.getElementById('sc2-overlay');
+                var sc2Panel = document.getElementById('sc2-panel-wrap');
+                if (bgOverlay) bgOverlay.style.display = 'none';
+                if (vdoFullOverlay) vdoFullOverlay.style.display = 'none';
+                if (vdoFullBtn) vdoFullBtn.classList.remove('active');
+                var sharedOverlay = document.getElementById('scene-overlay-shared-window');
+                var sharedBtn = document.getElementById('scene-btn-shared-window');
+                var fullSharedOverlay = document.getElementById('scene-overlay-full-shared-panel');
+                var fullSharedBtn = document.getElementById('scene-btn-full-shared');
+                var ytOverlay = document.getElementById('scene-overlay-yt');
+                var ytBtn = document.getElementById('scene-btn-yt');
+                var ytIframeOverlay = document.getElementById('scene-overlay-yt-iframe');
+                var ytIframeIntroBtn = document.getElementById('scene-btn-yt-intro');
+                var ytIframeBreakBtn = document.getElementById('scene-btn-yt-break');
+                var ytIframePlayer = document.getElementById('yt-iframe-player');
+                if (sharedOverlay) sharedOverlay.style.display = 'none';
+                if (sharedBtn) sharedBtn.classList.remove('active');
+                if (fullSharedOverlay) fullSharedOverlay.style.display = 'none';
+                if (fullSharedBtn) fullSharedBtn.classList.remove('active');
+                if (ytOverlay) ytOverlay.style.display = 'none';
+                if (ytBtn) ytBtn.classList.remove('active');
+                stopBreakCountdown();
+                if (ytIframeOverlay) ytIframeOverlay.style.display = 'none';
+                if (ytIframePlayer) ytIframePlayer.src = '';
+                if (ytIframeIntroBtn) ytIframeIntroBtn.classList.remove('active');
+                if (ytIframeBreakBtn) ytIframeBreakBtn.classList.remove('active');
+                var scoreboardOverlaySc2 = document.getElementById('scoreboard-overlay');
+                var scoreboardBtnSc2 = document.getElementById('scene-btn-scoreboard');
+                if (scoreboardOverlaySc2) { scoreboardOverlaySc2.style.display = 'none'; scoreboardOverlaySc2.style.zIndex = ''; }
+                if (scoreboardBtnSc2) scoreboardBtnSc2.classList.remove('active');
+                if (sc2Overlay) sc2Overlay.style.display = 'block';
+                setSc2ButtonsActive(true);
+                if (sc2Panel) {
+                    sc2Panel.style.display = 'block';
+                    var pos = getSavedSc2Panel() || getDefaultSc2PanelPosition(sc2Overlay ? sc2Overlay.getBoundingClientRect() : { width: 1280, height: 720 });
+                    applyPositionToSc2Panel(sc2Panel, pos);
+                    var sc2Iframe = sc2Panel.querySelector('iframe');
+                    ensureVdoIframeLoaded(sc2Iframe);
+                }
+                if (typeof logosEditMode !== 'undefined' && logosEditMode) updateVdoPanelsInEditMode();
+            }
+
+            function deactivateSc2Scene() {
+                var bgOverlay = document.getElementById('scene-overlay-all-vdo');
+                var vdoFullOverlay = document.getElementById('scene-overlay-vdo-full');
+                var vdoFullBtn = document.getElementById('scene-btn-vdo-full');
+                var sc2Overlay = document.getElementById('sc2-overlay');
+                var sc2Panel = document.getElementById('sc2-panel-wrap');
+                var videoIframe = document.getElementById('scene-overlay-all-vdo-iframe');
+                var bgBtn = document.getElementById('scene-btn-all-vdo');
+                if (bgOverlay) {
+                    bgOverlay.style.display = 'block';
+                    bgOverlay.style.zIndex = typeof getVideoOverlayDefaultZIndex === 'function' ? getVideoOverlayDefaultZIndex() : '1';
+                }
+                if (videoIframe) {
+                    videoIframe.src = '2026/video_player.php?v=' + encodeURIComponent(VIDEO_OVERLAY_FILES['all-vdo']) + '&_t=' + Date.now();
+                }
+                VIDEO_OVERLAY_KEYS.forEach(function(key) {
+                    var b = document.getElementById('scene-btn-' + key);
+                    if (b) b.classList.remove('active');
+                });
+                var sharedOverlay = document.getElementById('scene-overlay-shared-window');
+                var sharedBtn = document.getElementById('scene-btn-shared-window');
+                var fullSharedOverlay = document.getElementById('scene-overlay-full-shared-panel');
+                var fullSharedBtn = document.getElementById('scene-btn-full-shared');
+                var ytOverlay = document.getElementById('scene-overlay-yt');
+                var ytBtn = document.getElementById('scene-btn-yt');
+                var ytIframeOverlay = document.getElementById('scene-overlay-yt-iframe');
+                var ytIframePlayer = document.getElementById('yt-iframe-player');
+                var ytIframeIntroBtn = document.getElementById('scene-btn-yt-intro');
+                var ytIframeBreakBtn = document.getElementById('scene-btn-yt-break');
+                if (sharedOverlay) sharedOverlay.style.display = 'none';
+                if (sharedBtn) sharedBtn.classList.remove('active');
+                if (fullSharedOverlay) fullSharedOverlay.style.display = 'none';
+                if (fullSharedBtn) fullSharedBtn.classList.remove('active');
+                if (ytOverlay) ytOverlay.style.display = 'none';
+                if (ytBtn) ytBtn.classList.remove('active');
+                stopBreakCountdown();
+                if (ytIframeOverlay) ytIframeOverlay.style.display = 'none';
+                if (ytIframePlayer) ytIframePlayer.src = '';
+                if (ytIframeIntroBtn) ytIframeIntroBtn.classList.remove('active');
+                if (ytIframeBreakBtn) ytIframeBreakBtn.classList.remove('active');
+                if (bgBtn) bgBtn.classList.add('active');
+                if (vdoFullOverlay) vdoFullOverlay.style.display = 'block';
+                if (vdoFullBtn) vdoFullBtn.classList.add('active');
+                var vdoPanel = document.getElementById('vdo-full-panel-wrap');
+                if (vdoPanel) {
+                    var vdoPos = getSavedVdoFullPanel() || getDefaultVdoFullPanelPosition(vdoFullOverlay ? vdoFullOverlay.getBoundingClientRect() : { width: 1280, height: 720 });
+                    applyPositionToVdoFullPanel(vdoPanel, vdoPos);
+                    var vdoIframe = vdoPanel.querySelector('iframe');
+                    ensureVdoIframeLoaded(vdoIframe);
+                }
+                if (sc2Overlay) sc2Overlay.style.display = 'none';
+                setSc2ButtonsActive(false);
+                if (typeof logosEditMode !== 'undefined' && logosEditMode) updateVdoPanelsInEditMode();
+            }
+
+            function setSc2ButtonsActive(isActive) {
+                var b1 = document.getElementById('scene-btn-sc2');
+                var b2 = document.getElementById('scene-btn-sc2-quick');
+                if (b1) b1.classList.toggle('active', !!isActive);
+                if (b2) b2.classList.toggle('active', !!isActive);
             }
 
             /**
@@ -2474,7 +3072,7 @@ header('Pragma: no-cache');
                         ensureVdoIframeLoaded(vdoIframe);
                     }
                     if (sc2Overlay) sc2Overlay.style.display = 'none';
-                    sc2Btn.classList.remove('active');
+                    setSc2ButtonsActive(false);
                 }
             }
 
@@ -2507,9 +3105,8 @@ header('Pragma: no-cache');
                 var vdoFullOverlay = document.getElementById('scene-overlay-vdo-full');
                 var sc2Overlay = document.getElementById('sc2-overlay');
                 var vdoFullBtn = document.getElementById('scene-btn-vdo-full');
-                var sc2Btn = document.getElementById('scene-btn-sc2');
                 if (vdoFullBtn && vdoFullOverlay && (vdoFullOverlay.style.display === 'none' || !vdoFullOverlay.style.display)) vdoFullBtn.classList.remove('active');
-                if (sc2Btn && sc2Overlay && (sc2Overlay.style.display === 'none' || !sc2Overlay.style.display)) sc2Btn.classList.remove('active');
+                if (sc2Overlay && (sc2Overlay.style.display === 'none' || !sc2Overlay.style.display)) setSc2ButtonsActive(false);
             }
 
             function toggleVideoOverlay(sceneId) {
@@ -2643,6 +3240,62 @@ header('Pragma: no-cache');
                 }
                 return;
             }
+            if (sceneId === 'custom-scoreboard') {
+                var csbOverlay = document.getElementById('custom-scoreboard-overlay');
+                var csbBtn = document.getElementById('scene-btn-custom-scoreboard');
+                if (!csbOverlay || !csbBtn) return;
+                var isCsbActive = csbOverlay.style.display === 'block';
+                if (isCsbActive) {
+                    csbOverlay.style.display = 'none';
+                    csbOverlay.style.zIndex = '';
+                    csbBtn.classList.remove('active');
+                    applyLayoutFromSc2Button();
+                } else {
+                    VIDEO_OVERLAY_KEYS.forEach(function(k) { var b = document.getElementById('scene-btn-' + k); if (b) b.classList.remove('active'); });
+                    var bgOverlayCsb = document.getElementById('scene-overlay-all-vdo');
+                    var videoIframeCsb = document.getElementById('scene-overlay-all-vdo-iframe');
+                    var bgBtnCsb = document.getElementById('scene-btn-all-vdo');
+                    var sharedOverlayCsb = document.getElementById('scene-overlay-shared-window');
+                    var sharedBtnCsb = document.getElementById('scene-btn-shared-window');
+                    var fullSharedOverlayCsb = document.getElementById('scene-overlay-full-shared-panel');
+                    var fullSharedBtnCsb = document.getElementById('scene-btn-full-shared');
+                    var ytOverlayCsb = document.getElementById('scene-overlay-yt');
+                    var ytBtnCsb = document.getElementById('scene-btn-yt');
+                    var logosOverlayCsb = document.getElementById('logos-overlay');
+                    var logosBtnCsb = document.getElementById('scene-btn-logos');
+                    var sc2OverlayCsb = document.getElementById('sc2-overlay');
+                    var sc2PanelCsb = document.getElementById('sc2-panel-wrap');
+                    var vdoFullOverlayCsb = document.getElementById('scene-overlay-vdo-full');
+                    var vdoFullBtnCsb = document.getElementById('scene-btn-vdo-full');
+                    setSceneVideoError('');
+                    if (sharedOverlayCsb) sharedOverlayCsb.style.display = 'none';
+                    if (sharedBtnCsb) sharedBtnCsb.classList.remove('active');
+                    if (fullSharedOverlayCsb) fullSharedOverlayCsb.style.display = 'none';
+                    if (fullSharedBtnCsb) fullSharedBtnCsb.classList.remove('active');
+                    if (ytOverlayCsb) ytOverlayCsb.style.display = 'none';
+                    if (ytBtnCsb) ytBtnCsb.classList.remove('active');
+                    if (bgOverlayCsb) { bgOverlayCsb.style.display = 'block'; bgOverlayCsb.style.zIndex = typeof getVideoOverlayDefaultZIndex === 'function' ? getVideoOverlayDefaultZIndex() : '1'; }
+                    if (videoIframeCsb) videoIframeCsb.src = '2026/video_player.php?v=' + encodeURIComponent(VIDEO_OVERLAY_FILES['all-vdo']) + '&_t=' + Date.now();
+                    if (bgBtnCsb) bgBtnCsb.classList.add('active');
+                    if (logosOverlayCsb) { logosOverlayCsb.style.display = 'block'; if (logosBtnCsb) logosBtnCsb.classList.add('active'); }
+                    if (typeof updateLogosOverlay === 'function') updateLogosOverlay();
+                    if (vdoFullOverlayCsb) vdoFullOverlayCsb.style.display = 'none';
+                    if (vdoFullBtnCsb) vdoFullBtnCsb.classList.remove('active');
+                    if (sc2OverlayCsb) { sc2OverlayCsb.style.display = 'block'; sc2OverlayCsb.style.zIndex = '60000'; }
+                    if (sc2PanelCsb) {
+                        sc2PanelCsb.style.display = 'block';
+                        var posCsb = getSavedSc2Panel() || getDefaultSc2PanelPosition(sc2OverlayCsb ? sc2OverlayCsb.getBoundingClientRect() : { width: 1280, height: 720 });
+                        applyPositionToSc2Panel(sc2PanelCsb, posCsb);
+                        var sc2IframeCsb = sc2PanelCsb.querySelector('iframe');
+                        ensureVdoIframeLoaded(sc2IframeCsb);
+                    }
+                    csbOverlay.style.display = 'block';
+                    csbOverlay.style.zIndex = '99998';
+                    csbBtn.classList.add('active');
+                    if (typeof loadAndRenderCustomScoreboard === 'function') loadAndRenderCustomScoreboard();
+                }
+                return;
+            }
             if (sceneId === 'vdo-full') {
                 const overlay = document.getElementById('scene-overlay-vdo-full');
                 const panel = document.getElementById('vdo-full-panel-wrap');
@@ -2671,109 +3324,27 @@ header('Pragma: no-cache');
                     overlay.style.display = 'none';
                     btn.classList.remove('active');
                 }
-            } else if (sceneId === 'sc2') {
-                const bgOverlay = document.getElementById('scene-overlay-all-vdo');
-                const vdoFullOverlay = document.getElementById('scene-overlay-vdo-full');
-                const vdoFullBtn = document.getElementById('scene-btn-vdo-full');
-                const sc2Overlay = document.getElementById('sc2-overlay');
-                const sc2Panel = document.getElementById('sc2-panel-wrap');
-                const btn = document.getElementById('scene-btn-sc2');
+            } else if (sceneId === 'sc2' || sceneId === 'sc2-quick') {
+                var sc2Overlay = document.getElementById('sc2-overlay');
                 if (sc2Overlay.style.display === 'none' || !sc2Overlay.style.display) {
-                    /* SC2 on: play transition video then show small VDO panel */
-                    playTransitionVideo({
-                        videoSrc: '2026/2026_FSL_logo_reveal_GS_fast.mp4',
-                        fadeInMs: 500,
-                        fadeOutMs: 500,
-                        onComplete: function() {
-                            if (bgOverlay) bgOverlay.style.display = 'none';
-                            if (vdoFullOverlay) vdoFullOverlay.style.display = 'none';
-                            if (vdoFullBtn) vdoFullBtn.classList.remove('active');
-                            var sharedOverlay = document.getElementById('scene-overlay-shared-window');
-                            var sharedBtn = document.getElementById('scene-btn-shared-window');
-                            var fullSharedOverlay = document.getElementById('scene-overlay-full-shared-panel');
-                            var fullSharedBtn = document.getElementById('scene-btn-full-shared');
-                            var ytOverlay = document.getElementById('scene-overlay-yt');
-                            var ytBtn = document.getElementById('scene-btn-yt');
-                            var ytIframeOverlay = document.getElementById('scene-overlay-yt-iframe');
-                            var ytIframeIntroBtn = document.getElementById('scene-btn-yt-intro');
-                            var ytIframeBreakBtn = document.getElementById('scene-btn-yt-break');
-                            var ytIframePlayer = document.getElementById('yt-iframe-player');
-                            if (sharedOverlay) sharedOverlay.style.display = 'none';
-                            if (sharedBtn) sharedBtn.classList.remove('active');
-                            if (fullSharedOverlay) fullSharedOverlay.style.display = 'none';
-                            if (fullSharedBtn) fullSharedBtn.classList.remove('active');
-                            if (ytOverlay) ytOverlay.style.display = 'none';
-                            if (ytBtn) ytBtn.classList.remove('active');
-                            stopBreakCountdown();
-                            if (ytIframeOverlay) ytIframeOverlay.style.display = 'none';
-                            if (ytIframePlayer) ytIframePlayer.src = '';
-                            if (ytIframeIntroBtn) ytIframeIntroBtn.classList.remove('active');
-                            if (ytIframeBreakBtn) ytIframeBreakBtn.classList.remove('active');
-                            var scoreboardOverlaySc2 = document.getElementById('scoreboard-overlay');
-                            var scoreboardBtnSc2 = document.getElementById('scene-btn-scoreboard');
-                            if (scoreboardOverlaySc2) { scoreboardOverlaySc2.style.display = 'none'; scoreboardOverlaySc2.style.zIndex = ''; }
-                            if (scoreboardBtnSc2) scoreboardBtnSc2.classList.remove('active');
-                            sc2Overlay.style.display = 'block';
-                            btn.classList.add('active');
-                            if (sc2Panel) {
-                                sc2Panel.style.display = 'block';
-                                var pos = getSavedSc2Panel() || getDefaultSc2PanelPosition(sc2Overlay.getBoundingClientRect());
-                                applyPositionToSc2Panel(sc2Panel, pos);
-                                var sc2Iframe = sc2Panel.querySelector('iframe');
-                                ensureVdoIframeLoaded(sc2Iframe);
-                            }
-                            if (typeof logosEditMode !== 'undefined' && logosEditMode) updateVdoPanelsInEditMode();
-                        }
-                    });
+                    if (sceneId === 'sc2') {
+                        /* SC2 on: 1) Random Music, 2) stinger + FSL Intro simultaneously, 3) activate */
+                        var randomMusicForm = document.getElementById('media-form-7');
+                        if (randomMusicForm) randomMusicForm.requestSubmit();
+                        var fslIntroForm = document.getElementById('media-form-8');
+                        if (fslIntroForm) fslIntroForm.requestSubmit();
+                        playTransitionVideo({
+                            videoSrc: '2026/2026_FSL_logo_reveal_GS_fast.mp4',
+                            fadeInMs: 500,
+                            fadeOutMs: 500,
+                            onComplete: function() { activateSc2Scene(); }
+                        });
+                    } else {
+                        /* Quick on: no animation, immediately activate */
+                        activateSc2Scene(false);
+                    }
                 } else {
-                    /* SC2 off: BG and VDO full reappear, small VDO panel disappears; restore video overlay to BG */
-                    var videoIframe = document.getElementById('scene-overlay-all-vdo-iframe');
-                    var bgBtn = document.getElementById('scene-btn-all-vdo');
-                    if (bgOverlay) {
-                        bgOverlay.style.display = 'block';
-                        bgOverlay.style.zIndex = typeof getVideoOverlayDefaultZIndex === 'function' ? getVideoOverlayDefaultZIndex() : '1';
-                    }
-                    if (videoIframe) {
-                        videoIframe.src = '2026/video_player.php?v=' + encodeURIComponent(VIDEO_OVERLAY_FILES['all-vdo']) + '&_t=' + Date.now();
-                    }
-                    VIDEO_OVERLAY_KEYS.forEach(function(key) {
-                        var b = document.getElementById('scene-btn-' + key);
-                        if (b) b.classList.remove('active');
-                    });
-                    var sharedOverlay = document.getElementById('scene-overlay-shared-window');
-                    var sharedBtn = document.getElementById('scene-btn-shared-window');
-                    var fullSharedOverlay = document.getElementById('scene-overlay-full-shared-panel');
-                    var fullSharedBtn = document.getElementById('scene-btn-full-shared');
-                    var ytOverlay = document.getElementById('scene-overlay-yt');
-                    var ytBtn = document.getElementById('scene-btn-yt');
-                    var ytIframeOverlaySc2Off = document.getElementById('scene-overlay-yt-iframe');
-                    var ytIframePlayerSc2Off = document.getElementById('yt-iframe-player');
-                    var ytIframeIntroBtnSc2Off = document.getElementById('scene-btn-yt-intro');
-                    var ytIframeBreakBtnSc2Off = document.getElementById('scene-btn-yt-break');
-                    if (sharedOverlay) sharedOverlay.style.display = 'none';
-                    if (sharedBtn) sharedBtn.classList.remove('active');
-                    if (fullSharedOverlay) fullSharedOverlay.style.display = 'none';
-                    if (fullSharedBtn) fullSharedBtn.classList.remove('active');
-                    if (ytOverlay) ytOverlay.style.display = 'none';
-                    if (ytBtn) ytBtn.classList.remove('active');
-                    stopBreakCountdown();
-                    if (ytIframeOverlaySc2Off) ytIframeOverlaySc2Off.style.display = 'none';
-                    if (ytIframePlayerSc2Off) ytIframePlayerSc2Off.src = '';
-                    if (ytIframeIntroBtnSc2Off) ytIframeIntroBtnSc2Off.classList.remove('active');
-                    if (ytIframeBreakBtnSc2Off) ytIframeBreakBtnSc2Off.classList.remove('active');
-                    if (bgBtn) bgBtn.classList.add('active');
-                    if (vdoFullOverlay) vdoFullOverlay.style.display = 'block';
-                    if (vdoFullBtn) vdoFullBtn.classList.add('active');
-                    var vdoPanel = document.getElementById('vdo-full-panel-wrap');
-                    if (vdoPanel) {
-                        var pos = getSavedVdoFullPanel() || getDefaultVdoFullPanelPosition(vdoFullOverlay ? vdoFullOverlay.getBoundingClientRect() : { width: 1280, height: 720 });
-                        applyPositionToVdoFullPanel(vdoPanel, pos);
-                        var vdoIframe = vdoPanel.querySelector('iframe');
-                        ensureVdoIframeLoaded(vdoIframe);
-                    }
-                    sc2Overlay.style.display = 'none';
-                    btn.classList.remove('active');
-                    if (typeof logosEditMode !== 'undefined' && logosEditMode) updateVdoPanelsInEditMode();
+                    deactivateSc2Scene();
                 }
             } else if (sceneId === 'shared-window') {
                 var sharedOverlay = document.getElementById('scene-overlay-shared-window');
@@ -3049,6 +3620,201 @@ header('Pragma: no-cache');
                 document.getElementById("error-message").textContent = "Please enter both player name and division";
             }
         }
+    </script>
+
+    <script>
+        // ── Auth / User bar ──────────────────────────────────────────────
+        window.CURRENT_USER = <?php echo json_encode($_SESSION['username']); ?>;
+
+        document.getElementById('user-bar-logout').addEventListener('click', function() {
+            var fd = new FormData();
+            fd.append('action', 'logout');
+            fetch('auth.php', { method: 'POST', body: fd })
+                .then(function(){ window.location.reload(); })
+                .catch(function(){ window.location.reload(); });
+        });
+
+        // Username button: open Settings > Account section
+        document.getElementById('user-bar-name').addEventListener('click', function() {
+            var settingsSection = document.getElementById('settings-section');
+            var settingsBtn     = document.getElementById('btn-settings');
+            var accountSection  = document.getElementById('account-section');
+            var accountBtn      = document.getElementById('btn-account');
+            if (settingsSection.style.display !== 'block') {
+                settingsSection.style.display = 'block';
+                if (settingsBtn) settingsBtn.textContent = 'Hide Settings';
+            }
+            if (accountSection.style.display !== 'block') {
+                accountSection.style.display = 'block';
+                if (accountBtn) accountBtn.textContent = 'Hide Change Password';
+            }
+            accountSection.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+            document.getElementById('chpw-current').focus();
+        });
+
+        // ── Change password (inline in Settings > Account) ───────────────
+        window.toggleAccount = function toggleAccount(btn) {
+            var el = document.getElementById('account-section');
+            el.style.display = (el.style.display === 'block') ? 'none' : 'block';
+            if (btn) btn.textContent = (el.style.display === 'block') ? 'Hide Change Password' : 'Change Password';
+            if (el.style.display === 'block') {
+                document.getElementById('chpw-current').focus();
+            }
+        }
+
+        document.getElementById('chpw-save').addEventListener('click', function() {
+            var cur  = document.getElementById('chpw-current').value;
+            var nw   = document.getElementById('chpw-new').value;
+            var conf = document.getElementById('chpw-confirm').value;
+            var err  = document.getElementById('chpw-error');
+            var ok   = document.getElementById('chpw-ok');
+            var btn  = this;
+            ok.style.display = 'none';
+            if (!cur) { err.textContent = 'Enter your current password.'; return; }
+            if (!nw)  { err.textContent = 'Enter a new password.'; return; }
+            if (nw !== conf) { err.textContent = 'New passwords do not match.'; return; }
+            err.textContent = '';
+            btn.disabled = true;
+            var fd = new FormData();
+            fd.append('action', 'change_password');
+            fd.append('current_password', cur);
+            fd.append('new_password', nw);
+            fetch('auth.php', { method: 'POST', body: fd })
+                .then(function(r){ return r.json(); })
+                .then(function(res) {
+                    if (res.ok) {
+                        document.getElementById('chpw-current').value = '';
+                        document.getElementById('chpw-new').value = '';
+                        document.getElementById('chpw-confirm').value = '';
+                        ok.style.display = 'block';
+                        err.textContent = '';
+                    } else {
+                        err.textContent = res.error || 'Error saving password.';
+                    }
+                    btn.disabled = false;
+                })
+                .catch(function(){ err.textContent = 'Network error.'; btn.disabled = false; });
+        });
+    </script>
+
+    <!-- StreamElements live alerts -->
+    <div id="se-alert-overlay" style="position:fixed;top:8px;left:270px;z-index:99998;pointer-events:none;width:200px;overflow:visible;"></div>
+
+    <style>
+    #se-alert-overlay .se-card {
+        --ac: #9147ff;
+        width: 500px;
+        background: linear-gradient(135deg, #0a0a0f 0%, #12122a 100%);
+        border: 2px solid var(--ac);
+        border-radius: 14px;
+        padding: 24px 32px;
+        color: #fff;
+        font-family: 'Segoe UI', Arial, sans-serif;
+        text-align: center;
+        box-shadow: 0 0 40px var(--ac), 0 12px 48px rgba(0,0,0,0.9);
+        transform-origin: top left;
+        animation: seIn 0.65s cubic-bezier(0.34,1.56,0.64,1) forwards, seGlow 1.8s ease-in-out 0.65s infinite;
+    }
+    #se-alert-overlay .se-card.se-out {
+        animation: seOut 0.5s ease-in forwards !important;
+    }
+    @keyframes seIn {
+        0%   { transform: scale(0.08) translateY(400px); opacity: 0; }
+        70%  { transform: scale(0.42) translateY(-30px); opacity: 1; }
+        100% { transform: scale(0.4); opacity: 1; }
+    }
+    @keyframes seOut {
+        0%   { transform: scale(0.4); opacity: 1; }
+        100% { transform: scale(0.08) translateY(300px); opacity: 0; }
+    }
+    @keyframes seGlow {
+        0%,100% { box-shadow: 0 0 30px var(--ac), 0 12px 48px rgba(0,0,0,0.9); }
+        50%      { box-shadow: 0 0 70px var(--ac), 0 0 100px var(--ac), 0 12px 48px rgba(0,0,0,0.9); }
+    }
+    @keyframes sePulse {
+        0%,100% { transform: scale(1); }
+        50%     { transform: scale(1.18); }
+    }
+    .se-icon  { font-size: 3rem; display: block; margin-bottom: 8px; animation: sePulse 0.9s ease-in-out infinite; }
+    .se-type  { font-size: 0.8rem; text-transform: uppercase; letter-spacing: 4px; color: var(--ac); font-weight: 700; margin-bottom: 8px; }
+    .se-user  { font-size: 2.2rem; font-weight: 900; color: #fff; text-shadow: 0 0 24px var(--ac); line-height: 1.1; }
+    .se-extra { font-size: 1rem; color: #bbb; margin-top: 6px; }
+    .se-bar   { height: 4px; border-radius: 2px; background: var(--ac); margin-top: 16px;
+                animation: seBar 8s linear forwards; transform-origin: left; }
+    @keyframes seBar { 0% { transform: scaleX(1); } 100% { transform: scaleX(0); } }
+    </style>
+
+    <script src="https://cdn.socket.io/4.7.5/socket.io.min.js"></script>
+    <script>
+    (function() {
+        var SE_TOKEN = '<?php echo SE_JWT; ?>';
+
+        var TYPE_CFG = {
+            'follow':     { label: 'New Follower', icon: '💜', color: '#9147ff' },
+            'subscriber': { label: 'New Sub',      icon: '⭐', color: '#f0a500' },
+            'cheer':      { label: 'Cheer',        icon: '💎', color: '#1db954' },
+            'tip':        { label: 'Donation',     icon: '💰', color: '#e91e8c' },
+            'raid':       { label: 'Raid!',        icon: '⚔️', color: '#ff4500' },
+            'host':       { label: 'Host',         icon: '📡', color: '#1da1f2' },
+        };
+
+        function playChime() {
+            try {
+                var ctx = new (window.AudioContext || window.webkitAudioContext)();
+                [523, 659, 784, 1047].forEach(function(freq, i) {
+                    var osc = ctx.createOscillator(), gain = ctx.createGain();
+                    osc.connect(gain); gain.connect(ctx.destination);
+                    osc.type = 'sine'; osc.frequency.value = freq;
+                    var t = ctx.currentTime + i * 0.13;
+                    gain.gain.setValueAtTime(0, t);
+                    gain.gain.linearRampToValueAtTime(0.25, t + 0.04);
+                    gain.gain.exponentialRampToValueAtTime(0.001, t + 0.5);
+                    osc.start(t); osc.stop(t + 0.5);
+                });
+            } catch(e) {}
+        }
+
+        function showAlert(type, username, extra) {
+            var cfg = TYPE_CFG[type] || { label: type, icon: '🔔', color: '#9147ff' };
+            var overlay = document.getElementById('se-alert-overlay');
+            overlay.innerHTML = '';
+            var card = document.createElement('div');
+            card.className = 'se-card';
+            card.style.setProperty('--ac', cfg.color);
+            card.innerHTML =
+                '<span class="se-icon">' + cfg.icon + '</span>' +
+                '<div class="se-type">' + cfg.label + '</div>' +
+                '<div class="se-user">' + (username || 'Someone') + '</div>' +
+                (extra ? '<div class="se-extra">' + extra + '</div>' : '') +
+                '<div class="se-bar"></div>';
+            overlay.appendChild(card);
+            playChime();
+            setTimeout(function() {
+                card.classList.add('se-out');
+                setTimeout(function() { overlay.innerHTML = ''; }, 600);
+            }, 8000);
+        }
+
+        var socket = io('https://realtime.streamelements.com', { transports: ['websocket'] });
+        socket.on('connect', function() {
+            console.log('[SE] Connected, authenticating...');
+            socket.emit('authenticate', { method: 'jwt', token: SE_TOKEN });
+        });
+        socket.on('authenticated', function() { console.log('[SE] Authenticated'); });
+        socket.on('unauthorized',  function(e) { console.warn('[SE] Unauthorized:', e); });
+        socket.on('event', function(data) {
+            var type = data.type || '';
+            var username = (data.data && (data.data.username || data.data.displayName || data.data.name)) || '';
+            var extra = '';
+            if (data.data) {
+                if (data.data.amount)  extra = data.data.amount + (data.data.currency ? ' ' + data.data.currency : '');
+                if (data.data.viewers) extra = data.data.viewers + ' viewers';
+                if (data.data.message) extra = data.data.message;
+            }
+            showAlert(type, username, extra);
+        });
+        socket.on('disconnect', function() { console.log('[SE] Disconnected'); });
+    })();
     </script>
 
 </body>

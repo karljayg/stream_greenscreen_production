@@ -40,28 +40,28 @@
                 "height": 52
             },
             "fsl-small": {
-                "left": 1465,
-                "top": 6,
+                "left": 1182,
+                "top": 10,
                 "width": 84,
                 "height": 36
             }
         },
         "sc2Panel": {
-            "left": 212,
-            "top": 660,
+            "left": 168,
+            "top": 513,
             "width": 214,
             "height": 126
         },
         "vdoFullPanel": {
-            "left": 46,
-            "top": 77,
-            "width": 1506,
-            "height": 780
+            "left": 63,
+            "top": 60,
+            "width": 1153,
+            "height": 628
         }
     },
     "scenes": {
-        "bg": false,
-        "vdoFull": false,
+        "bg": true,
+        "vdoFull": true,
         "logos": true,
         "sc2": false
     },
@@ -69,7 +69,7 @@
         "NukLeo",
         "CrankyToaster",
         "Special Tactics",
-        "Warbunnies",
+        "DarkMenace",
         "Pacha",
         "AngrySpaceHares",
         "Random Music",
@@ -87,7 +87,7 @@
     "ytIframeVideos": [
         {
             "label": "INTRO",
-            "url": "https://www.youtube.com/embed/4MdAj7McuSU?autoplay=1&enablejsapi=1",
+            "url": "https://www.youtube.com/embed/R72YZ8e8UFY?autoplay=1&enablejsapi=1",
             "vol": 100
         },
         {
@@ -97,8 +97,8 @@
         }
     ],
     "breakSettings": {
-        "min": 5,
-        "sec": 0,
+        "min": 0,
+        "sec": 20,
         "msg": "be right back..."
     }
 }

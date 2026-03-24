@@ -1,9 +1,7 @@
 <?php
 /**
- * Server-side settings for Stream Production Tool.
- * GET: returns current user's settings JSON (falls back to shared if none).
- * POST: saves JSON body to the current user's settings file.
- * Requires an active session (user must be logged in).
+ * GET:  return data/custom_scoreboard.json (or empty default).
+ * POST: save JSON body to data/custom_scoreboard.json.
  */
 session_start();
 header('Content-Type: application/json; charset=utf-8');
@@ -15,22 +13,15 @@ if (empty($_SESSION['username'])) {
     exit;
 }
 
-$dir      = __DIR__ . '/data';
-$username = preg_replace('/[^a-zA-Z0-9_-]/', '', $_SESSION['username']);
-$file     = $dir . '/settings_' . $username . '.json';
-$fallback = $dir . '/stream_production_settings.json';
+$dir  = __DIR__ . '/data';
+$file = $dir . '/custom_scoreboard.json';
 
 if ($_SERVER['REQUEST_METHOD'] === 'GET') {
-    // Try user-specific file first, then shared fallback
-    $target = is_file($file) ? $file : $fallback;
-    if ($target && is_readable($target)) {
-        $raw = file_get_contents($target);
-        if ($raw !== false) {
-            echo $raw;
-            exit;
-        }
+    if (is_file($file) && is_readable($file)) {
+        $raw = file_get_contents($file);
+        if ($raw !== false) { echo $raw; exit; }
     }
-    echo '{}';
+    echo json_encode(['matches' => []]);
     exit;
 }
 
@@ -54,7 +45,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             exit;
         }
     }
-    $written = @file_put_contents($file, json_encode($data, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES), LOCK_EX);
+    $written = @file_put_contents($file, json_encode($data, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE), LOCK_EX);
     if ($written === false) {
         http_response_code(500);
         echo json_encode(['ok' => false, 'error' => 'Could not write file']);

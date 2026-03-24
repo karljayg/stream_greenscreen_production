@@ -10,16 +10,31 @@ export const gifFiles = [
   ];
 
 export const randomAudioFiles = [
-    "production_files/audio/PSL_s2_intro.mp3",
-    "production_files/audio/PSL_s2_intro2.mp3",
-    "production_files/audio/PSL_s2_intro3.mp3",
-    "production_files/audio/PSL_s2_intro4.mp3",
-    "production_files/audio/PSL_s2_intro5.mp3",
-    "production_files/audio/PSL_s2_intro6.mp3",
     "production_files/audio/FSL_intro_2024_clip1.mp3",
     "production_files/audio/FSL_intro_2024_clip2.mp3",
     "production_files/audio/FSL_intro_2024_clip3.mp3",
     "production_files/audio/FSL_intro_2024_clip4.mp3",
     "production_files/audio/FSL_intro_2024_clip5.mp3",
-    "production_files/audio/FSL_intro_2024_clip6.mp3"                    
+    "production_files/audio/FSL_intro_2024_clip6.mp3",                    
+    "production_files/audio/FSL_intro_2026_1.mp3",
+    "production_files/audio/FSL_intro_2026_2.mp3",
+    "production_files/audio/FSL_intro_2026_3.mp3",
+    "production_files/audio/FSL_intro_2026_4.mp3",
+    "production_files/audio/FSL_intro_2026_5.mp3",
+    "production_files/audio/FSL_intro_2026_6.mp3",
+    "production_files/audio/FSL_intro_2026_7.mp3",
+    "production_files/audio/FSL_intro_2026_8.mp3",
+    "production_files/audio/FSL_intro_2026_9.mp3",
+    "production_files/audio/FSL_intro_2026_10.mp3",
+    "production_files/audio/FSL_intro_2026_11.mp3",
+    "production_files/audio/FSL_intro_2026_12.mp3",
+    "production_files/audio/FSL_intro_2026_13.mp3",
+    "production_files/audio/FSL_intro_2026_14.mp3",
+    "production_files/audio/FSL_intro_2026_15.mp3",
+    "production_files/audio/PSL_s2_intro.mp3",
+    "production_files/audio/PSL_s2_intro2.mp3",
+    "production_files/audio/PSL_s2_intro3.mp3",
+    "production_files/audio/PSL_s2_intro4.mp3",
+    "production_files/audio/PSL_s2_intro5.mp3",
+    "production_files/audio/PSL_s2_intro6.mp3"    
 ];

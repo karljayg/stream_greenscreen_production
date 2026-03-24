@@ -1,8 +1,10 @@
 /* General container styles */
 .container {
     display: flex;
-    height: 100vh;
-    overflow: hidden;
+    min-height: 100vh;
+    min-width: 1540px; /* 260px left + 1280px right */
+    overflow-x: auto;
+    overflow-y: hidden;
     position: relative;
     z-index: 1;
     /* No gap so right panel is flush for OBS capture */
@@ -14,18 +16,17 @@
     flex: 0 0 260px;
     width: 260px;
     background: #FFFFFF;
-    height: 100vh;
+    height: 720px;
     overflow-y: auto;
     overflow-x: hidden;
 }
 
-/* Right panel = exact 16:9 stream view. Sized to fit viewport so no black bars; greenscreen fills this entirely. */
+/* Right panel = fixed 1280×720 (720p 16:9) for consistent OBS capture. */
 .right-column {
     position: relative;
-    flex: 0 0 auto;
-    /* Largest 16:9 that fits in (viewport minus left column) */
-    width: min(calc(100vh * 16 / 9), calc(100vw - 263px)); /* 260px left column + 3px margin */
-    height: min(100vh, calc((100vw - 263px) * 9 / 16));
+    flex: 0 0 1280px;
+    width: 1280px;
+    height: 720px;
     text-align: right;
     border: 0 solid black;
     background: #00FF00; /* Greenscreen; stream-frame fills this so no black bars */
@@ -276,7 +277,7 @@ body.layer-outline-debug [data-layer-id].layer-outline-active {
 }
 .player-name-box {
     position: absolute;
-    bottom: 10%;
+    bottom: calc(10% - 10px);
     left: 50%;
     transform: translateX(-50%);
     display: none;

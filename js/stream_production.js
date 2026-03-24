@@ -10,8 +10,9 @@ var imagepath = production_files + "/images/";
 // For LIVE use: 
 var spiderChartBaseUrl = "https://psistorm.com/fsl/view_spider_chart_player.php";
 
-import playerList from './playerlist.js';
-import { gifFiles, randomAudioFiles } from './other_lists.js';
+const _v = window.ASSET_VERSION || Date.now();
+const { default: playerList } = await import(`./playerlist.js?v=${_v}`);
+const { gifFiles, randomAudioFiles } = await import(`./other_lists.js?v=${_v}`);
 
 // FSL rankings: local cache for player intro stats (season/all-time W-L)
 let rankingsCache = [];
@@ -290,6 +291,24 @@ window.showFormattedResult = function(btn) {
     if (btn) btn.textContent = (statusResult.style.display === "block") ? "Hide Status" : "Show Status";
 }
 
+function playRandomAudio() {
+    const modeEl = document.querySelector('input[name="music-mode"]:checked');
+    const mode = modeEl ? modeEl.value : 'sequence';
+    let audioPath;
+    if (mode === 'sequence') {
+        const key = 'stream_production_music_index';
+        let idx = parseInt(localStorage.getItem(key) || '0', 10);
+        if (isNaN(idx) || idx < 0 || idx >= randomAudioFiles.length) idx = 0;
+        audioPath = randomAudioFiles[idx];
+        localStorage.setItem(key, (idx + 1) % randomAudioFiles.length);
+    } else {
+        audioPath = randomAudioFiles[Math.floor(Math.random() * randomAudioFiles.length)];
+    }
+    const audio = new Audio(audioPath);
+    audio.volume = document.getElementById('volume-slider').value / 100;
+    audio.play();
+}
+
 forms.forEach((form) => {
 
 	// get the player name input and the player name box elements
@@ -432,45 +451,24 @@ forms.forEach((form) => {
 		playerNameBox.style.display = 'none';
 	}
 
-    function playRandomAudio() {
-        const randomIndex = Math.floor(Math.random() * randomAudioFiles.length);
-        const audioPath = randomAudioFiles[randomIndex];
-        const audio = new Audio(audioPath);
-        audio.volume = document.getElementById('volume-slider').value / 100;
-        audio.play();
-    }     
 
 	function gifPlayer(gifIndex = 0) {
 	  const gifFileName = gifFiles.find(file => file[0] === gifIndex)[1];
 	  let gifPath = imagepath + gifFileName;
 	  if (typeof window.ASSET_VERSION !== 'undefined') gifPath += '?v=' + window.ASSET_VERSION;
+	  // Force reload each time so GIF always restarts from frame 0
+	  gifPath += (gifPath.includes('?') ? '&' : '?') + 't=' + Date.now();
 
 	  const gifContainer = document.querySelector('#gif-container');
 	  const gifImage = document.querySelector('#gif-image');
-	  const gifChromaCanvas = document.querySelector('#gif-chroma-canvas');
 	  const gifTimeout = 8000;
 
+	  // Hiding the <img> freezes GIF animation on frame 1, so skip canvas chroma key.
+	  // OBS applies chroma key directly from the browser source.
 	  gifImage.src = gifPath;
-
 	  gifContainer.style.display = 'flex';
-	  gifImage.onload = function() {
-		if (isChromaKeyEnabled() && gifChromaCanvas) {
-		  startGifChromaLoop(gifImage, gifChromaCanvas, gifTimeout);
-		}
-	  };
-	  if (gifImage.complete && gifImage.naturalWidth) {
-		if (isChromaKeyEnabled() && gifChromaCanvas) {
-		  startGifChromaLoop(gifImage, gifChromaCanvas, gifTimeout);
-		}
-	  }
 	  setTimeout(() => {
 		gifContainer.style.display = 'none';
-		if (gifChromaRaf) cancelAnimationFrame(gifChromaRaf);
-		gifChromaRaf = null;
-		if (gifChromaTimeout) clearTimeout(gifChromaTimeout);
-		gifChromaTimeout = null;
-		if (gifChromaCanvas) gifChromaCanvas.style.display = 'none';
-		if (gifImage) gifImage.style.display = '';
 	  }, gifTimeout);
 	}
 
@@ -519,6 +517,7 @@ const displayPositions = {
 // Expose positioning and spider chart URL to global window for HTML access
 window.displayPositions = displayPositions;
 window.spiderChartBaseUrl = spiderChartBaseUrl;
+window.playRandomAudio = playRandomAudio;
 
 document.addEventListener('DOMContentLoaded', function() {
     const chromaCb = document.getElementById('chroma-key-cb');
