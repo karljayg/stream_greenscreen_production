@@ -133,6 +133,21 @@ if (empty($_SESSION['username'])) {
 }
 $currentUser = htmlspecialchars($_SESSION['username'], ENT_QUOTES, 'UTF-8');
 require_once __DIR__ . '/config.local.php';
+
+$musicTracks = [
+    'opening_high'   => ['sc2_opening_high_heroic_01_A.mp3',    'sc2_opening_high_heroic_01_B.mp3'],
+    'opening_alert'  => ['sc2_opening_alert_suspense_01_A.mp3', 'sc2_opening_alert_suspense_01_B.mp3'],
+    'combat_mid'     => ['sc2_combat_mid_driving_01_A.mp3',     'sc2_combat_mid_driving_01_B.mp3'],
+    'combat_high'    => ['sc2_combat_high_aggressive_01_A.mp3', 'sc2_combat_high_aggressive_01_B.mp3'],
+    'combat_extreme' => ['sc2_combat_extreme_clutch_01_A.mp3',  'sc2_combat_extreme_clutch_01_B.mp3'],
+    'climax'         => ['sc2_climax_finalpush_01_A.mp3',       'sc2_climax_finalpush_01_B.mp3'],
+    'analysis'       => ['sc2_analysis_light_clean_01_A.mp3',   'sc2_analysis_light_clean_01_B.mp3'],
+    'chill'          => ['sc2_chill_upbeat_warm_01_A.mp3',      'sc2_chill_upbeat_warm_01_B.mp3'],
+    'replay'         => ['sc2_replay_clean_focused_01_A.mp3',   'sc2_replay_clean_focused_01_B.mp3'],
+    'victory'        => ['sc2_victory_high_triumphant_01_A.mp3','sc2_victory_high_triumphant_01_B.mp3'],
+    'defeat'         => ['sc2_defeat_neutral_reset_01_A.mp3',   'sc2_defeat_neutral_reset_01_B.mp3'],
+    'suspense'       => ['sc2_suspense_mid_dark_01_A.mp3',      'sc2_suspense_mid_dark_01_B.mp3'],
+];
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -271,6 +286,416 @@ require_once __DIR__ . '/config.local.php';
         .scoreboard-slot { font-size: 0.75em; color: #a29bfe; font-weight: 600; }
         .scoreboard-race-icon { width: 1em; height: 1em; vertical-align: middle; }
         .scoreboard-empty { color: #a29bfe; text-align: center; padding: 1rem; font-size: 1.075rem; }
+
+        /* ═══════════════════════════════════
+           LEFT PANEL — LIGHT PRODUCTION THEME
+           ═══════════════════════════════════ */
+        .left-column {
+            background: #f2f4f8 !important;
+            color: #1e293b;
+            font-family: 'Segoe UI', system-ui, sans-serif;
+            font-size: 0.82rem;
+        }
+
+        /* Section headings — dark band, stands out on light panel */
+        .left-column h2 {
+            background: #2d3748;
+            color: #f0f4ff;
+            font-size: 0.7rem;
+            font-weight: 800;
+            text-transform: uppercase;
+            letter-spacing: .12em;
+            padding: 7px 8px 7px 11px;
+            margin: 6px 0 0 0;
+            border-left: 3px solid #5a7fd4;
+            border-bottom: none;
+            line-height: 1;
+        }
+        /* Collapsible h2 sections */
+        .left-column h2.collapsible-h2 {
+            cursor: pointer;
+            user-select: none;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+        .left-column h2.collapsible-h2::before {
+            content: "−";
+            font-size: 0.85em;
+            font-weight: 400;
+            opacity: 0.6;
+            flex-shrink: 0;
+            line-height: 1;
+        }
+        .left-column h2.collapsible-h2.collapsed::before {
+            content: "+";
+        }
+        .left-column h2.collapsible-h2:hover {
+            background: #3a4a5e;
+        }
+        .left-column h3.settings-group-heading {
+            margin: 4px 0 0 0;
+            padding: 5px 8px 5px 10px;
+            font-size: 0.62rem;
+            font-weight: 800;
+            text-transform: uppercase;
+            letter-spacing: .1em;
+            color: #e2e8f0;
+            background: #475569;
+            border-left: 3px solid #94a3b8;
+        }
+        .left-column hr {
+            border: none;
+            border-top: 1px solid #cbd5e1;
+            margin: 5px 0;
+        }
+        .left-column br { display: none; }
+
+        /* Collapsible headers — light but clearly a drawer-pull */
+        .collapsible-btn {
+            background: #e2e8f0 !important;
+            color: #374151 !important;
+            border: none !important;
+            border-top: 1px solid #cbd5e1 !important;
+            border-bottom: 1px solid #cbd5e1 !important;
+            border-radius: 0 !important;
+            font-size: 0.7rem !important;
+            font-weight: 700 !important;
+            text-transform: uppercase !important;
+            letter-spacing: .08em !important;
+            padding: 8px 10px 8px 10px !important;
+            transition: background .12s !important;
+            display: flex !important;
+            justify-content: space-between !important;
+            align-items: center !important;
+            width: 100% !important;
+            box-sizing: border-box !important;
+        }
+        .collapsible-btn::before {
+            content: "+";
+            font-size: 0.9em;
+            opacity: 0.55;
+            flex-shrink: 0;
+            margin-right: 5px;
+            font-weight: 400;
+            line-height: 1;
+        }
+        .collapsible-btn.open::before {
+            content: "−";
+        }
+        .collapsible-btn:hover {
+            background: #d1d9e8 !important;
+            color: #111827 !important;
+        }
+        .collapsible-content {
+            background: #f2f4f8;
+        }
+
+        /* Scene buttons — solid, clearly buttons */
+        .scenes-buttons button {
+            background: #e2e8f0;
+            color: #1e293b;
+            border: 1px solid #b8c4d4;
+            border-radius: 5px;
+            font-size: 0.8rem;
+            font-weight: 700;
+            padding: 7px 8px;
+            cursor: pointer;
+            text-decoration: none !important;
+            transition: background .1s, border-color .1s;
+        }
+        .scenes-buttons button:hover {
+            background: #d1d9e8;
+            color: #111827;
+            border-color: #8090b0;
+        }
+        .scenes-buttons button.active {
+            background: #15803d !important;
+            color: #ffffff !important;
+            border-color: #16a34a !important;
+            text-decoration: none !important;
+            box-shadow: 0 0 0 2px rgba(22,163,74,0.2) !important;
+        }
+        .scene-btn-major {
+            font-size: 0.92rem !important;
+            padding: 10px 12px !important;
+            font-weight: 800 !important;
+        }
+
+        /* VDO / panel utility buttons */
+        .vdo-controls {
+            display: flex;
+            gap: 4px;
+            margin-bottom: 6px;
+        }
+        .vdo-controls button {
+            flex: 1;
+            background: #e2e8f0;
+            color: #1e293b;
+            border: 1px solid #b8c4d4;
+            border-radius: 4px;
+            font-size: 0.6rem;
+            font-weight: 700;
+            padding: 4px 2px;
+            cursor: pointer;
+            text-decoration: none;
+            transition: background .1s, border-color .1s;
+            text-transform: uppercase;
+            letter-spacing: .03em;
+            white-space: nowrap;
+        }
+        .vdo-controls button:hover {
+            background: #d1d9e8;
+            border-color: #8090b0;
+            color: #111827;
+        }
+        .vdo-controls button.active {
+            background: #15803d;
+            color: #ffffff;
+            border-color: #16a34a;
+            box-shadow: 0 0 0 2px rgba(22,163,74,0.2);
+        }
+        /* VDO hidden = amber warning — obviously something is off */
+        #btn-hide-vdo.vdo-hidden {
+            background: #b45309;
+            color: #ffffff;
+            border-color: #d97706;
+            box-shadow: 0 0 0 2px rgba(180,83,9,0.3);
+        }
+        #btn-hide-vdo.vdo-hidden:hover {
+            background: #92400e;
+            border-color: #b45309;
+        }
+
+        /* Player intro forms */
+        .media-form input[type="text"] {
+            background: #ffffff !important;
+            color: #1e293b !important;
+            border: 1px solid #b8c4d4 !important;
+            border-radius: 4px !important;
+            font-size: 0.78rem !important;
+            padding: 5px 8px !important;
+        }
+        .media-form input[type="text"]:focus {
+            border-color: #5a7fd4 !important;
+            outline: none !important;
+        }
+        .media-form button[type="submit"] {
+            background: #e2e8f0 !important;
+            color: #1e293b !important;
+            border: 1px solid #b8c4d4 !important;
+            border-radius: 4px !important;
+            font-size: 0.75rem !important;
+            font-weight: 700 !important;
+            padding: 5px 10px !important;
+        }
+        .media-form button[type="submit"]:hover {
+            background: #d1d9e8 !important;
+            color: #111827 !important;
+        }
+
+        /* Break timer inline inputs */
+        #break-quick-min, #break-quick-sec {
+            background: #ffffff !important;
+            color: #1e293b !important;
+            border: 1px solid #b8c4d4 !important;
+            border-radius: 3px !important;
+        }
+
+        /* ── Settings button in user-bar ── */
+        #user-bar #btn-settings {
+            background: rgba(255,255,255,0.18) !important;
+            border: 1px solid rgba(255,255,255,0.4) !important;
+            border-bottom: 1px solid rgba(255,255,255,0.4) !important;
+            border-top: none !important;
+            color: #e0e8f0 !important;
+            font-size: 0.7rem !important;
+            font-weight: 600 !important;
+            padding: 2px 7px !important;
+            border-radius: 4px !important;
+            width: auto !important;
+            text-transform: none !important;
+            letter-spacing: normal !important;
+            white-space: nowrap !important;
+            flex-shrink: 0;
+        }
+        #user-bar #btn-settings:hover {
+            background: rgba(255,255,255,0.3) !important;
+            color: #ffffff !important;
+        }
+
+        /* ── Music Player Widget ─────────────────── */
+        .lp-music { border-bottom: 1px solid #1e2637; margin-top: 6px; }
+
+        /* Bar: matches .left-column h2 section heading exactly */
+        .lp-music-bar {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            padding: 6px 8px 6px 8px;
+            background: #2d3748;
+            color: #f0f4ff;
+            border-left: 3px solid #5a7fd4;
+            border-bottom: 1px solid #1e2637;
+            cursor: pointer;
+            user-select: none;
+        }
+        .lp-music-bar:hover { background: #3a4a5e; }
+        .lp-music-label {
+            font-size: 0.7rem;
+            font-weight: 800;
+            letter-spacing: .12em;
+            text-transform: uppercase;
+            color: #f0f4ff;
+            flex-shrink: 0;
+        }
+        /* Transport buttons on dark bar */
+        .lp-music-transport {
+            display: flex;
+            gap: 3px;
+            flex-shrink: 0;
+        }
+        .lp-music-transport button {
+            width: 22px !important;
+            height: 20px !important;
+            background: rgba(255,255,255,0.1) !important;
+            border: 1px solid rgba(255,255,255,0.2) !important;
+            border-radius: 3px !important;
+            color: #e2e8f0 !important;
+            font-size: 10px !important;
+            cursor: pointer !important;
+            display: flex !important;
+            align-items: center !important;
+            justify-content: center !important;
+            padding: 0 !important;
+            text-decoration: none !important;
+            transition: background .1s !important;
+        }
+        .lp-music-transport button:hover {
+            background: rgba(255,255,255,0.22) !important;
+            color: #fff !important;
+            border-color: rgba(255,255,255,0.38) !important;
+        }
+        .lp-music-transport button.lp-mx-dim {
+            background: rgba(255,255,255,0.04) !important;
+            color: rgba(255,255,255,0.28) !important;
+            border-color: rgba(255,255,255,0.1) !important;
+        }
+        .lp-music-transport button.lp-mx-paused {
+            background: rgba(251,191,36,0.18) !important;
+            color: #fbbf24 !important;
+            border-color: rgba(251,191,36,0.45) !important;
+        }
+        /* Knobs inline in bar */
+        .lp-music-knobs {
+            display: flex;
+            gap: 6px;
+            flex-shrink: 0;
+        }
+        .lp-mx-knob-wrap {
+            display: flex;
+            flex-direction: row;
+            align-items: center;
+            gap: 2px;
+            flex-shrink: 0;
+            cursor: ns-resize;
+        }
+        .lp-mx-dial-lbl {
+            font-size: 0.5rem;
+            font-weight: 700;
+            color: rgba(255,255,255,0.45);
+            text-transform: uppercase;
+            letter-spacing: .04em;
+        }
+        .lp-mx-knob {
+            display: block;
+            width: 30px;
+            height: 30px;
+            cursor: ns-resize;
+        }
+        /* Toggle icon — left side of bar */
+        .lp-mx-toggle-icon {
+            font-size: 0.9em;
+            font-weight: 400;
+            color: rgba(255,255,255,0.4);
+            line-height: 1;
+            flex-shrink: 0;
+            margin-right: 2px;
+        }
+        /* Filename row — compact, always visible */
+        .lp-mx-song-row {
+            padding: 3px 10px;
+            background: #f2f4f8;
+            border-bottom: 1px solid #cbd5e1;
+        }
+        .lp-mx-song {
+            display: block;
+            font-size: 0.58rem;
+            color: #64748b;
+            font-family: Consolas, monospace;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            font-style: italic;
+        }
+        .lp-mx-song.playing { color: #15803d; font-style: normal; font-weight: 600; }
+        .lp-mx-song.lp-mx-err { color: #b91c1c; font-style: normal; }
+        /* Autoplay blocked banner */
+        #mx-autoplay-banner {
+            display: none;
+            background: #b45309;
+            color: #fff;
+            font-size: 0.68rem;
+            font-weight: 800;
+            text-transform: uppercase;
+            letter-spacing: .07em;
+            padding: 8px 10px;
+            text-align: center;
+            cursor: pointer;
+            border-bottom: 2px solid #92400e;
+            animation: mx-pulse 1.4s ease-in-out infinite;
+        }
+        #mx-autoplay-banner:hover { background: #92400e; }
+        @keyframes mx-pulse {
+            0%, 100% { opacity: 1; }
+            50%       { opacity: 0.7; }
+        }
+        /* Mood grid */
+        .lp-music-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 3px;
+            padding: 5px;
+            background: #f2f4f8;
+            border-bottom: 1px solid #b8c4d4;
+        }
+        .lp-music-grid button {
+            background: #e2e8f0 !important;
+            color: #1e293b !important;
+            border: 1px solid #b8c4d4 !important;
+            border-radius: 4px !important;
+            padding: 4px 2px !important;
+            font-size: 0.59rem !important;
+            font-weight: 700 !important;
+            cursor: pointer !important;
+            text-align: center !important;
+            text-transform: uppercase !important;
+            white-space: nowrap !important;
+            overflow: hidden !important;
+            text-overflow: ellipsis !important;
+            text-decoration: none !important;
+            transition: background .1s !important;
+        }
+        .lp-music-grid button:hover {
+            background: #d1d9e8 !important;
+            color: #111827 !important;
+        }
+        .lp-music-grid button.active {
+            background: #15803d !important;
+            color: #ffffff !important;
+            border-color: #16a34a !important;
+            box-shadow: 0 0 0 2px rgba(22,163,74,0.2) !important;
+        }
     </style>
 </head>
 
@@ -280,12 +705,13 @@ require_once __DIR__ . '/config.local.php';
             <!-- User bar -->
             <div id="user-bar">
                 <button id="user-bar-name" title="Click to change password"><?php echo $currentUser; ?></button>
+                <button class="collapsible-btn" id="btn-settings" onclick="toggleSettings(this)">&#9881; Settings</button>
                 <button id="user-bar-logout">Logout</button>
             </div>
-            <button class="collapsible-btn" id="btn-settings" onclick="toggleSettings(this)">Show Settings</button>
+            <div id="mx-autoplay-banner">&#9654; Click anywhere to start music</div>
             <div class="collapsible-content" id="settings-section" style="display: none;">
                 <h3 class="settings-group-heading">Onscreen Messages</h3>
-                <button class="collapsible-btn" id="btn-status" onclick="toggleStatus(this)">Show Status Message</button>
+                <button class="collapsible-btn" id="btn-status" onclick="toggleStatus(this)">Status Message</button>
                 <div class="collapsible-content" id="status-section" style="display: none;">
                     <h2>Status</h2>
                     <table>
@@ -360,13 +786,13 @@ require_once __DIR__ . '/config.local.php';
                         <span id="csb-save-status" style="font-size:12px; color:#aaa;"></span>
                     </div>
                 </div>
-                <button class="collapsible-btn" id="btn-player-intros" onclick="togglePlayerIntros(this)">Show Player Chroma</button>
+                <button class="collapsible-btn" id="btn-player-intros" onclick="togglePlayerIntros(this)">Player Chroma</button>
                 <div class="collapsible-content" id="player-intros-settings-section" style="display: none;">
                     <h2>Player Intros</h2>
                     <label><input type="checkbox" id="chroma-key-cb" checked> Chroma key (green transparent)</label>
                 </div>
 
-                <button class="collapsible-btn" id="btn-player-ratings" onclick="togglePlayerRatings(this)">Show Spider Ratings</button>
+                <button class="collapsible-btn" id="btn-player-ratings" onclick="togglePlayerRatings(this)">Spider Ratings</button>
                 <div class="collapsible-content" id="player-ratings-section" style="display: none;">
                     <h2>Spider Ratings</h2>
                     <p>External Spider Chart</p>
@@ -380,7 +806,7 @@ require_once __DIR__ . '/config.local.php';
                 </div>
 
                 <h3 class="settings-group-heading">Layouts and Layers</h3>
-                <button class="collapsible-btn" id="btn-volume" onclick="toggleVolume(this)">Show Volume</button>
+                <button class="collapsible-btn" id="btn-volume" onclick="toggleVolume(this)">Volume</button>
                 <div class="collapsible-content" id="volume-section" style="display: none;">
                     <h2>Volume</h2>
                     <div>
@@ -397,7 +823,7 @@ require_once __DIR__ . '/config.local.php';
                         <label><input type="radio" name="music-mode" value="random"> Random</label>
                     </div>
                 </div>
-                <button class="collapsible-btn" id="btn-layer-order" onclick="toggleLayerOrder(this)">Show Layer order</button>
+                <button class="collapsible-btn" id="btn-layer-order" onclick="toggleLayerOrder(this)">Layer Order</button>
                 <div class="collapsible-content" id="layer-order-section" style="display: none;">
                     <div id="layer-order-ui">
                         <h2 class="layer-order-heading">Layer order</h2>
@@ -408,7 +834,7 @@ require_once __DIR__ . '/config.local.php';
                         </div>
                     </div>
                 </div>
-                <button class="collapsible-btn" id="btn-yt-video" onclick="toggleYtVideo(this)">Show YT Video</button>
+                <button class="collapsible-btn" id="btn-yt-video" onclick="toggleYtVideo(this)">YT Video</button>
                 <div class="collapsible-content" id="yt-video-section" style="display: none;">
                     <h2 class="layer-order-heading">YT Video crop (pixels)</h2>
                     <p class="layer-order-hint">Crop applied when YT scene is on. Top, left, right, bottom cut from shared window.</p>
@@ -419,7 +845,7 @@ require_once __DIR__ . '/config.local.php';
                         <label>Bottom: <input type="number" id="yt-crop-bottom" min="0" step="1" value="100" style="width: 5ch;"></label>
                     </div>
                 </div>
-                <button class="collapsible-btn" id="btn-yt-videos-settings" onclick="toggleYtVideosSettings(this)">Show Video Buttons</button>
+                <button class="collapsible-btn" id="btn-yt-videos-settings" onclick="toggleYtVideosSettings(this)">Video Buttons</button>
                 <div class="collapsible-content" id="yt-videos-settings-section" style="display: none;">
                     <h2 class="layer-order-heading">Video Buttons</h2>
                     <p class="layer-order-hint">Paste any YouTube URL (youtube.com/watch, youtu.be, shorts, or embed). It is automatically converted to the embed+autoplay format needed. Changes take effect immediately.</p>
@@ -463,7 +889,7 @@ require_once __DIR__ . '/config.local.php';
                         </div>
                     </div>
                 </div>
-                <button class="collapsible-btn" id="btn-logos-settings" onclick="toggleLogosSettings(this)">Show Positioning settings</button>
+                <button class="collapsible-btn" id="btn-logos-settings" onclick="toggleLogosSettings(this)">Positioning</button>
                 <div class="collapsible-content" id="logos-settings-section" style="display: none;">
                     <h2>Positional settings</h2>
                     <div class="logos-checkboxes">
@@ -478,7 +904,7 @@ require_once __DIR__ . '/config.local.php';
                         <button type="button" id="logos-reset-btn" onclick="resetLogosPositions()">Reset</button>
                     </div>
                 </div>
-                <button class="collapsible-btn" id="btn-overlays" onclick="toggleOverlays(this)">Show Overlays</button>
+                <button class="collapsible-btn" id="btn-overlays" onclick="toggleOverlays(this)">Overlays</button>
                 <div class="collapsible-content" id="overlays-section" style="display: none;">
                     <h2 class="layer-order-heading">Overlays</h2>
                     <p class="layer-order-hint">BG, VDO full, and Logos toggles (optional).</p>
@@ -490,7 +916,7 @@ require_once __DIR__ . '/config.local.php';
                 </div>
 
                 <h3 class="settings-group-heading">Save / Load setup</h3>
-                <button class="collapsible-btn" id="btn-save-load" onclick="toggleSaveLoad(this)">Show Save/Load setup</button>
+                <button class="collapsible-btn" id="btn-save-load" onclick="toggleSaveLoad(this)">Save / Load</button>
                 <div class="collapsible-content" id="save-load-section" style="display: none;">
                     <h2 class="layer-order-heading">Import / Export all settings</h2>
                     <p class="layer-order-hint">Export saves: layer order, volume, Status, Player Ratings, Logos (checkboxes + positions), VDO full and SC2 panel positions, Scenes visibility, Player Intros names, Chroma key, YT crop, Video button labels/URLs, and Break timer/message. <strong>Save to server</strong> stores the current setup so anyone opening this link gets the same settings. You can still <strong>Export all</strong> / <strong>Import all</strong> to share via file.</p>
@@ -521,18 +947,46 @@ require_once __DIR__ . '/config.local.php';
             </div>
             <hr>
             <br>
-            <div style="display: flex; gap: 4px; margin-bottom: 6px;">
-                <button type="button" id="btn-hide-vdo" onclick="toggleVdoVisibility()" style="flex: 1; padding: 5px 4px; font-size: 0.8rem; background: #2a2a3a; color: #99eeff; border: 1px solid rgba(153,238,255,0.3); border-radius: 4px; cursor: pointer;">Hide VDO</button>
-                <button type="button" id="btn-reload-vdo" onclick="reloadVdo()" style="flex: 1; padding: 5px 4px; font-size: 0.8rem; background: #2a2a3a; color: #99eeff; border: 1px solid rgba(153,238,255,0.3); border-radius: 4px; cursor: pointer;">Reload VDO</button>
-                <button type="button" id="btn-refresh-panel" onclick="refreshProductionPanel()" style="flex: 1; padding: 5px 4px; font-size: 0.8rem; background: #2a2a3a; color: #99eeff; border: 1px solid rgba(153,238,255,0.3); border-radius: 4px; cursor: pointer;">Refresh Right Panel</button>
+            <div class="vdo-controls">
+                <button type="button" id="btn-hide-vdo" onclick="toggleVdoVisibility()">Hide VDO</button>
+                <button type="button" id="btn-reload-vdo" onclick="reloadVdo()">Reload VDO</button>
+                <button type="button" id="btn-refresh-panel" onclick="refreshProductionPanel()">Refresh RightPanel</button>
             </div>
-            <h2>Scenes</h2>
-            <div style="margin-bottom: 0.35rem;">
+
+            <!-- ── MUSIC PLAYER ────────────────── -->
+            <div class="lp-music">
+                <div class="lp-music-bar" id="lpMusicBar">
+                    <span class="lp-mx-toggle-icon" id="lpMusicToggleIcon">&#8722;</span>
+                    <span class="lp-music-label">&#9836; MUSIC</span>
+                    <div class="lp-music-transport" onclick="event.stopPropagation()">
+                        <button id="lpMusicPlayPause" class="lp-mx-dim" title="Play / Pause">&#9654;</button>
+                        <button id="lpMusicStop" title="Stop">&#9632;</button>
+                    </div>
+                    <div class="lp-music-knobs" onclick="event.stopPropagation()">
+                        <div class="lp-mx-knob-wrap" title="Volume — drag up/down or scroll">
+                            <span class="lp-mx-dial-lbl">VOL</span>
+                            <canvas id="lpMusicVolKnob" class="lp-mx-knob" width="30" height="30"></canvas>
+                            <input type="number" id="lpMusicVol" min="0" max="100" value="22" style="display:none">
+                        </div>
+                        <div class="lp-mx-knob-wrap" title="Crossfade — drag up/down or scroll">
+                            <span class="lp-mx-dial-lbl">FADE</span>
+                            <canvas id="lpMusicFadeKnob" class="lp-mx-knob" width="30" height="30"></canvas>
+                            <input type="number" id="lpMusicFade" min="0" max="10" step="0.5" value="4" style="display:none">
+                        </div>
+                    </div>
+                </div>
+                <div class="lp-mx-song-row">
+                    <span class="lp-mx-song" id="lpMusicStatus">select a mood</span>
+                </div>
+                <div class="lp-music-grid" id="lpMusicGrid"></div>
+            </div>
+
+            <h2 class="collapsible-h2" id="h2-scenes" onclick="toggleH2Section('scenes-section', this)">Scenes</h2>
+            <div id="scenes-section">
+            <div style="margin-bottom: 0.1rem; margin-top: 0.35rem;">
                 <div style="display: flex; align-items: center; gap: 0.25rem; margin-bottom: 0.2rem;">
                     <span style="font-size: 0.8rem; font-weight: 600; white-space: nowrap;">Videos:</span>
                     <button type="button" id="scene-btn-yt-intro" onclick="toggleYtIframeScene('intro')">INTRO</button>
-                </div>
-                <div style="display: flex; align-items: center; gap: 0.25rem;">
                     <button type="button" id="scene-btn-yt-break" onclick="toggleYtIframeScene('break')">BREAK</button>
                     <input type="text" inputmode="numeric" id="break-quick-min" maxlength="2" value="05" style="width: 4.5ch; text-align: center; padding: 2px;" title="Break timer minutes">
                     <span style="font-size: 0.85rem; line-height: 1;">:</span>
@@ -563,10 +1017,12 @@ require_once __DIR__ . '/config.local.php';
                 </span>
             </div>
             <div id="scene-video-error" class="scene-video-error" style="display: none; font-size: 0.8rem; color: #c00; margin-top: 4px;"></div>
+            </div><!-- /scenes-section -->
 
-            <h2>Player Intros & Effects</h2>
+            <h2 class="collapsible-h2" id="h2-player-intros" onclick="toggleH2Section('player-intros-section', this)">Player Intros & Effects</h2>
+            <div id="player-intros-section">
 
-            <button class="collapsible-btn" id="btn-forms" onclick="toggleForms(this)">Show More</button>
+            <button class="collapsible-btn" id="btn-forms" onclick="toggleForms(this)"> </button>
 
             <!-- Always visible forms -->
             <form class="media-form" id="media-form-1">
@@ -612,6 +1068,7 @@ require_once __DIR__ . '/config.local.php';
                     <button type="submit">Go</button>
                 </form>
             </div>
+            </div><!-- /player-intros-section -->
         </div>
         <div class="right-column">
             <!-- Fixed 16:9 stream frame (1280×720) so insets and layout are consistent -->
@@ -753,6 +1210,14 @@ require_once __DIR__ . '/config.local.php';
     <script type="module" src="js/stream_production.js?v=<?php echo $v; ?>"></script>
 
     <script>
+        function toggleH2Section(sectionId, h2el) {
+            var section = document.getElementById(sectionId);
+            if (!section) return;
+            var collapsed = section.style.display === 'none';
+            section.style.display = collapsed ? '' : 'none';
+            if (h2el) h2el.classList.toggle('collapsed', !collapsed);
+        }
+
         function toggleSettings(btn) {
             var el = document.getElementById("settings-section");
             if (el.style.display === "none" || !el.style.display) {
@@ -760,22 +1225,22 @@ require_once __DIR__ . '/config.local.php';
             } else {
                 el.style.display = "none";
             }
-            if (btn) btn.textContent = (el.style.display === "block") ? "Hide Settings" : "Show Settings";
+            if (btn) btn.classList.toggle('open', el.style.display === 'block');
         }
         function toggleMusic(btn) {
             var el = document.getElementById("music-section");
             if (el.style.display === "none" || !el.style.display) { el.style.display = "block"; } else { el.style.display = "none"; }
-            if (btn) btn.textContent = (el.style.display === "block") ? "Hide Music" : "Music";
+            if (btn) btn.classList.toggle('open', el.style.display === 'block');
         }
         function toggleVolume(btn) {
             var el = document.getElementById("volume-section");
             if (el.style.display === "none" || !el.style.display) { el.style.display = "block"; } else { el.style.display = "none"; }
-            if (btn) btn.textContent = (el.style.display === "block") ? "Hide Volume" : "Show Volume";
+            if (btn) btn.classList.toggle('open', el.style.display === 'block');
         }
         function toggleScoreboardSettings(btn) {
             var el = document.getElementById("scoreboard-settings-section");
             if (el.style.display === "none" || !el.style.display) { el.style.display = "block"; } else { el.style.display = "none"; }
-            if (btn) btn.textContent = (el.style.display === "block") ? "Hide Scoreboard" : "Scoreboard";
+            if (btn) btn.classList.toggle('open', el.style.display === 'block');
         }
         function toggleCustomScoreboardSettings(btn) {
             var el = document.getElementById("custom-scoreboard-settings-section");
@@ -785,42 +1250,42 @@ require_once __DIR__ . '/config.local.php';
             } else {
                 el.style.display = "none";
             }
-            if (btn) btn.textContent = (el.style.display === "block") ? "Hide Custom Scoreboard" : "Custom Scoreboard";
+            if (btn) btn.classList.toggle('open', el.style.display === 'block');
         }
         function togglePlayerIntros(btn) {
             var el = document.getElementById("player-intros-settings-section");
             if (el.style.display === "none" || !el.style.display) { el.style.display = "block"; } else { el.style.display = "none"; }
-            if (btn) btn.textContent = (el.style.display === "block") ? "Hide Player Chroma" : "Show Player Chroma";
+            if (btn) btn.classList.toggle('open', el.style.display === 'block');
         }
         function toggleLayerOrder(btn) {
             var el = document.getElementById("layer-order-section");
             if (el.style.display === "none" || !el.style.display) { el.style.display = "block"; } else { el.style.display = "none"; }
-            if (btn) btn.textContent = (el.style.display === "block") ? "Hide Layer order" : "Show Layer order";
+            if (btn) btn.classList.toggle('open', el.style.display === 'block');
         }
         function toggleSaveLoad(btn) {
             var el = document.getElementById("save-load-section");
             if (el.style.display === "none" || !el.style.display) { el.style.display = "block"; } else { el.style.display = "none"; }
-            if (btn) btn.textContent = (el.style.display === "block") ? "Hide Save/Load setup" : "Show Save/Load setup";
+            if (btn) btn.classList.toggle('open', el.style.display === 'block');
         }
         function toggleOverlays(btn) {
             var el = document.getElementById("overlays-section");
             if (el.style.display === "none" || !el.style.display) { el.style.display = "block"; } else { el.style.display = "none"; }
-            if (btn) btn.textContent = (el.style.display === "block") ? "Hide Overlays" : "Show Overlays";
+            if (btn) btn.classList.toggle('open', el.style.display === 'block');
         }
         function toggleYtVideo(btn) {
             var el = document.getElementById("yt-video-section");
             if (el.style.display === "none" || !el.style.display) { el.style.display = "block"; } else { el.style.display = "none"; }
-            if (btn) btn.textContent = (el.style.display === "block") ? "Hide YT Video" : "Show YT Video";
+            if (btn) btn.classList.toggle('open', el.style.display === 'block');
         }
         function toggleYtVideosSettings(btn) {
             var el = document.getElementById("yt-videos-settings-section");
             if (el.style.display === "none" || !el.style.display) { el.style.display = "block"; } else { el.style.display = "none"; }
-            if (btn) btn.textContent = (el.style.display === "block") ? "Hide Video Buttons" : "Show Video Buttons";
+            if (btn) btn.classList.toggle('open', el.style.display === 'block');
         }
         function toggleBreakSettings(btn) {
             var el = document.getElementById("break-settings-section");
             if (el.style.display === "none" || !el.style.display) { el.style.display = "block"; } else { el.style.display = "none"; }
-            if (btn) btn.textContent = (el.style.display === "block") ? "Hide Break" : "Break";
+            if (btn) btn.classList.toggle('open', el.style.display === 'block');
         }
 
         (function() {
@@ -986,7 +1451,9 @@ require_once __DIR__ . '/config.local.php';
                     { label: "BREAK", url: "https://youtu.be/O9lNetcn9Y8?si=FaqwLX5I9KkoJecK", vol: 100 }
                 ],
                 breakSettings: { min: 5, sec: 0, msg: "be right back..." },
-                musicMode: 'sequence'
+                musicMode: 'sequence',
+                musicVol: 22,
+                musicFade: 4
             };
 
             function persistEditModePositions() {
@@ -1060,7 +1527,9 @@ require_once __DIR__ . '/config.local.php';
                     ytCrop: typeof getYtCrop === "function" ? getYtCrop() : { top: 150, left: 10, right: 20, bottom: 100 },
                     ytIframeVideos: typeof getYtIframeVideos === "function" ? getYtIframeVideos() : DEFAULT_SETTINGS.ytIframeVideos,
                     breakSettings: typeof getBreakSettings === "function" ? getBreakSettings() : DEFAULT_SETTINGS.breakSettings,
-                    musicMode: (function() { var el = document.querySelector('input[name="music-mode"]:checked'); return el ? el.value : 'sequence'; })()
+                    musicMode: (function() { var el = document.querySelector('input[name="music-mode"]:checked'); return el ? el.value : 'sequence'; })(),
+                musicVol: (function() { var el = document.getElementById('lpMusicVol'); return el ? parseFloat(el.value) : 22; })(),
+                musicFade: (function() { var el = document.getElementById('lpMusicFade'); return el ? parseFloat(el.value) : 4; })()
                 };
                 return out;
             }
@@ -1181,6 +1650,17 @@ require_once __DIR__ . '/config.local.php';
                     var modeEl = document.querySelector('input[name="music-mode"][value="' + parsed.musicMode + '"]');
                     if (modeEl) modeEl.checked = true;
                 }
+                (function() {
+                    var fireChange = function(id, val) {
+                        var el = document.getElementById(id);
+                        if (el && val !== undefined && val !== null) {
+                            el.value = val;
+                            el.dispatchEvent(new Event('change'));
+                        }
+                    };
+                    if (parsed.musicVol !== undefined) fireChange('lpMusicVol', parsed.musicVol);
+                    if (parsed.musicFade !== undefined) fireChange('lpMusicFade', parsed.musicFade);
+                })();
                 if (window.updateLogosOverlay) window.updateLogosOverlay();
                 if (window.updateSc2Panel) window.updateSc2Panel();
                 if (window.reapplyLayerOrder) window.reapplyLayerOrder();
@@ -1469,7 +1949,7 @@ require_once __DIR__ . '/config.local.php';
             } else {
                 content.style.display = "none";
             }
-            if (btn) btn.textContent = (content.style.display === "block") ? "Hide More" : "Show More";
+            if (btn) btn.classList.toggle('open', content.style.display === 'block');
         }
 
         function toggleLogosSettings(btn) {
@@ -1479,7 +1959,7 @@ require_once __DIR__ . '/config.local.php';
             } else {
                 el.style.display = "none";
             }
-            if (btn) btn.textContent = (el.style.display === "block") ? "Hide Logos settings" : "Show Logos settings";
+            if (btn) btn.classList.toggle('open', el.style.display === 'block');
         }
 
         var LOGO_POSITIONS_KEY = "stream_production_logo_positions";
@@ -2826,7 +3306,10 @@ require_once __DIR__ . '/config.local.php';
                 var btn = document.getElementById('btn-hide-vdo');
                 if (largePanel) largePanel.style.visibility = _vdoHidden ? 'hidden' : '';
                 if (smallPanel) smallPanel.style.visibility = _vdoHidden ? 'hidden' : '';
-                if (btn) btn.textContent = _vdoHidden ? 'Show VDO' : 'Hide VDO';
+                if (btn) {
+                    btn.textContent = _vdoHidden ? 'Show VDO' : 'Hide VDO';
+                    btn.classList.toggle('vdo-hidden', _vdoHidden);
+                }
             }
 
             /** Force reload of VDO Ninja iframes (SC2 and VDO full). Use when camera feed is stuck. */
@@ -2855,6 +3338,7 @@ require_once __DIR__ . '/config.local.php';
                 });
                 if (btn) {
                     btn.disabled = true;
+                    btn.classList.add('active');
                     btn.textContent = 'Reloaded!';
                     clearInterval(_reloadVdoCooldownTimer);
                     var remaining = 30;
@@ -2863,9 +3347,10 @@ require_once __DIR__ . '/config.local.php';
                         if (remaining <= 0) {
                             clearInterval(_reloadVdoCooldownTimer);
                             btn.disabled = false;
+                            btn.classList.remove('active');
                             btn.textContent = 'Reload VDO';
                         } else {
-                            btn.textContent = 'Reload VDO (' + remaining + 's)';
+                            btn.textContent = 'Wait ' + remaining + 's';
                         }
                     }, 1000);
                 }
@@ -2890,10 +3375,12 @@ require_once __DIR__ . '/config.local.php';
                 });
                 if (btn) {
                     btn.disabled = true;
+                    btn.classList.add('active');
                     btn.textContent = 'Refreshed!';
                     clearTimeout(_refreshPanelTimer);
                     _refreshPanelTimer = setTimeout(function() {
                         btn.disabled = false;
+                        btn.classList.remove('active');
                         btn.textContent = 'Refresh Right Panel';
                     }, 5000);
                 }
@@ -3656,7 +4143,7 @@ require_once __DIR__ . '/config.local.php';
         window.toggleAccount = function toggleAccount(btn) {
             var el = document.getElementById('account-section');
             el.style.display = (el.style.display === 'block') ? 'none' : 'block';
-            if (btn) btn.textContent = (el.style.display === 'block') ? 'Hide Change Password' : 'Change Password';
+            if (btn) btn.classList.toggle('open', el.style.display === 'block');
             if (el.style.display === 'block') {
                 document.getElementById('chpw-current').focus();
             }
@@ -3814,6 +4301,386 @@ require_once __DIR__ . '/config.local.php';
             showAlert(type, username, extra);
         });
         socket.on('disconnect', function() { console.log('[SE] Disconnected'); });
+    })();
+
+    // ── Music Player ────────────────────────────────────────────────
+    (function () {
+        var MX_TRACKS = <?php echo json_encode($musicTracks, JSON_UNESCAPED_SLASHES); ?>;
+        var MX_LABELS = {
+            opening_high:   'Open Hi',  opening_alert:  'Alert',
+            combat_mid:     'Combat',   combat_high:    'Combat+',
+            combat_extreme: 'Extreme',  climax:         'Climax',
+            analysis:       'Analysis', chill:          'Chill',
+            replay:         'Replay',   victory:        'Victory',
+            defeat:         'Defeat',   suspense:       'Suspense',
+        };
+
+        var mx = null, mxGain = null;
+        var mxCur = null, mxNxt = null;
+        var mxPaused = false, mxMood = null, mxTrack = null, mxTimer = null;
+        var mxMoodPlayCount = 0; // tracks played in current mood session
+
+        var statusEl  = document.getElementById('lpMusicStatus');
+        var volInput  = document.getElementById('lpMusicVol');
+        var fadeInput = document.getElementById('lpMusicFade');
+        var ppBtn     = document.getElementById('lpMusicPlayPause');
+
+        volInput.addEventListener('input', function () {
+            if (mxGain) mxGain.gain.value = Number(volInput.value) / 100;
+        });
+
+        document.getElementById('lpMusicStop').addEventListener('click', mxStop);
+        ppBtn.addEventListener('click', mxTogglePlay);
+
+        function mxSetStatus(text, type) {
+            statusEl.textContent = text;
+            statusEl.className = type === 'err' ? 'lp-mx-song lp-mx-err' : (type === 'playing' ? 'lp-mx-song playing' : 'lp-mx-song');
+        }
+
+        function mxBuildGrid() {
+            var grid = document.getElementById('lpMusicGrid');
+            Object.keys(MX_TRACKS).forEach(function (mood) {
+                var btn = document.createElement('button');
+                btn.textContent = MX_LABELS[mood] || mood;
+                btn.dataset.mood = mood;
+                btn.title = mood;
+                btn.addEventListener('click', function () { mxSwitch(mood); });
+                grid.appendChild(btn);
+            });
+        }
+
+        function mxUpdateActive() {
+            document.querySelectorAll('#lpMusicGrid button').forEach(function (b) {
+                b.classList.toggle('active', b.dataset.mood === mxMood);
+            });
+        }
+
+        function mxEnsure() {
+            if (!mx) {
+                mx = new (window.AudioContext || window.webkitAudioContext)();
+                mxGain = mx.createGain();
+                mxGain.gain.value = Number(volInput.value) / 100;
+                mxGain.connect(mx.destination);
+            }
+            if (mx.state === 'suspended') return mx.resume();
+            return Promise.resolve();
+        }
+
+        function mxAlt(mood, cur) {
+            var f = MX_TRACKS[mood] || [];
+            if (!f.length) return null;
+            if (f.length === 1) return f[0];
+            if (!cur) return f[Math.floor(Math.random() * f.length)];
+            return f.find(function (x) { return x !== cur; }) || f[0];
+        }
+
+        function mxInit(mood) {
+            var f = MX_TRACKS[mood] || [];
+            return f.length ? f[Math.floor(Math.random() * f.length)] : null;
+        }
+
+        function mxNextMood() {
+            var keys = Object.keys(MX_TRACKS);
+            var idx  = keys.indexOf(mxMood);
+            return keys[(idx + 1) % keys.length];
+        }
+
+        function mxMakeDeck(file) {
+            var audio = new Audio('music/' + file);
+            audio.crossOrigin = 'anonymous'; audio.loop = false; audio.preload = 'auto';
+            var src  = mx.createMediaElementSource(audio);
+            var gain = mx.createGain(); gain.gain.value = 0;
+            src.connect(gain); gain.connect(mxGain);
+            return { audio: audio, gain: gain, file: file };
+        }
+
+        function mxWaitReady(audio) {
+            if (audio.readyState >= 3) return Promise.resolve();
+            return new Promise(function (res, rej) {
+                var done = function () { audio.removeEventListener('canplay', ok); audio.removeEventListener('error', er); };
+                var ok = function () { done(); res(); };
+                var er = function () { done(); rej(new Error('Load failed')); };
+                audio.addEventListener('canplay', ok);
+                audio.addEventListener('error', er);
+                audio.load();
+            });
+        }
+
+        function mxClearTimer() {
+            if (mxTimer) { clearTimeout(mxTimer); mxTimer = null; }
+        }
+
+        function mxSchedule(mood, file) {
+            mxClearTimer();
+            if (!mxCur || mxPaused) return;
+            var fade = Number(fadeInput.value);
+            var dur  = mxCur.audio.duration;
+            if (!isFinite(dur) || dur <= 0) return;
+            var wait = Math.max(0, dur - mxCur.audio.currentTime - fade - 0.15);
+            mxTimer = setTimeout(function () {
+                if (mxMood !== mood || !mxCur || mxCur.file !== file || mxPaused) return;
+                if (mxMoodPlayCount >= 2) {
+                    // Both tracks for this mood played — advance to next mood
+                    mxSwitch(mxNextMood(), { auto: true });
+                } else {
+                    var next = mxAlt(mood, file);
+                    if (!next || next === file) {
+                        mxSwitch(mxNextMood(), { auto: true });
+                    } else {
+                        mxSwitch(mood, { forceFile: next, auto: true });
+                    }
+                }
+            }, wait * 1000);
+        }
+
+        function mxSwitch(mood, opts) {
+            opts = opts || {};
+            mxEnsure().then(function () {
+                mxClearTimer();
+                var file = opts.forceFile || null;
+                if (!file) file = mxMood === mood ? mxAlt(mood, mxTrack) : mxInit(mood);
+                if (!file) { mxSetStatus('No tracks: ' + mood, 'err'); return; }
+
+                var fade = Number(fadeInput.value);
+                mxSetStatus('Loading\u2026');
+                var deck = mxMakeDeck(file);
+                mxWaitReady(deck.audio).then(function () {
+                    var now = mx.currentTime;
+                    deck.gain.gain.cancelScheduledValues(now);
+                    deck.gain.gain.setValueAtTime(0, now);
+                    deck.audio.play().then(function () {
+                        if (!mxCur || fade === 0) {
+                            deck.gain.gain.linearRampToValueAtTime(1, now + 0.05);
+                            if (mxCur) { try { mxCur.audio.pause(); mxCur.audio.currentTime = 0; } catch(e){} }
+                            mxCur = deck;
+                        } else {
+                            mxCur.gain.gain.cancelScheduledValues(now);
+                            mxCur.gain.gain.setValueAtTime(mxCur.gain.gain.value, now);
+                            mxCur.gain.gain.linearRampToValueAtTime(0, now + fade);
+                            deck.gain.gain.linearRampToValueAtTime(1, now + fade);
+                            var old = mxCur;
+                            setTimeout(function () { try { old.audio.pause(); old.audio.currentTime = 0; } catch(e){} }, fade * 1000 + 100);
+                            mxCur = deck;
+                        }
+                        mxNxt = null;
+                        mxMoodPlayCount = (mxMood === mood) ? mxMoodPlayCount + 1 : 1;
+                        mxMood = mood; mxTrack = file;
+                        mxUpdateActive();
+                        mxPaused = false;
+                        ppBtn.innerHTML = '&#x23F8;';
+                        ppBtn.classList.remove('lp-mx-dim', 'lp-mx-paused');
+                        mxSchedule(mood, file);
+                        mxSetStatus(file, 'playing');
+                    }).catch(function (err) {
+                        if (err.name === 'NotAllowedError') {
+                            mxStop();
+                            mxShowBanner();
+                        } else {
+                            mxSetStatus(err.message, 'err');
+                        }
+                    });
+                }).catch(function (err) { mxSetStatus(err.message, 'err'); });
+            });
+        }
+
+        function mxStop() {
+            mxClearTimer();
+            try {
+                if (mxCur) { mxCur.audio.pause(); mxCur.audio.currentTime = 0; }
+                if (mxNxt) { mxNxt.audio.pause(); mxNxt.audio.currentTime = 0; }
+            } catch(e) {}
+            mxCur = mxNxt = null; mxMood = mxTrack = null; mxPaused = false;
+            mxMoodPlayCount = 0;
+            ppBtn.innerHTML = '&#9654;';
+            ppBtn.classList.add('lp-mx-dim');
+            ppBtn.classList.remove('lp-mx-paused');
+            mxUpdateActive();
+            mxSetStatus('select a mood');
+        }
+
+        function mxTogglePlay() {
+            if (!mxCur) {
+                // Nothing loaded — auto-select first mood and start playing
+                var firstMood = Object.keys(MX_TRACKS)[0];
+                if (firstMood) mxSwitch(firstMood);
+                return;
+            }
+            mxEnsure().then(function () {
+                if (mxPaused) {
+                    mxCur.audio.play().then(function () {
+                        mxPaused = false;
+                        ppBtn.innerHTML = '&#x23F8;';
+                        ppBtn.classList.remove('lp-mx-paused');
+                        mxSchedule(mxMood, mxTrack);
+                        mxSetStatus(mxTrack, 'playing');
+                    });
+                } else {
+                    mxClearTimer();
+                    mxCur.audio.pause();
+                    mxPaused = true;
+                    ppBtn.innerHTML = '&#9654;';
+                    ppBtn.classList.add('lp-mx-paused');
+                    mxSetStatus('\u23f8 ' + mxTrack);
+                }
+            });
+        }
+
+        // Show/hide toggle — bar click (transport/knobs stop propagation)
+        (function () {
+            var bar     = document.getElementById('lpMusicBar');
+            var icon    = document.getElementById('lpMusicToggleIcon');
+            var grid    = document.getElementById('lpMusicGrid');
+            var songRow = document.querySelector('.lp-mx-song-row');
+            var collapsed = true; // default closed
+            grid.style.display    = 'none';
+            songRow.style.display = 'none';
+            icon.innerHTML        = '+';
+            bar.addEventListener('click', function () {
+                collapsed = !collapsed;
+                grid.style.display    = collapsed ? 'none' : '';
+                songRow.style.display = collapsed ? 'none' : '';
+                icon.innerHTML        = collapsed ? '+' : '&#8722;';
+            });
+        })();
+
+        mxBuildGrid();
+
+        // ── Rotary knob ──────────────────────────────────────────────
+        function MusicKnob(canvasId, inputId, min, max, step) {
+            var canvas = document.getElementById(canvasId);
+            var input  = document.getElementById(inputId);
+            if (!canvas || !input) return;
+
+            var val = parseFloat(input.value) || min;
+            var dragging = false, dragY0 = 0, dragV0 = 0;
+
+            function clamp(v) { return Math.max(min, Math.min(max, v)); }
+            function snap(v)  { return Math.round(v / step) * step; }
+
+            function set(v) {
+                val = clamp(snap(v));
+                // keep one decimal for non-integer steps
+                input.value = (step < 1) ? val.toFixed(1) : String(val);
+                input.dispatchEvent(new Event('input', { bubbles: true }));
+                draw();
+            }
+
+            function draw() {
+                var W = canvas.width, H = canvas.height;
+                var ctx = canvas.getContext('2d');
+                var cx = W / 2, cy = H / 2;
+                var R = Math.min(W, H) / 2 - 2;
+                var sc = W / 46; // scale factor relative to original 46px design
+                var pct = (val - min) / (max - min);
+
+                // Angles: start at 7:30, sweep 270° clockwise
+                var S = Math.PI * 0.75;
+                var SWEEP = Math.PI * 1.5;
+                var angle = S + pct * SWEEP;
+
+                ctx.clearRect(0, 0, W, H);
+
+                // Outer circle background
+                ctx.beginPath();
+                ctx.arc(cx, cy, R, 0, Math.PI * 2);
+                ctx.fillStyle = '#dde3ed';
+                ctx.fill();
+                ctx.strokeStyle = '#a8b4c8';
+                ctx.lineWidth = Math.max(1, 1.5 * sc);
+                ctx.stroke();
+
+                // Track arc (full range, gray)
+                var trackR = R - Math.max(3, 5 * sc);
+                ctx.beginPath();
+                ctx.arc(cx, cy, trackR, S, S + SWEEP, false);
+                ctx.strokeStyle = '#b8c4d4';
+                ctx.lineWidth = Math.max(1.5, 3.5 * sc);
+                ctx.lineCap = 'round';
+                ctx.stroke();
+
+                // Value arc (blue)
+                if (pct > 0.005) {
+                    ctx.beginPath();
+                    ctx.arc(cx, cy, trackR, S, angle, false);
+                    ctx.strokeStyle = '#3b82f6';
+                    ctx.lineWidth = Math.max(1.5, 3.5 * sc);
+                    ctx.lineCap = 'round';
+                    ctx.stroke();
+                }
+
+                // Dot indicator at current angle
+                var dotR = Math.max(3, 4 * sc);
+                var dotX = cx + (trackR) * Math.cos(angle);
+                var dotY = cy + (trackR) * Math.sin(angle);
+                ctx.beginPath();
+                ctx.arc(dotX, dotY, Math.max(1.5, 2.5 * sc), 0, Math.PI * 2);
+                ctx.fillStyle = '#1e293b';
+                ctx.fill();
+
+                // Center value text
+                ctx.fillStyle = '#1e293b';
+                var fontSize = Math.max(7, Math.round(10 * sc));
+                ctx.font = 'bold ' + fontSize + 'px Segoe UI, system-ui, sans-serif';
+                ctx.textAlign = 'center';
+                ctx.textBaseline = 'middle';
+                ctx.fillText((step < 1) ? val.toFixed(1) : String(val), cx, cy);
+            }
+
+            canvas.addEventListener('mousedown', function (e) {
+                dragging = true;
+                dragY0 = e.clientY;
+                dragV0 = val;
+                e.preventDefault();
+            });
+            window.addEventListener('mousemove', function (e) {
+                if (!dragging) return;
+                // 80px drag = full range
+                set(dragV0 + (dragY0 - e.clientY) * (max - min) / 80);
+            });
+            window.addEventListener('mouseup', function () { dragging = false; });
+            canvas.addEventListener('wheel', function (e) {
+                e.preventDefault();
+                set(val + (e.deltaY < 0 ? step : -step));
+            }, { passive: false });
+
+            // Sync if external code changes the hidden input
+            input.addEventListener('change', function () {
+                val = clamp(parseFloat(input.value) || min);
+                draw();
+            });
+
+            draw();
+        }
+
+        new MusicKnob('lpMusicVolKnob',  'lpMusicVol',  0, 100, 1);
+        new MusicKnob('lpMusicFadeKnob', 'lpMusicFade', 0, 10,  0.5);
+
+        // ── Auto-start + autoplay-blocked banner ─────────────────────
+        function mxShowBanner() {
+            var banner = document.getElementById('mx-autoplay-banner');
+            if (!banner) return;
+            banner.style.display = 'block';
+            // Any click anywhere starts the music and hides the banner
+            function onFirstClick() {
+                document.removeEventListener('click', onFirstClick, true);
+                banner.style.display = 'none';
+                var firstMood = Object.keys(MX_TRACKS)[0];
+                if (firstMood) mxSwitch(firstMood);
+            }
+            document.addEventListener('click', onFirstClick, true);
+            banner.addEventListener('click', function () {
+                document.removeEventListener('click', onFirstClick, true);
+                banner.style.display = 'none';
+                var firstMood = Object.keys(MX_TRACKS)[0];
+                if (firstMood) mxSwitch(firstMood);
+            }, { once: true });
+        }
+
+        // Try to auto-start; browser may block until user gesture
+        (function () {
+            var firstMood = Object.keys(MX_TRACKS)[0];
+            if (firstMood) mxSwitch(firstMood);
+        })();
     })();
     </script>
 

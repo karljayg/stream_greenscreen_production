@@ -235,7 +235,7 @@ window.toggleStatus = function(btn) {
     } else {
         statusSection.style.display = "none";
     }
-    if (btn) btn.textContent = (statusSection.style.display === "block") ? "Hide Status" : "Show Status";
+    if (btn) btn.classList.toggle('open', statusSection.style.display === 'block');
 }
 
 window.togglePlayerRatings = function(btn) {
@@ -245,7 +245,7 @@ window.togglePlayerRatings = function(btn) {
     } else {
         playerRatingsSection.style.display = "none";
     }
-    if (btn) btn.textContent = (playerRatingsSection.style.display === "block") ? "Hide Spider Ratings" : "Show Spider Ratings";
+    if (btn) btn.classList.toggle('open', playerRatingsSection.style.display === 'block');
 }
 
 window.showFormattedResult = function(btn) {

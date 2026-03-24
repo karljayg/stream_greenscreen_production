@@ -15,7 +15,7 @@
     margin-right: 0; /* Flush to right panel so OBS capture has no offset */
     flex: 0 0 260px;
     width: 260px;
-    background: #FFFFFF;
+    background: #f2f4f8;
     height: 720px;
     overflow-y: auto;
     overflow-x: hidden;
