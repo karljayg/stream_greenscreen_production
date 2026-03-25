@@ -400,12 +400,14 @@ forms.forEach((form) => {
 			}
 		}
 
-		Promise.all([
-			videoPlayer.play(),            
-			audioPlayer.play()
-		]).catch((error) => {
+		// Stop any residual audio from team buttons (POG/ASH/etc.) before playing the intro video.
+		audioPlayer.pause();
+		audioPlayer.removeAttribute('src');
+		audioPlayer.load();
+
+		videoPlayer.play().catch((error) => {
 			errorMessage.textContent = `Error: ${error.message}`;
-			console.error('Error playing video ' + audioPath + ' or audio: ' + videoPath + ' ', error);
+			console.error('Error playing video ' + videoPath + ': ', error);
 		});
 		videoContainer.style.display = 'flex';
 		const videoChromaCanvas = document.getElementById('video-chroma-canvas');

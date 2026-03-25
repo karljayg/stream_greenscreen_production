@@ -817,7 +817,7 @@ if (file_exists($sceneMoodMapFile)) {
                     <h2>Volume</h2>
                     <div>
                         <label for="volume-slider">Volume: </label>
-                        <input type="range" id="volume-slider" min="0" max="100" value="50">
+                        <input type="range" id="volume-slider" min="5" max="100" value="50">
                     </div>
                 </div>
                 <button class="collapsible-btn" id="btn-music" onclick="toggleMusic(this)">Music</button>
@@ -881,7 +881,7 @@ if (file_exists($sceneMoodMapFile)) {
                         <span></span>
                         <div id="yt-video-1-resolved" style="grid-column: 2 / 4; font-size: 0.75rem; font-family: monospace; word-break: break-all; min-height: 1em;"></div>
                         <label style="font-size: 0.85rem; white-space: nowrap;">Button 1 volume:</label>
-                        <input type="number" id="yt-video-1-vol" min="0" max="100" value="100" style="width: 5ch; text-align: center;">
+                        <input type="number" id="yt-video-1-vol" min="5" max="100" value="100" style="width: 5ch; text-align: center;">
                         <span style="font-size: 0.85rem;">%</span>
                         <label style="font-size: 0.85rem; white-space: nowrap;">Button 2 label:</label>
                         <input type="text" id="yt-video-2-label" value="BREAK" style="width: 8ch;">
@@ -891,7 +891,7 @@ if (file_exists($sceneMoodMapFile)) {
                         <span></span>
                         <div id="yt-video-2-resolved" style="grid-column: 2 / 4; font-size: 0.75rem; font-family: monospace; word-break: break-all; min-height: 1em;"></div>
                         <label style="font-size: 0.85rem; white-space: nowrap;">Button 2 volume:</label>
-                        <input type="number" id="yt-video-2-vol" min="0" max="100" value="100" style="width: 5ch; text-align: center;">
+                        <input type="number" id="yt-video-2-vol" min="5" max="100" value="100" style="width: 5ch; text-align: center;">
                         <span style="font-size: 0.85rem;">%</span>
                     </div>
                 </div>
@@ -989,7 +989,7 @@ if (file_exists($sceneMoodMapFile)) {
                         <div class="lp-mx-knob-wrap" title="Volume — drag up/down or scroll">
                             <span class="lp-mx-dial-lbl">VOL</span>
                             <canvas id="lpMusicVolKnob" class="lp-mx-knob" width="30" height="30"></canvas>
-                            <input type="number" id="lpMusicVol" min="0" max="100" value="22" style="display:none">
+                            <input type="number" id="lpMusicVol" min="5" max="100" value="22" style="display:none">
                         </div>
                         <div class="lp-mx-knob-wrap" title="Crossfade — drag up/down or scroll">
                             <span class="lp-mx-dial-lbl">FADE</span>
@@ -1569,7 +1569,7 @@ if (file_exists($sceneMoodMapFile)) {
                 if (!parsed || typeof parsed !== "object") return;
                 var set = function(id, val) { var el = document.getElementById(id); if (el && val !== undefined) el.value = String(val); };
                 var setCheck = function(id, val) { var el = document.getElementById(id); if (el) el.checked = !!val; };
-                if (parsed.volume !== undefined) { var vs = document.getElementById("volume-slider"); if (vs) vs.value = Math.max(0, Math.min(100, parseInt(parsed.volume, 10) || 50)); }
+                if (parsed.volume !== undefined) { var vs = document.getElementById("volume-slider"); if (vs) vs.value = Math.max(5, Math.min(100, parseInt(parsed.volume, 10) || 50)); }
                 var order = parsed.layerOrder || parsed.order;
                 if (order && Array.isArray(order)) {
                     var filtered = order.filter(function(id) { return DEFAULT_ORDER.indexOf(id) !== -1; });
@@ -1688,7 +1688,7 @@ if (file_exists($sceneMoodMapFile)) {
                             el.dispatchEvent(new Event('change'));
                         }
                     };
-                    if (parsed.musicVol !== undefined) fireChange('lpMusicVol', parsed.musicVol);
+                    if (parsed.musicVol !== undefined) fireChange('lpMusicVol', Math.max(5, parsed.musicVol));
                     if (parsed.musicFade !== undefined) fireChange('lpMusicFade', parsed.musicFade);
                 })();
                 if (parsed.sceneMoodMap && typeof parsed.sceneMoodMap === 'object') {
@@ -2166,8 +2166,8 @@ if (file_exists($sceneMoodMapFile)) {
             var u2 = document.getElementById('yt-video-2-url');
             var v2 = document.getElementById('yt-video-2-vol');
             return [
-                { label: (l1 && l1.value.trim()) || YT_IFRAME_VIDEOS_DEFAULTS[0].label, url: normalizeYtUrl((u1 && u1.value.trim()) || YT_IFRAME_VIDEOS_DEFAULTS[0].url), vol: v1 ? Math.max(0, Math.min(100, parseInt(v1.value, 10) || 100)) : 100 },
-                { label: (l2 && l2.value.trim()) || YT_IFRAME_VIDEOS_DEFAULTS[1].label, url: normalizeYtUrl((u2 && u2.value.trim()) || YT_IFRAME_VIDEOS_DEFAULTS[1].url), vol: v2 ? Math.max(0, Math.min(100, parseInt(v2.value, 10) || 100)) : 100 }
+                { label: (l1 && l1.value.trim()) || YT_IFRAME_VIDEOS_DEFAULTS[0].label, url: normalizeYtUrl((u1 && u1.value.trim()) || YT_IFRAME_VIDEOS_DEFAULTS[0].url), vol: v1 ? Math.max(5, Math.min(100, parseInt(v1.value, 10) || 100)) : 100 },
+                { label: (l2 && l2.value.trim()) || YT_IFRAME_VIDEOS_DEFAULTS[1].label, url: normalizeYtUrl((u2 && u2.value.trim()) || YT_IFRAME_VIDEOS_DEFAULTS[1].url), vol: v2 ? Math.max(5, Math.min(100, parseInt(v2.value, 10) || 100)) : 100 }
             ];
         }
 
@@ -4822,7 +4822,7 @@ if (file_exists($sceneMoodMapFile)) {
             draw();
         }
 
-        new MusicKnob('lpMusicVolKnob',  'lpMusicVol',  0, 100, 1);
+        new MusicKnob('lpMusicVolKnob',  'lpMusicVol',  5, 100, 1);
         new MusicKnob('lpMusicFadeKnob', 'lpMusicFade', 0, 10,  0.5);
 
         // ── Config editors (Scene→Moods and Mood→Songs) ──────────────
