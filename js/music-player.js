@@ -18,6 +18,7 @@
     var mx = null, mxGain = null;
     var mxCur = null, mxNxt = null;
     var mxPaused = false, mxMood = null, mxTrack = null, mxTimer = null;
+    var mxRandom = false;
     // Scene-aware playback state
     var mxSongIdx = 0;         // current song index within active mood
     var mxCurScene = null;     // current scene key
@@ -32,6 +33,74 @@
     var timeNow   = document.getElementById('lpMusicTimeNow');
     var timeDur   = document.getElementById('lpMusicTimeDur');
     var mxSeekDragging = false;
+
+    // ── Stats tracker ─────────────────────────────────────────────
+    var mxStats = (function () {
+        var pending   = { songs: {}, moods: {}, totals: { plays: 0, skips: 0, seconds: 0 } };
+        var startTime = null;   // wall-clock ms when current track started
+        var curFile   = null;
+        var curMood   = null;
+        var flushTimer = null;
+
+        function songBucket(file) {
+            if (!pending.songs[file]) pending.songs[file] = { plays: 0, skips: 0, seconds: 0 };
+            return pending.songs[file];
+        }
+        function moodBucket(mood) {
+            if (!pending.moods[mood]) pending.moods[mood] = { plays: 0, seconds: 0 };
+            return pending.moods[mood];
+        }
+
+        // Accumulate elapsed time from current track into pending; does NOT clear state.
+        function accrue() {
+            if (!startTime || !curFile) return;
+            var elapsed = (Date.now() - startTime) / 1000;
+            songBucket(curFile).seconds += elapsed;
+            if (curMood) moodBucket(curMood).seconds += elapsed;
+            pending.totals.seconds += elapsed;
+            startTime = Date.now(); // reset so next accrue doesn't double-count
+        }
+
+        return {
+            // Called when a track successfully starts playing.
+            onSongStart: function (mood, file) {
+                accrue(); // close previous track's time
+                curFile = file; curMood = mood; startTime = Date.now();
+                songBucket(file).plays++;
+                moodBucket(mood).plays++;
+                pending.totals.plays++;
+            },
+            // Called by user-initiated skips (next/prev/mood change).
+            onSkip: function () {
+                if (!curFile) return;
+                accrue();
+                songBucket(curFile).skips++;
+                pending.totals.skips++;
+            },
+            // Flush accumulated delta to the server.
+            flush: function (keepalive) {
+                accrue();
+                var hasData = pending.totals.plays > 0 || pending.totals.skips > 0 || pending.totals.seconds >= 1;
+                if (!hasData) return;
+                var url = (typeof window.MX_STATS_URL !== 'undefined') ? window.MX_STATS_URL : 'save_music_stats.php';
+                var body = JSON.stringify(pending);
+                pending = { songs: {}, moods: {}, totals: { plays: 0, skips: 0, seconds: 0 } };
+                startTime = Date.now(); // timer continues for current track
+                try {
+                    fetch(url, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: body, keepalive: !!keepalive });
+                } catch(e) {}
+            },
+            startPeriodicFlush: function () {
+                if (flushTimer) return;
+                flushTimer = setInterval(function () { mxStats.flush(false); }, 60000);
+            }
+        };
+    })();
+
+    // Flush on page leave.
+    window.addEventListener('pagehide',         function () { mxStats.flush(true); });
+    window.addEventListener('visibilitychange', function () { if (document.visibilityState === 'hidden') mxStats.flush(true); });
+    mxStats.startPeriodicFlush();
 
     function mxFmtTime(s) {
         if (!isFinite(s) || s < 0) return '-:--';
@@ -73,8 +142,36 @@
         if (mxGain) mxGain.gain.value = Number(volInput.value) / 100;
     });
 
-    document.getElementById('lpMusicStop').addEventListener('click', mxStop);
+    document.getElementById('lpMusicRandom').addEventListener('click', function (e) {
+        e.stopPropagation();
+        if (!mxRandom) {
+            mxSetRandom(true);
+            // Switch immediately whether or not something is already playing
+            mxStats.onSkip();
+            mxSwitchRandom(false);
+        } else {
+            mxSetRandom(false);
+        }
+    });
     ppBtn.addEventListener('click', mxTogglePlay);
+
+    document.getElementById('lpMusicNext').addEventListener('click', function () {
+        if (mxCur) mxStats.onSkip();
+        if (mxRandom) { mxSwitchRandom(false); return; }
+        if (!mxMood) return;
+        var songs = MX_TRACKS[mxMood] || [];
+        if (!songs.length) return;
+        mxSwitch(mxMood, (mxSongIdx + 1) % songs.length, true);
+    });
+
+    document.getElementById('lpMusicPrev').addEventListener('click', function () {
+        if (mxCur) mxStats.onSkip();
+        if (mxRandom) { mxSwitchRandom(false); return; }
+        if (!mxMood) return;
+        var songs = MX_TRACKS[mxMood] || [];
+        if (!songs.length) return;
+        mxSwitch(mxMood, (mxSongIdx - 1 + songs.length) % songs.length, true);
+    });
 
     function mxSetStatus(text, type) {
         statusEl.textContent = text;
@@ -86,16 +183,19 @@
         grid.innerHTML = '';
         Object.keys(MX_TRACKS).forEach(function (mood) {
             var btn = document.createElement('button');
-            btn.textContent = MX_LABELS[mood] || mood;
+            btn.textContent = MX_LABELS[mood] || mood.replace(/_/g, ' ').replace(/\b\w/g, function (c) { return c.toUpperCase(); });
             btn.dataset.mood = mood;
             btn.title = mood;
             btn.addEventListener('click', function () {
+                mxSetRandom(false);
                 mxCurScene = null; mxSceneMoods = null; mxSceneMoodIdx = 0;
                 if (mxMood === mood && mxCur) {
                     // Re-click on active mood — skip to next song sequentially
                     var songs = MX_TRACKS[mood] || [];
+                    mxStats.onSkip();
                     mxSwitch(mood, (mxSongIdx + 1) % songs.length);
                 } else {
+                    if (mxCur) mxStats.onSkip();
                     mxSwitch(mood, mxRandIdx(mood));
                 }
             });
@@ -121,7 +221,7 @@
     }
 
     function mxMakeDeck(file) {
-        var audio = new Audio('music/' + file);
+        var audio = new Audio((window.MX_MUSIC_PATH !== undefined ? window.MX_MUSIC_PATH : 'music/') + file);
         audio.crossOrigin = 'anonymous'; audio.loop = false; audio.preload = 'auto';
         var src  = mx.createMediaElementSource(audio);
         var gain = mx.createGain(); gain.gain.value = 0;
@@ -154,6 +254,7 @@
 
     // Advance to the next mood in the scene list (or loop current mood if no scene).
     function mxAdvanceMood(autoAdvance) {
+        if (mxRandom) { mxSwitchRandom(autoAdvance); return; }
         if (mxSceneMoods && mxSceneMoods.length > 0) {
             mxSceneMoodIdx = (mxSceneMoodIdx + 1) % mxSceneMoods.length;
             var nextMood = mxSceneMoods[mxSceneMoodIdx];
@@ -161,6 +262,19 @@
         } else {
             mxSwitch(mxMood, mxRandIdx(mxMood), true, autoAdvance); // no scene → loop this mood
         }
+    }
+
+    function mxSwitchRandom(autoAdvance) {
+        var moods = Object.keys(MX_TRACKS).filter(function (m) { return (MX_TRACKS[m] || []).length > 0; });
+        if (!moods.length) return;
+        var mood = moods[Math.floor(Math.random() * moods.length)];
+        mxSwitch(mood, mxRandIdx(mood), false, autoAdvance);
+    }
+
+    function mxSetRandom(on) {
+        mxRandom = on;
+        var btn = document.getElementById('lpMusicRandom');
+        if (btn) btn.classList.toggle('active', on);
     }
 
     // Derive start offset and crossfade duration from the FADE knob value (0–10).
@@ -186,7 +300,9 @@
             if (mxMood !== mood || !mxCur || mxCur.file !== file || mxPaused) return;
             var songs = MX_TRACKS[mood] || [];
             var nextIdx = songIdx + 1;
-            if (nextIdx < songs.length) {
+            if (mxRandom) {
+                mxSwitchRandom(true);
+            } else if (nextIdx < songs.length) {
                 // More songs left in this mood — play next
                 mxSwitch(mood, nextIdx, true, true);
             } else {
@@ -237,6 +353,7 @@
                     }
                     mxNxt = null;
                     mxMood = mood; mxTrack = file; mxSongIdx = songIdx;
+                    mxStats.onSongStart(mood, file);
                     mxUpdateActive();
                     mxPaused = false;
                     ppBtn.innerHTML = '&#x23F8;';
@@ -259,22 +376,6 @@
                 });
             }).catch(function (err) { mxSetStatus(err.message, 'err'); });
         });
-    }
-
-    function mxStop() {
-        mxClearTimer();
-        try {
-            if (mxCur) { mxCur.audio.pause(); mxCur.audio.currentTime = 0; }
-            if (mxNxt) { mxNxt.audio.pause(); mxNxt.audio.currentTime = 0; }
-        } catch(e) {}
-        mxCur = mxNxt = null; mxMood = mxTrack = null; mxPaused = false;
-        mxSongIdx = 0; mxCurScene = null; mxSceneMoods = null; mxSceneMoodIdx = 0;
-        ppBtn.innerHTML = '&#9654;';
-        ppBtn.classList.add('lp-mx-dim');
-        ppBtn.classList.remove('lp-mx-paused');
-        mxUpdateActive();
-        mxSetStatus('select a mood');
-        mxSeekReset();
     }
 
     function mxTogglePlay() {
@@ -322,6 +423,19 @@
     })();
 
     mxBuildGrid();
+
+    // ── Help window ──────────────────────────────────────────────
+    (function () {
+        var helpBtn = document.getElementById('lpMusicHelp');
+        if (!helpBtn) return;
+        var helpWin = null;
+        helpBtn.addEventListener('click', function (e) {
+            e.stopPropagation();
+            var url = (typeof window.MX_HELP_URL !== 'undefined') ? window.MX_HELP_URL : 'music-help.php';
+            if (helpWin && !helpWin.closed) { helpWin.focus(); return; }
+            helpWin = window.open(url, 'mx-help', 'width=440,height=640,resizable=yes,scrollbars=yes');
+        });
+    })();
 
     // ── Rotary knob ──────────────────────────────────────────────
     function MusicKnob(canvasId, inputId, min, max, step) {

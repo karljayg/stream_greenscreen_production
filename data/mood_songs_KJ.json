@@ -1,0 +1,96 @@
+{
+    "SC2 soundtrack": [
+        "11. The Preserver.mp3",
+        "03. Valor My Shield.mp3",
+        "10. Last Stand.mp3",
+        "12. My Path Is Set.mp3",
+        "18. The Firstborn.mp3",
+        "13. The Golden Armada.mp3",
+        "01. The Stars Our Home.mp3",
+        "04. The Deal.mp3",
+        "11. Card to Play.mp3",
+        "01. Wings of Liberty.mp3"
+    ],
+    "opening_high": [
+        "sc2_opening_high_heroic_01_A.mp3",
+        "sc2_opening_high_heroic_01_B.mp3",
+        "Chasing the Horizon - Scud in the Snow.mp3",
+        "01. Wings of Liberty.mp3",
+        "12. My Path Is Set.mp3",
+        "11. The Preserver.mp3"
+    ],
+    "opening_alert": [
+        "sc2_opening_alert_suspense_01_A.mp3",
+        "sc2_opening_alert_suspense_01_B.mp3",
+        "The Deal excerpt - StarCraft 2 soundtrack.mp3"
+    ],
+    "combat_mid": [
+        "sc2_combat_mid_driving_01_A.mp3",
+        "sc2_combat_mid_driving_01_B.mp3",
+        "Chasing the Horizon - Edmund runs.mp3",
+        "Wings of Liberty excerpt - StarCraft 2 soundtrack.mp3"
+    ],
+    "combat_high": [
+        "sc2_combat_high_aggressive_01_A.mp3",
+        "sc2_combat_high_aggressive_01_B.mp3",
+        "FSL theme - Masters of Stars - 2026 part 2.1.mp3",
+        "Card To Play excerpt - StarCraft 2 soundtrack .mp3",
+        "13. The Golden Armada.mp3",
+        "01. The Stars Our Home.mp3"
+    ],
+    "combat_extreme": [
+        "sc2_combat_extreme_clutch_01_A.mp3",
+        "sc2_combat_extreme_clutch_01_B.mp3",
+        "The Chase of Cirrus.mp3"
+    ],
+    "climax": [
+        "sc2_climax_finalpush_01_A.mp3",
+        "sc2_climax_finalpush_01_B.mp3",
+        "FSL theme - Masters of Stars - Epic Classical Orchestra .mp3",
+        "FSL theme - Masters of Stars - Viking Horn - Epic Classical Orchestra.mp3"
+    ],
+    "analysis": [
+        "sc2_analysis_light_clean_01_A.mp3",
+        "sc2_analysis_light_clean_01_B.mp3"
+    ],
+    "analysis_low": [
+        "sc2_analysis_low_thoughtful_01_A.mp3",
+        "sc2_analysis_low_thoughtful_01_B.mp3"
+    ],
+    "chill": [
+        "sc2_chill_upbeat_warm_01_A.mp3",
+        "sc2_chill_upbeat_warm_01_B.mp3"
+    ],
+    "chill_low": [
+        "sc2_chill_low_ambient_01_A.mp3",
+        "sc2_chill_low_ambient_01_B.mp3"
+    ],
+    "replay": [
+        "sc2_replay_clean_focused_01_A.mp3",
+        "sc2_replay_clean_focused_01_B.mp3"
+    ],
+    "replay_reflective": [
+        "sc2_replay_mid_reflective_01_A.mp3",
+        "sc2_replay_mid_reflective_01_B.mp3"
+    ],
+    "victory": [
+        "sc2_victory_high_triumphant_01_A.mp3",
+        "sc2_victory_high_triumphant_01_B.mp3"
+    ],
+    "defeat": [
+        "sc2_defeat_neutral_reset_01_A.mp3",
+        "sc2_defeat_neutral_reset_01_B.mp3"
+    ],
+    "defeat_somber": [
+        "sc2_defeat_low_somber_01_A.mp3",
+        "sc2_defeat_low_somber_01_B.mp3"
+    ],
+    "suspense": [
+        "sc2_suspense_mid_dark_01_A.mp3",
+        "sc2_suspense_mid_dark_01_B.mp3"
+    ],
+    "scoreboard": [
+        "Neon Score Screen.mp3",
+        "Neon Score Screen B.mp3"
+    ]
+}

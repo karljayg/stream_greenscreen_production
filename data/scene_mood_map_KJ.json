@@ -1,0 +1,62 @@
+{
+    "sc2": [
+        "opening_high",
+        "opening_alert",
+        "combat_mid",
+        "combat_high",
+        "combat_extreme",
+        "climax",
+        "suspense"
+    ],
+    "sc2-off": [
+        "analysis",
+        "analysis_low",
+        "chill",
+        "chill_low",
+        "replay",
+        "replay_reflective"
+    ],
+    "sc2-quick": [
+        "opening_high",
+        "opening_alert",
+        "combat_mid",
+        "combat_high",
+        "combat_extreme",
+        "climax",
+        "suspense"
+    ],
+    "schedule": [
+        "analysis",
+        "analysis_low",
+        "chill",
+        "chill_low",
+        "replay",
+        "replay_reflective"
+    ],
+    "scoreboard": [
+        "scoreboard"
+    ],
+    "custom-scoreboard": [
+        "scoreboard"
+    ],
+    "ash": [
+        "victory",
+        "defeat",
+        "defeat_somber"
+    ],
+    "pog": [
+        "victory",
+        "defeat",
+        "defeat_somber"
+    ],
+    "ptb": [
+        "victory",
+        "defeat",
+        "defeat_somber"
+    ],
+    "st": [
+        "victory",
+        "defeat",
+        "defeat_somber"
+    ]
+}

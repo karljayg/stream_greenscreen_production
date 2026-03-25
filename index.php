@@ -1,91 +1,14 @@
 <?php
-session_start();
+$pathPrefix = '';
+require_once __DIR__ . '/partials/auth-gate.php'; // session_start, login gate, defines $currentUser
 require_once __DIR__ . '/asset_version.php';
 
 // Music config saving is handled by save_music_config.php
 header('Cache-Control: no-cache, no-store, must-revalidate');
 header('Pragma: no-cache');
-
-// Gate: show login screen if not authenticated
-if (empty($_SESSION['username'])) {
-?>
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Stream Production Tool – Login</title>
-    <link rel="icon" href="production_files/images/favicon.ico" type="image/x-icon">
-    <link rel="stylesheet" href="styles/login.css">
-</head>
-<body>
-    <div class="login-box">
-        <h1>Stream Production Tool</h1>
-        <label for="l-user">Username</label>
-        <input type="text" id="l-user" autocomplete="username" autofocus>
-        <label for="l-pass">Password</label>
-        <input type="password" id="l-pass" autocomplete="current-password">
-        <button id="l-btn">Sign In</button>
-        <div id="login-error"></div>
-    </div>
-    <script>
-        function doLogin() {
-            var user = document.getElementById('l-user').value.trim();
-            var pass = document.getElementById('l-pass').value;
-            var err  = document.getElementById('login-error');
-            var btn  = document.getElementById('l-btn');
-            if (!user || !pass) { err.textContent = 'Enter username and password.'; return; }
-            btn.disabled = true;
-            btn.textContent = 'Signing in…';
-            var fd = new FormData();
-            fd.append('action', 'login');
-            fd.append('username', user);
-            fd.append('password', pass);
-            fetch('auth.php', { method: 'POST', body: fd })
-                .then(function(r){ return r.json(); })
-                .then(function(res) {
-                    if (res.ok) {
-                        window.location.reload();
-                    } else {
-                        err.textContent = res.error || 'Login failed.';
-                        btn.disabled = false;
-                        btn.textContent = 'Sign In';
-                    }
-                })
-                .catch(function(){ err.textContent = 'Network error.'; btn.disabled = false; btn.textContent = 'Sign In'; });
-        }
-        document.getElementById('l-btn').addEventListener('click', doLogin);
-        document.getElementById('l-pass').addEventListener('keydown', function(e){ if (e.key === 'Enter') doLogin(); });
-        document.getElementById('l-user').addEventListener('keydown', function(e){ if (e.key === 'Enter') document.getElementById('l-pass').focus(); });
-    </script>
-</body>
-</html>
-<?php
-    exit;
-}
-$currentUser = htmlspecialchars($_SESSION['username'], ENT_QUOTES, 'UTF-8');
 require_once __DIR__ . '/config.local.php';
 
-// Load mood→songs mapping — user override takes priority over global default
-$safeUser = preg_replace('/[^a-zA-Z0-9_\-]/', '', $_SESSION['username'] ?? '');
-$moodSongsFile = __DIR__ . '/data/mood_songs.json';
-$moodSongsUserFile = __DIR__ . '/data/mood_songs_' . $safeUser . '.json';
-if ($safeUser && file_exists($moodSongsUserFile)) $moodSongsFile = $moodSongsUserFile;
-$moodSongs = [];
-if (file_exists($moodSongsFile)) {
-    $raw = @file_get_contents($moodSongsFile);
-    if ($raw) $moodSongs = json_decode($raw, true) ?: [];
-}
-
-// Load scene→moods mapping — user override takes priority over global default
-$sceneMoodMapFile = __DIR__ . '/data/scene_mood_map.json';
-$sceneMoodMapUserFile = __DIR__ . '/data/scene_mood_map_' . $safeUser . '.json';
-if ($safeUser && file_exists($sceneMoodMapUserFile)) $sceneMoodMapFile = $sceneMoodMapUserFile;
-$sceneMoodMap = [];
-if (file_exists($sceneMoodMapFile)) {
-    $raw = @file_get_contents($sceneMoodMapFile);
-    if ($raw) $sceneMoodMap = json_decode($raw, true) ?: [];
-}
+require_once __DIR__ . '/partials/music-config.php'; // defines $safeUser, $moodSongs, $sceneMoodMap, $musicFiles
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -233,22 +156,9 @@ if (file_exists($sceneMoodMapFile)) {
                         <label><input type="radio" name="music-mode" value="sequence" checked> Sequence &mdash; plays in order, loops back to start</label>
                         <label><input type="radio" name="music-mode" value="random"> Random</label>
                     </div>
-                    <h2 style="margin-top:10px;">Scene → Moods</h2>
-                    <p class="layer-order-hint">Maps each scene to an ordered list of moods. When a scene activates, a random mood is picked; after all songs in that mood finish, the next mood in the list plays (cycling). Edit JSON, then Apply or Save.</p>
-                    <textarea id="mx-scene-map-editor" rows="12" style="width:100%;font-family:monospace;font-size:10px;background:#1e293b;color:#e2e8f0;border:1px solid #475569;border-radius:4px;padding:6px;box-sizing:border-box;resize:vertical;"></textarea>
-                    <div style="display:flex;gap:6px;align-items:center;margin-top:4px;">
-                        <button type="button" id="mx-scene-map-apply-btn">Apply</button>
-                        <button type="button" id="mx-scene-map-save-btn">Save to Server</button>
-                        <span id="mx-scene-map-status" style="font-size:0.78rem;color:#64748b;"></span>
-                    </div>
-
-                    <h2 style="margin-top:14px;">Mood → Songs</h2>
-                    <p class="layer-order-hint">Maps each mood to its song files (in <code>music/</code>). Songs play in order; when the list ends the next mood in the scene begins. Edit JSON, then Apply or Save.</p>
-                    <textarea id="mx-mood-songs-editor" rows="18" style="width:100%;font-family:monospace;font-size:10px;background:#1e293b;color:#e2e8f0;border:1px solid #475569;border-radius:4px;padding:6px;box-sizing:border-box;resize:vertical;"></textarea>
-                    <div style="display:flex;gap:6px;align-items:center;margin-top:4px;">
-                        <button type="button" id="mx-mood-songs-apply-btn">Apply</button>
-                        <button type="button" id="mx-mood-songs-save-btn">Save to Server</button>
-                        <span id="mx-mood-songs-status" style="font-size:0.78rem;color:#64748b;"></span>
+                    <div style="margin-top:10px;">
+                        <button type="button" onclick="mxAdminOpen()" style="font-size:0.82rem;padding:5px 13px;">&#9836; Open Music Admin</button>
+                        <p class="layer-order-hint" style="margin-top:5px;">Visual editor for Scene&nbsp;&rarr;&nbsp;Mood mappings and Mood&nbsp;&rarr;&nbsp;Song assignments. Upload new audio files, add/remove moods, reorder songs.</p>
                     </div>
                 </div>
                 <button class="collapsible-btn" id="btn-layer-order" onclick="toggleSection('layer-order-section', this)">Layer Order</button>
@@ -381,38 +291,7 @@ if (file_exists($sceneMoodMapFile)) {
                 <button type="button" id="btn-refresh-panel" onclick="refreshProductionPanel()">Refresh RightPanel</button>
             </div>
 
-            <!-- ── MUSIC PLAYER ────────────────── -->
-            <div class="lp-music">
-                <div class="lp-music-bar" id="lpMusicBar">
-                    <span class="lp-mx-toggle-icon" id="lpMusicToggleIcon">&#8722;</span>
-                    <span class="lp-music-label">&#9836; MUSIC</span>
-                    <div class="lp-music-transport" onclick="event.stopPropagation()">
-                        <button id="lpMusicPlayPause" class="lp-mx-dim" title="Play / Pause">&#9654;</button>
-                        <button id="lpMusicStop" title="Stop">&#9632;</button>
-                    </div>
-                    <div class="lp-music-knobs" onclick="event.stopPropagation()">
-                        <div class="lp-mx-knob-wrap" title="Volume — drag up/down or scroll">
-                            <span class="lp-mx-dial-lbl">VOL</span>
-                            <canvas id="lpMusicVolKnob" class="lp-mx-knob" width="30" height="30"></canvas>
-                            <input type="number" id="lpMusicVol" min="5" max="100" value="22" style="display:none">
-                        </div>
-                        <div class="lp-mx-knob-wrap" title="Crossfade — drag up/down or scroll">
-                            <span class="lp-mx-dial-lbl">FADE</span>
-                            <canvas id="lpMusicFadeKnob" class="lp-mx-knob" width="30" height="30"></canvas>
-                            <input type="number" id="lpMusicFade" min="0" max="10" step="0.5" value="1.5" style="display:none">
-                        </div>
-                    </div>
-                </div>
-                <div class="lp-mx-song-row">
-                    <span class="lp-mx-song" id="lpMusicStatus">select a mood</span>
-                    <div class="lp-mx-seek-wrap">
-                        <span id="lpMusicTimeNow" class="lp-mx-time">0:00</span>
-                        <input type="range" id="lpMusicSeek" class="lp-mx-seek" min="0" max="1000" value="0" step="1">
-                        <span id="lpMusicTimeDur" class="lp-mx-time">-:--</span>
-                    </div>
-                </div>
-                <div class="lp-music-grid" id="lpMusicGrid"></div>
-            </div>
+            <?php include __DIR__ . '/partials/music-player-widget.php'; ?>
 
             <h2 class="collapsible-h2" id="h2-scenes" onclick="toggleH2Section('scenes-section', this)">Scenes</h2>
             <div id="scenes-section">
@@ -644,8 +523,11 @@ if (file_exists($sceneMoodMapFile)) {
         window.ASSET_VERSION = "<?php echo $v; ?>";
         window.CURRENT_USER  = <?php echo json_encode($_SESSION['username']); ?>;
         window.SE_TOKEN      = "<?php echo addslashes(SE_JWT); ?>";
-        window.MX_TRACKS     = <?php echo json_encode($moodSongs,    JSON_UNESCAPED_SLASHES); ?>;
-        window.MX_SCENE_MAP  = <?php echo json_encode($sceneMoodMap, JSON_UNESCAPED_SLASHES); ?>;
+        window.MX_TRACKS      = <?php echo json_encode($moodSongs,    JSON_UNESCAPED_SLASHES); ?>;
+        window.MX_SCENE_MAP   = <?php echo json_encode($sceneMoodMap, JSON_UNESCAPED_SLASHES); ?>;
+        window.MX_MUSIC_FILES = <?php echo json_encode($musicFiles,   JSON_UNESCAPED_SLASHES); ?>;
+        window.MX_STATS_URL   = 'save_music_stats.php';
+        window.MX_HELP_URL    = 'music-help.php';
     </script>
     <script type="module" src="js/stream_production.js?v=<?php echo $v; ?>"></script>
 
@@ -3569,6 +3451,7 @@ if (file_exists($sceneMoodMapFile)) {
     <script src="js/stream-elements.js?v=<?php echo $v; ?>"></script>
 
     <script src="js/music-player.js?v=<?php echo $v; ?>"></script>
+    <script src="js/music-admin.js?v=<?php echo $v; ?>"></script>
 
 </body>
 

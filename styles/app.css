@@ -351,14 +351,33 @@
 }
 
 /* ── Music Player Widget ─────────────────── */
-.lp-music { border-bottom: 1px solid #1e2637; margin-top: 6px; }
+.lp-music { border-bottom: 1px solid #1e2637; margin-top: 6px; position: relative; }
+
+.lp-mx-help-btn {
+    width: 16px !important;
+    height: 16px !important;
+    min-width: 16px !important;
+    border-radius: 50% !important;
+    background: transparent !important;
+    border: 1px solid rgba(255,255,255,0.3) !important;
+    color: rgba(255,255,255,0.45) !important;
+    font-size: 0.6rem !important;
+    font-weight: 700 !important;
+    line-height: 1 !important;
+    padding: 0 !important;
+    cursor: pointer;
+    flex-shrink: 0;
+}
+.lp-mx-help-btn:hover { border-color: rgba(255,255,255,0.7) !important; color: #fff !important; }
+
+
 
 /* Bar: matches .left-column h2 section heading exactly */
 .lp-music-bar {
     display: flex;
     align-items: center;
     gap: 6px;
-    padding: 6px 8px 6px 8px;
+    padding: 5px 8px;
     background: #2d3748;
     color: #f0f4ff;
     border-left: 3px solid #5a7fd4;
@@ -373,22 +392,30 @@
     letter-spacing: .12em;
     text-transform: uppercase;
     color: #f0f4ff;
-    flex-shrink: 0;
+    flex: 1;
 }
-/* Transport buttons on dark bar */
+/* Controls row — transport + knobs, always visible */
+.lp-music-controls {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 5px 8px;
+    background: #f2f4f8;
+    border-bottom: 1px solid #cbd5e1;
+}
 .lp-music-transport {
     display: flex;
     gap: 3px;
     flex-shrink: 0;
 }
 .lp-music-transport button {
-    width: 22px !important;
-    height: 20px !important;
-    background: rgba(255,255,255,0.1) !important;
-    border: 1px solid rgba(255,255,255,0.2) !important;
+    width: 26px !important;
+    height: 22px !important;
+    background: #e2e8f0 !important;
+    border: 1px solid #b8c4d4 !important;
     border-radius: 3px !important;
-    color: #e2e8f0 !important;
-    font-size: 10px !important;
+    color: #1e293b !important;
+    font-size: 11px !important;
     cursor: pointer !important;
     display: flex !important;
     align-items: center !important;
@@ -398,38 +425,43 @@
     transition: background .1s !important;
 }
 .lp-music-transport button:hover {
-    background: rgba(255,255,255,0.22) !important;
-    color: #fff !important;
-    border-color: rgba(255,255,255,0.38) !important;
+    background: #c7d2e4 !important;
+    color: #0f172a !important;
+    border-color: #8fa3be !important;
 }
 .lp-music-transport button.lp-mx-dim {
-    background: rgba(255,255,255,0.04) !important;
-    color: rgba(255,255,255,0.28) !important;
-    border-color: rgba(255,255,255,0.1) !important;
+    background: #eef0f5 !important;
+    color: #94a3b8 !important;
+    border-color: #cbd5e1 !important;
 }
 .lp-music-transport button.lp-mx-paused {
     background: rgba(251,191,36,0.18) !important;
-    color: #fbbf24 !important;
-    border-color: rgba(251,191,36,0.45) !important;
+    color: #b45309 !important;
+    border-color: rgba(180,83,9,0.35) !important;
 }
-/* Knobs inline in bar */
+.lp-music-transport button.active {
+    background: #15803d !important;
+    color: #fff !important;
+    border-color: #16a34a !important;
+}
 .lp-music-knobs {
     display: flex;
-    gap: 6px;
+    gap: 10px;
     flex-shrink: 0;
+    margin-left: auto;
 }
 .lp-mx-knob-wrap {
     display: flex;
     flex-direction: row;
     align-items: center;
-    gap: 2px;
+    gap: 4px;
     flex-shrink: 0;
     cursor: ns-resize;
 }
 .lp-mx-dial-lbl {
-    font-size: 0.5rem;
+    font-size: 0.55rem;
     font-weight: 700;
-    color: rgba(255,255,255,0.45);
+    color: #64748b;
     text-transform: uppercase;
     letter-spacing: .04em;
 }
