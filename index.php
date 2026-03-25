@@ -2,23 +2,7 @@
 session_start();
 require_once __DIR__ . '/asset_version.php';
 
-// ── Music config save endpoint ───────────────────────────────────────────────
-// Saves to data/{which}_{username}.json (user override), never touches global defaults.
-if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_GET['save_music_config'])) {
-    if (empty($_SESSION['username'])) { http_response_code(403); echo json_encode(['error'=>'Not authenticated']); exit; }
-    $which = $_GET['save_music_config'];
-    $allowed = ['mood_songs', 'scene_mood_map'];
-    if (!in_array($which, $allowed, true)) { http_response_code(400); echo json_encode(['error'=>'Unknown config']); exit; }
-    $body = file_get_contents('php://input');
-    $parsed = json_decode($body, true);
-    if ($parsed === null) { http_response_code(400); echo json_encode(['error'=>'Invalid JSON']); exit; }
-    $safeUser = preg_replace('/[^a-zA-Z0-9_\-]/', '', $_SESSION['username']);
-    $path = __DIR__ . '/data/' . $which . '_' . $safeUser . '.json';
-    $written = file_put_contents($path, json_encode($parsed, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE));
-    echo json_encode($written !== false ? ['ok'=>true] : ['error'=>'Write failed']);
-    exit;
-}
-
+// Music config saving is handled by save_music_config.php
 header('Cache-Control: no-cache, no-store, must-revalidate');
 header('Pragma: no-cache');
 
@@ -32,77 +16,7 @@ if (empty($_SESSION['username'])) {
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Stream Production Tool – Login</title>
     <link rel="icon" href="production_files/images/favicon.ico" type="image/x-icon">
-    <style>
-        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-        body {
-            background: #111;
-            color: #eee;
-            font-family: 'Segoe UI', Arial, sans-serif;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            min-height: 100vh;
-        }
-        .login-box {
-            background: #1c1c1c;
-            border: 1px solid #333;
-            border-radius: 8px;
-            padding: 2.5rem 2rem;
-            width: 320px;
-            box-shadow: 0 8px 32px rgba(0,0,0,0.6);
-        }
-        .login-box h1 {
-            font-size: 1.3rem;
-            text-align: center;
-            margin-bottom: 1.8rem;
-            color: #f0a500;
-            letter-spacing: 1px;
-            text-transform: uppercase;
-        }
-        .login-box label {
-            display: block;
-            font-size: 0.78rem;
-            color: #aaa;
-            margin-bottom: 4px;
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
-        }
-        .login-box input[type="text"],
-        .login-box input[type="password"] {
-            width: 100%;
-            padding: 9px 10px;
-            background: #2a2a2a;
-            border: 1px solid #444;
-            border-radius: 4px;
-            color: #eee;
-            font-size: 0.95rem;
-            margin-bottom: 1rem;
-            outline: none;
-        }
-        .login-box input:focus { border-color: #f0a500; }
-        .login-box button {
-            width: 100%;
-            padding: 10px;
-            background: #f0a500;
-            color: #111;
-            font-weight: 700;
-            font-size: 1rem;
-            border: none;
-            border-radius: 4px;
-            cursor: pointer;
-            text-transform: uppercase;
-            letter-spacing: 1px;
-            margin-top: 0.4rem;
-        }
-        .login-box button:hover { background: #ffc72c; }
-        #login-error {
-            color: #e44;
-            font-size: 0.85rem;
-            min-height: 1.2em;
-            margin-top: 0.8rem;
-            text-align: center;
-        }
-    </style>
+    <link rel="stylesheet" href="styles/login.css">
 </head>
 <body>
     <div class="login-box">
@@ -190,520 +104,11 @@ if (file_exists($sceneMoodMapFile)) {
     <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Rajdhani:wght@500;600;700;800;900&family=Teko:wght@700&family=Orbitron:wght@700;800;900&family=Exo+2:wght@400;600;700&display=swap" rel="stylesheet">
 
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
-    <script src="js/jquery-ui.min.js?v=<?php echo $v; ?>"></script>
+    <script src="https://code.jquery.com/ui/1.13.1/jquery-ui.min.js"></script>
     <script src="js/popper.min.js?v=<?php echo $v; ?>"></script>
     <script src="js/chart.js?v=<?php echo $v; ?>"></script>
-    <script src="https://code.jquery.com/ui/1.13.1/jquery-ui.min.js"></script>
-
-    <style>
-        /* ── User bar (left column only) ── */
-        #user-bar {
-            display: flex;
-            align-items: center;
-            gap: 6px;
-            padding: 4px 6px;
-            background: #1a1a1a;
-            border-bottom: 1px solid #333;
-        }
-        #user-bar-name {
-            background: none;
-            border: 1px solid #555;
-            color: #f0a500;
-            font-size: 0.75rem;
-            font-weight: 700;
-            padding: 2px 8px;
-            border-radius: 4px;
-            cursor: pointer;
-            letter-spacing: 0.5px;
-            white-space: nowrap;
-            overflow: hidden;
-            text-overflow: ellipsis;
-            max-width: 130px;
-        }
-        #user-bar-name:hover { border-color: #f0a500; background: rgba(240,165,0,0.1); }
-        #user-bar-logout {
-            background: none;
-            border: 1px solid #444;
-            color: #888;
-            font-size: 0.72rem;
-            padding: 2px 8px;
-            border-radius: 4px;
-            cursor: pointer;
-            white-space: nowrap;
-        }
-        #user-bar-logout:hover { border-color: #888; color: #ccc; }
-
-        #chpw-error { color: #e44; font-size: 0.8rem; min-height: 1.1em; margin-top: 0.5rem; }
-        #chpw-ok    { color: #4c4; font-size: 0.8rem; min-height: 1.1em; margin-top: 0.5rem; }
-        #chpw-save  { background: #f0a500; color: #111; font-weight: 700; border-color: #f0a500; }
-        #chpw-save:hover { background: #ffc72c; }
-
-        .collapsible-content {
-            display: none;
-            margin-top: 10px;
-        }
-
-        .collapsible-btn {
-            background-color: #f1f1f1;
-            color: #333;
-            cursor: pointer;
-            padding: 10px;
-            width: 100%;
-            border: none;
-            text-align: left;
-        }
-        .settings-group-heading {
-            margin-top: 1rem;
-            margin-bottom: 0.25rem;
-            font-size: 1rem;
-        }
-        .settings-group-heading:first-child { margin-top: 0; }
-
-        .scoreboard-overlay-wrap { background: transparent; }
-        /* Centered horizontally; top edge 300px; bottom leaves room for small VDO */
-        #scoreboard-content.scoreboard-content-wrap,
-        #custom-scoreboard-content.scoreboard-content-wrap {
-            position: absolute; left: 50%; top: 120px; bottom: 40px;
-            width: calc(100% - 60px); max-width: calc(100vw - 60px);
-            transform: translateX(-50%);
-            display: flex; flex-direction: column; align-items: center; justify-content: flex-start;
-            overflow: auto; box-sizing: border-box;
-        }
-        .scoreboard-panel { padding: 0.35rem 0.5rem; color: #fff; font-family: 'Exo 2', sans-serif; box-sizing: border-box; width: 100%; max-width: 100%; min-width: 0; }
-        .scoreboard-panel-inner { width: 100%; max-width: 100%; min-width: 0; margin: 0 auto; }
-        .scoreboard-header { display: flex; justify-content: center; align-items: center; gap: 0.5rem; margin-bottom: 0.4rem; padding-bottom: 0.35rem; border-bottom: 2px solid rgba(108, 92, 231, 0.3); flex-wrap: nowrap; }
-        .scoreboard-team-block { min-width: 0; flex: 1; }
-        .scoreboard-team-a { text-align: center; }
-        .scoreboard-team-b { text-align: center; }
-        .scoreboard-team-name { display: block; font-size: 2.6rem; font-weight: 600; line-height: 1.2; color: #e0e0e0; font-family: 'Exo 2', sans-serif; }
-        .scoreboard-team-a .scoreboard-team-name { color: #e0e0e0; }
-        .scoreboard-team-b .scoreboard-team-name { color: #e0e0e0; }
-        .scoreboard-vs-block { display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 0 0.5rem; flex-shrink: 0; }
-        .scoreboard-score-main { font-size: 2.75rem; font-weight: 700; color: #99eeff; font-family: 'Rajdhani', sans-serif; }
-        .scoreboard-score-label { font-size: 0.9rem; color: #00b894; text-transform: uppercase; letter-spacing: 0.06em; margin-top: 0.08rem; font-weight: 600; font-family: 'Rajdhani', sans-serif; }
-        .scoreboard-table-wrap { background: rgba(0, 0, 0, 0.25); border-radius: 8px; overflow: hidden; border: 1px solid rgba(108, 92, 231, 0.2); margin-top: 0.35rem; width: 100%; max-width: 100%; min-width: 0; }
-        .scoreboard-table { width: 100%; max-width: 100%; min-width: 0; table-layout: auto; border-collapse: collapse; font-size: 1.15rem; font-family: 'Exo 2', sans-serif; }
-        /* Narrow columns shrink to content; team/map columns autosize (no width = fit content) */
-        .scoreboard-table col:nth-child(1), .scoreboard-table col:nth-child(6), .scoreboard-table col:nth-child(10) { width: 0.1%; }
-        .scoreboard-table col:nth-child(2) { width: 1%; min-width: 2.8em; }
-        .scoreboard-table col:nth-child(5), .scoreboard-table col:nth-child(9) { width: 1%; min-width: 2em; }
-        .scoreboard-table thead { border-bottom: none; }
-        .scoreboard-table th { padding: 0.3rem 0.4rem; text-align: center; color: #fff; font-weight: 600; font-size: 1.1rem; background: rgba(108, 92, 231, 0.25); border-bottom: 1px solid rgba(255,255,255,0.08); white-space: nowrap; }
-        .scoreboard-table th.scoreboard-th-empty { padding-left: 4px; padding-right: 4px; background: rgba(108, 92, 231, 0.15); }
-        .scoreboard-table th.scoreboard-th-map { color: #a29bfe; font-weight: 500; font-size: 0.88rem; }
-        .scoreboard-table th.scoreboard-th-group { text-align: center; }
-        .scoreboard-table td { padding: 0.28rem 0.4rem; border-bottom: 1px solid rgba(255,255,255,0.08); color: #e0e0e0; text-align: center; font-size: 1.12rem; }
-        .scoreboard-table tr:last-child td { border-bottom: none; }
-        .scoreboard-table tr:nth-child(even) td { background: rgba(255,255,255,0.03); }
-        .scoreboard-table td.scoreboard-empty-cell { padding-left: 4px; padding-right: 4px; overflow: hidden; border-color: rgba(255,255,255,0.06); }
-        .scoreboard-table td.scoreboard-type { font-size: 1.12rem; }
-        .scoreboard-table td.scoreboard-num { color: #FFD700; font-size: 1.25rem; font-weight: 700; text-align: center; white-space: nowrap; }
-        .scoreboard-table tbody tr:hover td { background: rgba(108, 92, 231, 0.12); }
-        .scoreboard-type { color: #00b894; font-weight: 600; font-family: 'Rajdhani', sans-serif; text-align: center; white-space: nowrap; }
-        .scoreboard-num { color: #FFD700; font-weight: 700; text-align: center; white-space: nowrap; }
-        .scoreboard-table td.scoreboard-map { color: #a29bfe; font-size: 0.88rem; text-align: center; overflow: hidden; text-overflow: ellipsis; max-width: 100%; }
-        .scoreboard-map { color: #a29bfe; text-align: center; overflow: hidden; text-overflow: ellipsis; max-width: 100%; }
-        .scoreboard-cell { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; text-align: center; }
-        .scoreboard-table td.scoreboard-cell-team { padding-left: 0.4rem; padding-right: 0.4rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-        .scoreboard-table td.scoreboard-cell-team-a { text-align: left; padding-right: 0.6rem; }
-        .scoreboard-table td.scoreboard-cell-team-b { text-align: left; padding-left: 0.6rem; padding-right: 0.4rem; }
-        .scoreboard-slot { font-size: 0.75em; color: #a29bfe; font-weight: 600; }
-        .scoreboard-race-icon { width: 1em; height: 1em; vertical-align: middle; }
-        .scoreboard-empty { color: #a29bfe; text-align: center; padding: 1rem; font-size: 1.075rem; }
-
-        /* ═══════════════════════════════════
-           LEFT PANEL — LIGHT PRODUCTION THEME
-           ═══════════════════════════════════ */
-        .left-column {
-            background: #f2f4f8 !important;
-            color: #1e293b;
-            font-family: 'Segoe UI', system-ui, sans-serif;
-            font-size: 0.82rem;
-        }
-
-        /* Section headings — dark band, stands out on light panel */
-        .left-column h2 {
-            background: #2d3748;
-            color: #f0f4ff;
-            font-size: 0.7rem;
-            font-weight: 800;
-            text-transform: uppercase;
-            letter-spacing: .12em;
-            padding: 7px 8px 7px 11px;
-            margin: 6px 0 0 0;
-            border-left: 3px solid #5a7fd4;
-            border-bottom: none;
-            line-height: 1;
-        }
-        /* Collapsible h2 sections */
-        .left-column h2.collapsible-h2 {
-            cursor: pointer;
-            user-select: none;
-            display: flex;
-            align-items: center;
-            gap: 5px;
-        }
-        .left-column h2.collapsible-h2::before {
-            content: "−";
-            font-size: 0.85em;
-            font-weight: 400;
-            opacity: 0.6;
-            flex-shrink: 0;
-            line-height: 1;
-        }
-        .left-column h2.collapsible-h2.collapsed::before {
-            content: "+";
-        }
-        .left-column h2.collapsible-h2:hover {
-            background: #3a4a5e;
-        }
-        .left-column h3.settings-group-heading {
-            margin: 4px 0 0 0;
-            padding: 5px 8px 5px 10px;
-            font-size: 0.62rem;
-            font-weight: 800;
-            text-transform: uppercase;
-            letter-spacing: .1em;
-            color: #e2e8f0;
-            background: #475569;
-            border-left: 3px solid #94a3b8;
-        }
-        .left-column hr {
-            border: none;
-            border-top: 1px solid #cbd5e1;
-            margin: 5px 0;
-        }
-        .left-column br { display: none; }
-
-        /* Collapsible headers — light but clearly a drawer-pull */
-        .collapsible-btn {
-            background: #e2e8f0 !important;
-            color: #374151 !important;
-            border: none !important;
-            border-top: 1px solid #cbd5e1 !important;
-            border-bottom: 1px solid #cbd5e1 !important;
-            border-radius: 0 !important;
-            font-size: 0.7rem !important;
-            font-weight: 700 !important;
-            text-transform: uppercase !important;
-            letter-spacing: .08em !important;
-            padding: 8px 10px 8px 10px !important;
-            transition: background .12s !important;
-            display: flex !important;
-            justify-content: space-between !important;
-            align-items: center !important;
-            width: 100% !important;
-            box-sizing: border-box !important;
-        }
-        .collapsible-btn::before {
-            content: "+";
-            font-size: 0.9em;
-            opacity: 0.55;
-            flex-shrink: 0;
-            margin-right: 5px;
-            font-weight: 400;
-            line-height: 1;
-        }
-        .collapsible-btn.open::before {
-            content: "−";
-        }
-        .collapsible-btn:hover {
-            background: #d1d9e8 !important;
-            color: #111827 !important;
-        }
-        .collapsible-content {
-            background: #f2f4f8;
-        }
-
-        /* Scene buttons — solid, clearly buttons */
-        .scenes-buttons button {
-            background: #e2e8f0;
-            color: #1e293b;
-            border: 1px solid #b8c4d4;
-            border-radius: 5px;
-            font-size: 0.8rem;
-            font-weight: 700;
-            padding: 7px 8px;
-            cursor: pointer;
-            text-decoration: none !important;
-            transition: background .1s, border-color .1s;
-        }
-        .scenes-buttons button:hover {
-            background: #d1d9e8;
-            color: #111827;
-            border-color: #8090b0;
-        }
-        .scenes-buttons button.active {
-            background: #15803d !important;
-            color: #ffffff !important;
-            border-color: #16a34a !important;
-            text-decoration: none !important;
-            box-shadow: 0 0 0 2px rgba(22,163,74,0.2) !important;
-        }
-        .scene-btn-major {
-            font-size: 0.92rem !important;
-            padding: 10px 12px !important;
-            font-weight: 800 !important;
-        }
-
-        /* VDO / panel utility buttons */
-        .vdo-controls {
-            display: flex;
-            gap: 4px;
-            margin-bottom: 6px;
-        }
-        .vdo-controls button {
-            flex: 1;
-            background: #e2e8f0;
-            color: #1e293b;
-            border: 1px solid #b8c4d4;
-            border-radius: 4px;
-            font-size: 0.6rem;
-            font-weight: 700;
-            padding: 4px 2px;
-            cursor: pointer;
-            text-decoration: none;
-            transition: background .1s, border-color .1s;
-            text-transform: uppercase;
-            letter-spacing: .03em;
-            white-space: nowrap;
-        }
-        .vdo-controls button:hover {
-            background: #d1d9e8;
-            border-color: #8090b0;
-            color: #111827;
-        }
-        .vdo-controls button.active {
-            background: #15803d;
-            color: #ffffff;
-            border-color: #16a34a;
-            box-shadow: 0 0 0 2px rgba(22,163,74,0.2);
-        }
-        /* VDO hidden = amber warning — obviously something is off */
-        #btn-hide-vdo.vdo-hidden {
-            background: #b45309;
-            color: #ffffff;
-            border-color: #d97706;
-            box-shadow: 0 0 0 2px rgba(180,83,9,0.3);
-        }
-        #btn-hide-vdo.vdo-hidden:hover {
-            background: #92400e;
-            border-color: #b45309;
-        }
-
-        /* Player intro forms */
-        .media-form input[type="text"] {
-            background: #ffffff !important;
-            color: #1e293b !important;
-            border: 1px solid #b8c4d4 !important;
-            border-radius: 4px !important;
-            font-size: 0.78rem !important;
-            padding: 5px 8px !important;
-        }
-        .media-form input[type="text"]:focus {
-            border-color: #5a7fd4 !important;
-            outline: none !important;
-        }
-        .media-form button[type="submit"] {
-            background: #e2e8f0 !important;
-            color: #1e293b !important;
-            border: 1px solid #b8c4d4 !important;
-            border-radius: 4px !important;
-            font-size: 0.75rem !important;
-            font-weight: 700 !important;
-            padding: 5px 10px !important;
-        }
-        .media-form button[type="submit"]:hover {
-            background: #d1d9e8 !important;
-            color: #111827 !important;
-        }
-
-        /* Break timer inline inputs */
-        #break-quick-min, #break-quick-sec {
-            background: #ffffff !important;
-            color: #1e293b !important;
-            border: 1px solid #b8c4d4 !important;
-            border-radius: 3px !important;
-        }
-
-        /* ── Settings button in user-bar ── */
-        #user-bar #btn-settings {
-            background: rgba(255,255,255,0.18) !important;
-            border: 1px solid rgba(255,255,255,0.4) !important;
-            border-bottom: 1px solid rgba(255,255,255,0.4) !important;
-            border-top: none !important;
-            color: #e0e8f0 !important;
-            font-size: 0.7rem !important;
-            font-weight: 600 !important;
-            padding: 2px 7px !important;
-            border-radius: 4px !important;
-            width: auto !important;
-            text-transform: none !important;
-            letter-spacing: normal !important;
-            white-space: nowrap !important;
-            flex-shrink: 0;
-        }
-        #user-bar #btn-settings:hover {
-            background: rgba(255,255,255,0.3) !important;
-            color: #ffffff !important;
-        }
-
-        /* ── Music Player Widget ─────────────────── */
-        .lp-music { border-bottom: 1px solid #1e2637; margin-top: 6px; }
-
-        /* Bar: matches .left-column h2 section heading exactly */
-        .lp-music-bar {
-            display: flex;
-            align-items: center;
-            gap: 6px;
-            padding: 6px 8px 6px 8px;
-            background: #2d3748;
-            color: #f0f4ff;
-            border-left: 3px solid #5a7fd4;
-            border-bottom: 1px solid #1e2637;
-            cursor: pointer;
-            user-select: none;
-        }
-        .lp-music-bar:hover { background: #3a4a5e; }
-        .lp-music-label {
-            font-size: 0.7rem;
-            font-weight: 800;
-            letter-spacing: .12em;
-            text-transform: uppercase;
-            color: #f0f4ff;
-            flex-shrink: 0;
-        }
-        /* Transport buttons on dark bar */
-        .lp-music-transport {
-            display: flex;
-            gap: 3px;
-            flex-shrink: 0;
-        }
-        .lp-music-transport button {
-            width: 22px !important;
-            height: 20px !important;
-            background: rgba(255,255,255,0.1) !important;
-            border: 1px solid rgba(255,255,255,0.2) !important;
-            border-radius: 3px !important;
-            color: #e2e8f0 !important;
-            font-size: 10px !important;
-            cursor: pointer !important;
-            display: flex !important;
-            align-items: center !important;
-            justify-content: center !important;
-            padding: 0 !important;
-            text-decoration: none !important;
-            transition: background .1s !important;
-        }
-        .lp-music-transport button:hover {
-            background: rgba(255,255,255,0.22) !important;
-            color: #fff !important;
-            border-color: rgba(255,255,255,0.38) !important;
-        }
-        .lp-music-transport button.lp-mx-dim {
-            background: rgba(255,255,255,0.04) !important;
-            color: rgba(255,255,255,0.28) !important;
-            border-color: rgba(255,255,255,0.1) !important;
-        }
-        .lp-music-transport button.lp-mx-paused {
-            background: rgba(251,191,36,0.18) !important;
-            color: #fbbf24 !important;
-            border-color: rgba(251,191,36,0.45) !important;
-        }
-        /* Knobs inline in bar */
-        .lp-music-knobs {
-            display: flex;
-            gap: 6px;
-            flex-shrink: 0;
-        }
-        .lp-mx-knob-wrap {
-            display: flex;
-            flex-direction: row;
-            align-items: center;
-            gap: 2px;
-            flex-shrink: 0;
-            cursor: ns-resize;
-        }
-        .lp-mx-dial-lbl {
-            font-size: 0.5rem;
-            font-weight: 700;
-            color: rgba(255,255,255,0.45);
-            text-transform: uppercase;
-            letter-spacing: .04em;
-        }
-        .lp-mx-knob {
-            display: block;
-            width: 30px;
-            height: 30px;
-            cursor: ns-resize;
-        }
-        /* Toggle icon — left side of bar */
-        .lp-mx-toggle-icon {
-            font-size: 0.9em;
-            font-weight: 400;
-            color: rgba(255,255,255,0.4);
-            line-height: 1;
-            flex-shrink: 0;
-            margin-right: 2px;
-        }
-        /* Filename row — compact, always visible */
-        .lp-mx-song-row {
-            padding: 3px 10px;
-            background: #f2f4f8;
-            border-bottom: 1px solid #cbd5e1;
-        }
-        .lp-mx-song {
-            display: block;
-            font-size: 0.58rem;
-            color: #64748b;
-            font-family: Consolas, monospace;
-            white-space: nowrap;
-            overflow: hidden;
-            text-overflow: ellipsis;
-            font-style: italic;
-        }
-        .lp-mx-song.playing { color: #15803d; font-style: normal; font-weight: 600; }
-        .lp-mx-song.lp-mx-err { color: #b91c1c; font-style: normal; }
-        .lp-mx-seek-wrap { display:flex; align-items:center; gap:4px; padding:3px 0 1px; }
-        .lp-mx-time { font-size:0.52rem; color:#94a3b8; font-family:Consolas,monospace; flex-shrink:0; }
-        .lp-mx-seek { flex:1; height:3px; accent-color:#3b82f6; cursor:pointer; margin:0; padding:0; }
-        /* Mood grid */
-        .lp-music-grid {
-            display: grid;
-            grid-template-columns: repeat(3, 1fr);
-            gap: 3px;
-            padding: 5px;
-            background: #f2f4f8;
-            border-bottom: 1px solid #b8c4d4;
-        }
-        .lp-music-grid button {
-            background: #e2e8f0 !important;
-            color: #1e293b !important;
-            border: 1px solid #b8c4d4 !important;
-            border-radius: 4px !important;
-            padding: 4px 2px !important;
-            font-size: 0.59rem !important;
-            font-weight: 700 !important;
-            cursor: pointer !important;
-            text-align: center !important;
-            text-transform: uppercase !important;
-            white-space: nowrap !important;
-            overflow: hidden !important;
-            text-overflow: ellipsis !important;
-            text-decoration: none !important;
-            transition: background .1s !important;
-        }
-        .lp-music-grid button:hover {
-            background: #d1d9e8 !important;
-            color: #111827 !important;
-        }
-        .lp-music-grid button.active {
-            background: #15803d !important;
-            color: #ffffff !important;
-            border-color: #16a34a !important;
-            box-shadow: 0 0 0 2px rgba(22,163,74,0.2) !important;
-        }
-    </style>
+    <link rel="stylesheet" href="styles/app.css?v=<?php echo $v; ?>">
+    <link rel="stylesheet" href="styles/stream-elements.css?v=<?php echo $v; ?>">
 </head>
 
 <body>
@@ -712,7 +117,7 @@ if (file_exists($sceneMoodMapFile)) {
             <!-- User bar -->
             <div id="user-bar">
                 <button id="user-bar-name" title="Click to change password"><?php echo $currentUser; ?></button>
-                <button class="collapsible-btn" id="btn-settings" onclick="toggleSettings(this)">&#9881; Settings</button>
+                <button class="collapsible-btn" id="btn-settings" onclick="toggleSection('settings-section', this)">&#9881; Settings</button>
                 <button id="user-bar-logout">Logout</button>
             </div>
             <div class="collapsible-content" id="settings-section" style="display: none;">
@@ -740,7 +145,7 @@ if (file_exists($sceneMoodMapFile)) {
                     <button id="btn-status-result" onclick="showFormattedResult(this)">Show Status Message</button>
                 </div>
                 <h3 class="settings-group-heading">Player</h3>
-                <button class="collapsible-btn" id="btn-scoreboard-settings" onclick="toggleScoreboardSettings(this)">Scoreboard</button>
+                <button class="collapsible-btn" id="btn-scoreboard-settings" onclick="toggleSection('scoreboard-settings-section', this)">Scoreboard</button>
                 <div class="collapsible-content" id="scoreboard-settings-section" style="display: none;">
                     <h2>Scoreboard</h2>
                     <div style="display:flex; gap:6px; align-items:center; margin-bottom:8px;">
@@ -792,7 +197,7 @@ if (file_exists($sceneMoodMapFile)) {
                         <span id="csb-save-status" style="font-size:12px; color:#aaa;"></span>
                     </div>
                 </div>
-                <button class="collapsible-btn" id="btn-player-intros" onclick="togglePlayerIntros(this)">Player Chroma</button>
+                <button class="collapsible-btn" id="btn-player-intros" onclick="toggleSection('player-intros-settings-section', this)">Player Chroma</button>
                 <div class="collapsible-content" id="player-intros-settings-section" style="display: none;">
                     <h2>Player Intros</h2>
                     <label><input type="checkbox" id="chroma-key-cb" checked> Chroma key (green transparent)</label>
@@ -812,7 +217,7 @@ if (file_exists($sceneMoodMapFile)) {
                 </div>
 
                 <h3 class="settings-group-heading">Layouts and Layers</h3>
-                <button class="collapsible-btn" id="btn-volume" onclick="toggleVolume(this)">Volume</button>
+                <button class="collapsible-btn" id="btn-volume" onclick="toggleSection('volume-section', this)">Volume</button>
                 <div class="collapsible-content" id="volume-section" style="display: none;">
                     <h2>Volume</h2>
                     <div>
@@ -820,7 +225,7 @@ if (file_exists($sceneMoodMapFile)) {
                         <input type="range" id="volume-slider" min="5" max="100" value="50">
                     </div>
                 </div>
-                <button class="collapsible-btn" id="btn-music" onclick="toggleMusic(this)">Music</button>
+                <button class="collapsible-btn" id="btn-music" onclick="toggleSection('music-section', this)">Music</button>
                 <div class="collapsible-content" id="music-section" style="display: none;">
                     <h2>Music Mode</h2>
                     <p class="layer-order-hint">Controls how "Random Music" picks its clips.</p>
@@ -846,7 +251,7 @@ if (file_exists($sceneMoodMapFile)) {
                         <span id="mx-mood-songs-status" style="font-size:0.78rem;color:#64748b;"></span>
                     </div>
                 </div>
-                <button class="collapsible-btn" id="btn-layer-order" onclick="toggleLayerOrder(this)">Layer Order</button>
+                <button class="collapsible-btn" id="btn-layer-order" onclick="toggleSection('layer-order-section', this)">Layer Order</button>
                 <div class="collapsible-content" id="layer-order-section" style="display: none;">
                     <div id="layer-order-ui">
                         <h2 class="layer-order-heading">Layer order</h2>
@@ -857,7 +262,7 @@ if (file_exists($sceneMoodMapFile)) {
                         </div>
                     </div>
                 </div>
-                <button class="collapsible-btn" id="btn-yt-video" onclick="toggleYtVideo(this)">YT Video</button>
+                <button class="collapsible-btn" id="btn-yt-video" onclick="toggleSection('yt-video-section', this)">YT Video</button>
                 <div class="collapsible-content" id="yt-video-section" style="display: none;">
                     <h2 class="layer-order-heading">YT Video crop (pixels)</h2>
                     <p class="layer-order-hint">Crop applied when YT scene is on. Top, left, right, bottom cut from shared window.</p>
@@ -868,7 +273,7 @@ if (file_exists($sceneMoodMapFile)) {
                         <label>Bottom: <input type="number" id="yt-crop-bottom" min="0" step="1" value="100" style="width: 5ch;"></label>
                     </div>
                 </div>
-                <button class="collapsible-btn" id="btn-yt-videos-settings" onclick="toggleYtVideosSettings(this)">Video Buttons</button>
+                <button class="collapsible-btn" id="btn-yt-videos-settings" onclick="toggleSection('yt-videos-settings-section', this)">Video Buttons</button>
                 <div class="collapsible-content" id="yt-videos-settings-section" style="display: none;">
                     <h2 class="layer-order-heading">Video Buttons</h2>
                     <p class="layer-order-hint">Paste any YouTube URL (youtube.com/watch, youtu.be, shorts, or embed). It is automatically converted to the embed+autoplay format needed. Changes take effect immediately.</p>
@@ -895,7 +300,7 @@ if (file_exists($sceneMoodMapFile)) {
                         <span style="font-size: 0.85rem;">%</span>
                     </div>
                 </div>
-                <button class="collapsible-btn" id="btn-break-settings" onclick="toggleBreakSettings(this)">Break</button>
+                <button class="collapsible-btn" id="btn-break-settings" onclick="toggleSection('break-settings-section', this)">Break</button>
                 <div class="collapsible-content" id="break-settings-section" style="display: none;">
                     <h2 class="layer-order-heading">Break</h2>
                     <p class="layer-order-hint">Countdown and message shown on top of the BREAK video in the right panel.</p>
@@ -927,7 +332,7 @@ if (file_exists($sceneMoodMapFile)) {
                         <button type="button" id="logos-reset-btn" onclick="resetLogosPositions()">Reset</button>
                     </div>
                 </div>
-                <button class="collapsible-btn" id="btn-overlays" onclick="toggleOverlays(this)">Overlays</button>
+                <button class="collapsible-btn" id="btn-overlays" onclick="toggleSection('overlays-section', this)">Overlays</button>
                 <div class="collapsible-content" id="overlays-section" style="display: none;">
                     <h2 class="layer-order-heading">Overlays</h2>
                     <p class="layer-order-hint">BG, VDO full, and Logos toggles (optional).</p>
@@ -939,7 +344,7 @@ if (file_exists($sceneMoodMapFile)) {
                 </div>
 
                 <h3 class="settings-group-heading">Save / Load setup</h3>
-                <button class="collapsible-btn" id="btn-save-load" onclick="toggleSaveLoad(this)">Save / Load</button>
+                <button class="collapsible-btn" id="btn-save-load" onclick="toggleSection('save-load-section', this)">Save / Load</button>
                 <div class="collapsible-content" id="save-load-section" style="display: none;">
                     <h2 class="layer-order-heading">Import / Export all settings</h2>
                     <p class="layer-order-hint">Export saves: layer order, volume, Status, Player Ratings, Logos (checkboxes + positions), VDO full and SC2 panel positions, Scenes visibility, Player Intros names, Chroma key, YT crop, Video button labels/URLs, and Break timer/message. <strong>Save to server</strong> stores the current setup so anyone opening this link gets the same settings. You can still <strong>Export all</strong> / <strong>Import all</strong> to share via file.</p>
@@ -1234,7 +639,14 @@ if (file_exists($sceneMoodMapFile)) {
         </div>
     </div>
 
-    <script>window.ASSET_VERSION = "<?php echo $v; ?>";</script>
+    <script>
+        // PHP → JS config globals — all PHP-injected values in one place
+        window.ASSET_VERSION = "<?php echo $v; ?>";
+        window.CURRENT_USER  = <?php echo json_encode($_SESSION['username']); ?>;
+        window.SE_TOKEN      = "<?php echo addslashes(SE_JWT); ?>";
+        window.MX_TRACKS     = <?php echo json_encode($moodSongs,    JSON_UNESCAPED_SLASHES); ?>;
+        window.MX_SCENE_MAP  = <?php echo json_encode($sceneMoodMap, JSON_UNESCAPED_SLASHES); ?>;
+    </script>
     <script type="module" src="js/stream_production.js?v=<?php echo $v; ?>"></script>
 
     <script>
@@ -1246,30 +658,17 @@ if (file_exists($sceneMoodMapFile)) {
             if (h2el) h2el.classList.toggle('collapsed', !collapsed);
         }
 
-        function toggleSettings(btn) {
-            var el = document.getElementById("settings-section");
-            if (el.style.display === "none" || !el.style.display) {
-                el.style.display = "block";
-            } else {
-                el.style.display = "none";
-            }
-            if (btn) btn.classList.toggle('open', el.style.display === 'block');
+        // Generic collapsible panel toggle — replaces 11 near-identical named functions.
+        // Called from HTML: onclick="toggleSection('settings-section', this)"
+        function toggleSection(sectionId, btn) {
+            var el = document.getElementById(sectionId);
+            if (!el) return;
+            var visible = el.style.display === 'block';
+            el.style.display = visible ? 'none' : 'block';
+            if (btn) btn.classList.toggle('open', !visible);
         }
-        function toggleMusic(btn) {
-            var el = document.getElementById("music-section");
-            if (el.style.display === "none" || !el.style.display) { el.style.display = "block"; } else { el.style.display = "none"; }
-            if (btn) btn.classList.toggle('open', el.style.display === 'block');
-        }
-        function toggleVolume(btn) {
-            var el = document.getElementById("volume-section");
-            if (el.style.display === "none" || !el.style.display) { el.style.display = "block"; } else { el.style.display = "none"; }
-            if (btn) btn.classList.toggle('open', el.style.display === 'block');
-        }
-        function toggleScoreboardSettings(btn) {
-            var el = document.getElementById("scoreboard-settings-section");
-            if (el.style.display === "none" || !el.style.display) { el.style.display = "block"; } else { el.style.display = "none"; }
-            if (btn) btn.classList.toggle('open', el.style.display === 'block');
-        }
+
+        // Custom scoreboard has extra logic: load data on first open.
         function toggleCustomScoreboardSettings(btn) {
             var el = document.getElementById("custom-scoreboard-settings-section");
             if (el.style.display === "none" || !el.style.display) {
@@ -1278,41 +677,6 @@ if (file_exists($sceneMoodMapFile)) {
             } else {
                 el.style.display = "none";
             }
-            if (btn) btn.classList.toggle('open', el.style.display === 'block');
-        }
-        function togglePlayerIntros(btn) {
-            var el = document.getElementById("player-intros-settings-section");
-            if (el.style.display === "none" || !el.style.display) { el.style.display = "block"; } else { el.style.display = "none"; }
-            if (btn) btn.classList.toggle('open', el.style.display === 'block');
-        }
-        function toggleLayerOrder(btn) {
-            var el = document.getElementById("layer-order-section");
-            if (el.style.display === "none" || !el.style.display) { el.style.display = "block"; } else { el.style.display = "none"; }
-            if (btn) btn.classList.toggle('open', el.style.display === 'block');
-        }
-        function toggleSaveLoad(btn) {
-            var el = document.getElementById("save-load-section");
-            if (el.style.display === "none" || !el.style.display) { el.style.display = "block"; } else { el.style.display = "none"; }
-            if (btn) btn.classList.toggle('open', el.style.display === 'block');
-        }
-        function toggleOverlays(btn) {
-            var el = document.getElementById("overlays-section");
-            if (el.style.display === "none" || !el.style.display) { el.style.display = "block"; } else { el.style.display = "none"; }
-            if (btn) btn.classList.toggle('open', el.style.display === 'block');
-        }
-        function toggleYtVideo(btn) {
-            var el = document.getElementById("yt-video-section");
-            if (el.style.display === "none" || !el.style.display) { el.style.display = "block"; } else { el.style.display = "none"; }
-            if (btn) btn.classList.toggle('open', el.style.display === 'block');
-        }
-        function toggleYtVideosSettings(btn) {
-            var el = document.getElementById("yt-videos-settings-section");
-            if (el.style.display === "none" || !el.style.display) { el.style.display = "block"; } else { el.style.display = "none"; }
-            if (btn) btn.classList.toggle('open', el.style.display === 'block');
-        }
-        function toggleBreakSettings(btn) {
-            var el = document.getElementById("break-settings-section");
-            if (el.style.display === "none" || !el.style.display) { el.style.display = "block"; } else { el.style.display = "none"; }
             if (btn) btn.classList.toggle('open', el.style.display === 'block');
         }
 
@@ -2337,6 +1701,7 @@ if (file_exists($sceneMoodMapFile)) {
             if (introBtn) introBtn.classList.remove('active');
             if (breakBtn) breakBtn.classList.remove('active');
             applyLayoutFromSc2Button();
+            if (typeof window.mxResumeForYt === 'function') window.mxResumeForYt();
         }
 
         (function initBreakSettings() {
@@ -2399,8 +1764,7 @@ if (file_exists($sceneMoodMapFile)) {
             var currentWhich = overlay ? overlay.getAttribute('data-yt-which') : '';
 
             if (isActive && currentWhich === which) {
-                closeYtIframeScene();
-                if (typeof window.mxResumeForYt === 'function') window.mxResumeForYt();
+                closeYtIframeScene(); /* mxResumeForYt called inside */
             } else {
                 closeYtIframeScene(); /* clear any prior YT iframe state before switching */
                 if (typeof window.mxPauseForYt === 'function') window.mxPauseForYt();
@@ -4196,820 +3560,15 @@ if (file_exists($sceneMoodMapFile)) {
         }
     </script>
 
-    <script>
-        // ── Auth / User bar ──────────────────────────────────────────────
-        window.CURRENT_USER = <?php echo json_encode($_SESSION['username']); ?>;
-
-        document.getElementById('user-bar-logout').addEventListener('click', function() {
-            var fd = new FormData();
-            fd.append('action', 'logout');
-            fetch('auth.php', { method: 'POST', body: fd })
-                .then(function(){ window.location.reload(); })
-                .catch(function(){ window.location.reload(); });
-        });
-
-        // Username button: open Settings > Account section
-        document.getElementById('user-bar-name').addEventListener('click', function() {
-            var settingsSection = document.getElementById('settings-section');
-            var settingsBtn     = document.getElementById('btn-settings');
-            var accountSection  = document.getElementById('account-section');
-            var accountBtn      = document.getElementById('btn-account');
-            if (settingsSection.style.display !== 'block') {
-                settingsSection.style.display = 'block';
-                if (settingsBtn) settingsBtn.textContent = 'Hide Settings';
-            }
-            if (accountSection.style.display !== 'block') {
-                accountSection.style.display = 'block';
-                if (accountBtn) accountBtn.textContent = 'Hide Change Password';
-            }
-            accountSection.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
-            document.getElementById('chpw-current').focus();
-        });
-
-        // ── Change password (inline in Settings > Account) ───────────────
-        window.toggleAccount = function toggleAccount(btn) {
-            var el = document.getElementById('account-section');
-            el.style.display = (el.style.display === 'block') ? 'none' : 'block';
-            if (btn) btn.classList.toggle('open', el.style.display === 'block');
-            if (el.style.display === 'block') {
-                document.getElementById('chpw-current').focus();
-            }
-        }
-
-        document.getElementById('chpw-save').addEventListener('click', function() {
-            var cur  = document.getElementById('chpw-current').value;
-            var nw   = document.getElementById('chpw-new').value;
-            var conf = document.getElementById('chpw-confirm').value;
-            var err  = document.getElementById('chpw-error');
-            var ok   = document.getElementById('chpw-ok');
-            var btn  = this;
-            ok.style.display = 'none';
-            if (!cur) { err.textContent = 'Enter your current password.'; return; }
-            if (!nw)  { err.textContent = 'Enter a new password.'; return; }
-            if (nw !== conf) { err.textContent = 'New passwords do not match.'; return; }
-            err.textContent = '';
-            btn.disabled = true;
-            var fd = new FormData();
-            fd.append('action', 'change_password');
-            fd.append('current_password', cur);
-            fd.append('new_password', nw);
-            fetch('auth.php', { method: 'POST', body: fd })
-                .then(function(r){ return r.json(); })
-                .then(function(res) {
-                    if (res.ok) {
-                        document.getElementById('chpw-current').value = '';
-                        document.getElementById('chpw-new').value = '';
-                        document.getElementById('chpw-confirm').value = '';
-                        ok.style.display = 'block';
-                        err.textContent = '';
-                    } else {
-                        err.textContent = res.error || 'Error saving password.';
-                    }
-                    btn.disabled = false;
-                })
-                .catch(function(){ err.textContent = 'Network error.'; btn.disabled = false; });
-        });
-    </script>
+    <script src="js/auth.js?v=<?php echo $v; ?>"></script>
 
     <!-- StreamElements live alerts -->
     <div id="se-alert-overlay" style="position:fixed;top:8px;left:270px;z-index:99998;pointer-events:none;width:200px;overflow:visible;"></div>
 
-    <style>
-    #se-alert-overlay .se-card {
-        --ac: #9147ff;
-        width: 500px;
-        background: linear-gradient(135deg, #0a0a0f 0%, #12122a 100%);
-        border: 2px solid var(--ac);
-        border-radius: 14px;
-        padding: 24px 32px;
-        color: #fff;
-        font-family: 'Segoe UI', Arial, sans-serif;
-        text-align: center;
-        box-shadow: 0 0 40px var(--ac), 0 12px 48px rgba(0,0,0,0.9);
-        transform-origin: top left;
-        animation: seIn 0.65s cubic-bezier(0.34,1.56,0.64,1) forwards, seGlow 1.8s ease-in-out 0.65s infinite;
-    }
-    #se-alert-overlay .se-card.se-out {
-        animation: seOut 0.5s ease-in forwards !important;
-    }
-    @keyframes seIn {
-        0%   { transform: scale(0.08) translateY(400px); opacity: 0; }
-        70%  { transform: scale(0.42) translateY(-30px); opacity: 1; }
-        100% { transform: scale(0.4); opacity: 1; }
-    }
-    @keyframes seOut {
-        0%   { transform: scale(0.4); opacity: 1; }
-        100% { transform: scale(0.08) translateY(300px); opacity: 0; }
-    }
-    @keyframes seGlow {
-        0%,100% { box-shadow: 0 0 30px var(--ac), 0 12px 48px rgba(0,0,0,0.9); }
-        50%      { box-shadow: 0 0 70px var(--ac), 0 0 100px var(--ac), 0 12px 48px rgba(0,0,0,0.9); }
-    }
-    @keyframes sePulse {
-        0%,100% { transform: scale(1); }
-        50%     { transform: scale(1.18); }
-    }
-    .se-icon  { font-size: 3rem; display: block; margin-bottom: 8px; animation: sePulse 0.9s ease-in-out infinite; }
-    .se-type  { font-size: 0.8rem; text-transform: uppercase; letter-spacing: 4px; color: var(--ac); font-weight: 700; margin-bottom: 8px; }
-    .se-user  { font-size: 2.2rem; font-weight: 900; color: #fff; text-shadow: 0 0 24px var(--ac); line-height: 1.1; }
-    .se-extra { font-size: 1rem; color: #bbb; margin-top: 6px; }
-    .se-bar   { height: 4px; border-radius: 2px; background: var(--ac); margin-top: 16px;
-                animation: seBar 8s linear forwards; transform-origin: left; }
-    @keyframes seBar { 0% { transform: scaleX(1); } 100% { transform: scaleX(0); } }
-    </style>
-
     <script src="https://cdn.socket.io/4.7.5/socket.io.min.js"></script>
-    <script>
-    (function() {
-        var SE_TOKEN = '<?php echo SE_JWT; ?>';
+    <script src="js/stream-elements.js?v=<?php echo $v; ?>"></script>
 
-        var TYPE_CFG = {
-            'follow':     { label: 'New Follower', icon: '💜', color: '#9147ff' },
-            'subscriber': { label: 'New Sub',      icon: '⭐', color: '#f0a500' },
-            'cheer':      { label: 'Cheer',        icon: '💎', color: '#1db954' },
-            'tip':        { label: 'Donation',     icon: '💰', color: '#e91e8c' },
-            'raid':       { label: 'Raid!',        icon: '⚔️', color: '#ff4500' },
-            'host':       { label: 'Host',         icon: '📡', color: '#1da1f2' },
-        };
-
-        function playChime() {
-            try {
-                var ctx = new (window.AudioContext || window.webkitAudioContext)();
-                [523, 659, 784, 1047].forEach(function(freq, i) {
-                    var osc = ctx.createOscillator(), gain = ctx.createGain();
-                    osc.connect(gain); gain.connect(ctx.destination);
-                    osc.type = 'sine'; osc.frequency.value = freq;
-                    var t = ctx.currentTime + i * 0.13;
-                    gain.gain.setValueAtTime(0, t);
-                    gain.gain.linearRampToValueAtTime(0.25, t + 0.04);
-                    gain.gain.exponentialRampToValueAtTime(0.001, t + 0.5);
-                    osc.start(t); osc.stop(t + 0.5);
-                });
-            } catch(e) {}
-        }
-
-        function showAlert(type, username, extra) {
-            var cfg = TYPE_CFG[type] || { label: type, icon: '🔔', color: '#9147ff' };
-            var overlay = document.getElementById('se-alert-overlay');
-            overlay.innerHTML = '';
-            var card = document.createElement('div');
-            card.className = 'se-card';
-            card.style.setProperty('--ac', cfg.color);
-            card.innerHTML =
-                '<span class="se-icon">' + cfg.icon + '</span>' +
-                '<div class="se-type">' + cfg.label + '</div>' +
-                '<div class="se-user">' + (username || 'Someone') + '</div>' +
-                (extra ? '<div class="se-extra">' + extra + '</div>' : '') +
-                '<div class="se-bar"></div>';
-            overlay.appendChild(card);
-            playChime();
-            setTimeout(function() {
-                card.classList.add('se-out');
-                setTimeout(function() { overlay.innerHTML = ''; }, 600);
-            }, 8000);
-        }
-
-        var socket = io('https://realtime.streamelements.com', { transports: ['websocket'] });
-        socket.on('connect', function() {
-            console.log('[SE] Connected, authenticating...');
-            socket.emit('authenticate', { method: 'jwt', token: SE_TOKEN });
-        });
-        socket.on('authenticated', function() { console.log('[SE] Authenticated'); });
-        socket.on('unauthorized',  function(e) { console.warn('[SE] Unauthorized:', e); });
-        socket.on('event', function(data) {
-            var type = data.type || '';
-            var username = (data.data && (data.data.username || data.data.displayName || data.data.name)) || '';
-            var extra = '';
-            if (data.data) {
-                if (data.data.amount)  extra = data.data.amount + (data.data.currency ? ' ' + data.data.currency : '');
-                if (data.data.viewers) extra = data.data.viewers + ' viewers';
-                if (data.data.message) extra = data.data.message;
-            }
-            showAlert(type, username, extra);
-        });
-        socket.on('disconnect', function() { console.log('[SE] Disconnected'); });
-    })();
-
-    // ── Music config globals (editable via Settings) ─────────────────────────
-    var MX_TRACKS    = <?php echo json_encode($moodSongs,    JSON_UNESCAPED_SLASHES); ?>;
-    var MX_SCENE_MAP = <?php echo json_encode($sceneMoodMap, JSON_UNESCAPED_SLASHES); ?>;
-
-    // ── Music Player ────────────────────────────────────────────────
-    (function () {
-        var MX_LABELS = {
-            opening_high:      'Open Hi',    opening_alert:     'Alert',
-            combat_mid:        'Combat',      combat_high:       'Combat+',
-            combat_extreme:    'Extreme',     climax:            'Climax',
-            analysis:          'Analysis',    analysis_low:      'Analyze Lo',
-            chill:             'Chill',       chill_low:         'Chill Lo',
-            replay:            'Replay',      replay_reflective: 'Replay Lo',
-            victory:           'Victory',     defeat:            'Defeat',
-            defeat_somber:     'Defeat Lo',   suspense:          'Suspense',
-        };
-
-        var mx = null, mxGain = null;
-        var mxCur = null, mxNxt = null;
-        var mxPaused = false, mxMood = null, mxTrack = null, mxTimer = null;
-        // Scene-aware playback state
-        var mxSongIdx = 0;         // current song index within active mood
-        var mxCurScene = null;     // current scene key
-        var mxSceneMoods = null;   // mood list for current scene
-        var mxSceneMoodIdx = 0;    // current index into mxSceneMoods
-
-        var statusEl  = document.getElementById('lpMusicStatus');
-        var volInput  = document.getElementById('lpMusicVol');
-        var fadeInput = document.getElementById('lpMusicFade');
-        var ppBtn     = document.getElementById('lpMusicPlayPause');
-        var seekEl    = document.getElementById('lpMusicSeek');
-        var timeNow   = document.getElementById('lpMusicTimeNow');
-        var timeDur   = document.getElementById('lpMusicTimeDur');
-        var mxSeekDragging = false;
-
-        function mxFmtTime(s) {
-            if (!isFinite(s) || s < 0) return '-:--';
-            var m = Math.floor(s / 60);
-            var sec = Math.floor(s % 60);
-            return m + ':' + (sec < 10 ? '0' : '') + sec;
-        }
-
-        function mxSeekReset() {
-            seekEl.value = 0;
-            timeNow.textContent = '0:00';
-            timeDur.textContent = '-:--';
-        }
-
-        seekEl.addEventListener('mousedown',  function () { mxSeekDragging = true; });
-        seekEl.addEventListener('touchstart', function () { mxSeekDragging = true; }, { passive: true });
-        seekEl.addEventListener('change', function () {
-            mxSeekDragging = false;
-            if (!mxCur) return;
-            var dur = mxCur.audio.duration;
-            if (!isFinite(dur) || dur <= 0) return;
-            mxCur.audio.currentTime = (Number(seekEl.value) / 1000) * dur;
-            mxSchedule(mxMood, mxTrack, mxSongIdx);
-        });
-
-        (function mxRafLoop() {
-            requestAnimationFrame(mxRafLoop);
-            if (!mxCur || mxSeekDragging) return;
-            var dur = mxCur.audio.duration;
-            var cur = mxCur.audio.currentTime;
-            if (isFinite(dur) && dur > 0) {
-                seekEl.value = Math.round((cur / dur) * 1000);
-                timeNow.textContent = mxFmtTime(cur);
-                timeDur.textContent = mxFmtTime(dur);
-            }
-        })();
-
-        volInput.addEventListener('input', function () {
-            if (mxGain) mxGain.gain.value = Number(volInput.value) / 100;
-        });
-
-        document.getElementById('lpMusicStop').addEventListener('click', mxStop);
-        ppBtn.addEventListener('click', mxTogglePlay);
-
-        function mxSetStatus(text, type) {
-            statusEl.textContent = text;
-            statusEl.className = type === 'err' ? 'lp-mx-song lp-mx-err' : (type === 'playing' ? 'lp-mx-song playing' : 'lp-mx-song');
-        }
-
-        function mxBuildGrid() {
-            var grid = document.getElementById('lpMusicGrid');
-            grid.innerHTML = '';
-            Object.keys(MX_TRACKS).forEach(function (mood) {
-                var btn = document.createElement('button');
-                btn.textContent = MX_LABELS[mood] || mood;
-                btn.dataset.mood = mood;
-                btn.title = mood;
-                btn.addEventListener('click', function () {
-                    mxCurScene = null; mxSceneMoods = null; mxSceneMoodIdx = 0;
-                    if (mxMood === mood && mxCur) {
-                        // Re-click on active mood — skip to next song sequentially
-                        var songs = MX_TRACKS[mood] || [];
-                        mxSwitch(mood, (mxSongIdx + 1) % songs.length);
-                    } else {
-                        mxSwitch(mood, mxRandIdx(mood));
-                    }
-                });
-                grid.appendChild(btn);
-            });
-        }
-
-        function mxUpdateActive() {
-            document.querySelectorAll('#lpMusicGrid button').forEach(function (b) {
-                b.classList.toggle('active', b.dataset.mood === mxMood);
-            });
-        }
-
-        function mxEnsure() {
-            if (!mx) {
-                mx = new (window.AudioContext || window.webkitAudioContext)();
-                mxGain = mx.createGain();
-                mxGain.gain.value = Number(volInput.value) / 100;
-                mxGain.connect(mx.destination);
-            }
-            if (mx.state === 'suspended') return mx.resume();
-            return Promise.resolve();
-        }
-
-        function mxMakeDeck(file) {
-            var audio = new Audio('music/' + file);
-            audio.crossOrigin = 'anonymous'; audio.loop = false; audio.preload = 'auto';
-            var src  = mx.createMediaElementSource(audio);
-            var gain = mx.createGain(); gain.gain.value = 0;
-            src.connect(gain); gain.connect(mxGain);
-            return { audio: audio, gain: gain, file: file };
-        }
-
-        function mxWaitReady(audio) {
-            if (audio.readyState >= 3) return Promise.resolve();
-            return new Promise(function (res, rej) {
-                var done = function () { audio.removeEventListener('canplay', ok); audio.removeEventListener('error', er); };
-                var ok = function () { done(); res(); };
-                var er = function () { done(); rej(new Error('Load failed')); };
-                audio.addEventListener('canplay', ok);
-                audio.addEventListener('error', er);
-                audio.load();
-            });
-        }
-
-        function mxClearTimer() {
-            if (mxTimer) { clearTimeout(mxTimer); mxTimer = null; }
-        }
-
-        // Random starting index within a mood's song list.
-        function mxRandIdx(mood) {
-            var songs = MX_TRACKS[mood] || [];
-            if (songs.length <= 1) return 0;
-            return Math.floor(Math.random() * songs.length);
-        }
-
-        // Advance to the next mood in the scene list (or loop current mood if no scene).
-        function mxAdvanceMood(autoAdvance) {
-            if (mxSceneMoods && mxSceneMoods.length > 0) {
-                mxSceneMoodIdx = (mxSceneMoodIdx + 1) % mxSceneMoods.length;
-                var nextMood = mxSceneMoods[mxSceneMoodIdx];
-                mxSwitch(nextMood, mxRandIdx(nextMood), true, autoAdvance);
-            } else {
-                mxSwitch(mxMood, mxRandIdx(mxMood), true, autoAdvance); // no scene → loop this mood
-            }
-        }
-
-        // Derive start offset and crossfade duration from the FADE knob value (0–10).
-        // fade=0 → skip 20s into song, crossfade 0.5s
-        // fade=10 → start at 0s, crossfade 2s
-        function mxGetFadeParams() {
-            var fade = Math.max(0, Math.min(10, Number(fadeInput.value)));
-            return {
-                startOffset:       40 * (1 - fade / 10),
-                crossfadeDuration: 0.5 + 1.5 * (fade / 10)
-            };
-        }
-
-        // Schedule the auto-advance timer for when the current track ends.
-        function mxSchedule(mood, file, songIdx) {
-            mxClearTimer();
-            if (!mxCur || mxPaused) return;
-            var fade = mxGetFadeParams().crossfadeDuration;
-            var dur  = mxCur.audio.duration;
-            if (!isFinite(dur) || dur <= 0) return;
-            var wait = Math.max(0, dur - mxCur.audio.currentTime - fade - 0.15);
-            mxTimer = setTimeout(function () {
-                if (mxMood !== mood || !mxCur || mxCur.file !== file || mxPaused) return;
-                var songs = MX_TRACKS[mood] || [];
-                var nextIdx = songIdx + 1;
-                if (nextIdx < songs.length) {
-                    // More songs left in this mood — play next
-                    mxSwitch(mood, nextIdx, true, true);
-                } else {
-                    // Mood's song set finished — advance to next mood
-                    mxAdvanceMood(true);
-                }
-            }, wait * 1000);
-        }
-
-        // Switch to mood at songIdx.
-        // keepScene=true:   preserve scene tracking (internal auto-advance calls).
-        // autoAdvance=true: song ended naturally — start next song from 0, short fixed crossfade.
-        function mxSwitch(mood, songIdx, keepScene, autoAdvance) {
-            if (songIdx === undefined || songIdx === null) songIdx = 0;
-            if (!keepScene) {
-                mxCurScene = null; mxSceneMoods = null; mxSceneMoodIdx = 0;
-            }
-            var songs = MX_TRACKS[mood] || [];
-            var file = songs[songIdx] || null;
-            if (!file) { mxSetStatus('No tracks: ' + mood, 'err'); return; }
-
-            mxEnsure().then(function () {
-                mxClearTimer();
-                var fp = autoAdvance ? { startOffset: 0, crossfadeDuration: 0.5 } : mxGetFadeParams();
-                var startOffset = fp.startOffset;
-                var fade = fp.crossfadeDuration;
-                mxSetStatus('Loading\u2026');
-                var deck = mxMakeDeck(file);
-                mxWaitReady(deck.audio).then(function () {
-                    if (startOffset > 0 && isFinite(deck.audio.duration) && startOffset < deck.audio.duration) {
-                        deck.audio.currentTime = startOffset;
-                    }
-                    var now = mx.currentTime;
-                    deck.gain.gain.cancelScheduledValues(now);
-                    deck.gain.gain.setValueAtTime(0, now);
-                    deck.audio.play().then(function () {
-                        if (!mxCur) {
-                            deck.gain.gain.linearRampToValueAtTime(1, now + 0.05);
-                            mxCur = deck;
-                        } else {
-                            mxCur.gain.gain.cancelScheduledValues(now);
-                            mxCur.gain.gain.setValueAtTime(mxCur.gain.gain.value, now);
-                            mxCur.gain.gain.linearRampToValueAtTime(0, now + fade);
-                            deck.gain.gain.linearRampToValueAtTime(1, now + fade);
-                            var old = mxCur;
-                            setTimeout(function () { try { old.audio.pause(); old.audio.currentTime = 0; } catch(e){} }, fade * 1000 + 100);
-                            mxCur = deck;
-                        }
-                        mxNxt = null;
-                        mxMood = mood; mxTrack = file; mxSongIdx = songIdx;
-                        mxUpdateActive();
-                        mxPaused = false;
-                        ppBtn.innerHTML = '&#x23F8;';
-                        ppBtn.classList.remove('lp-mx-dim', 'lp-mx-paused');
-                        mxSchedule(mood, file, songIdx);
-                        mxSetStatus(file, 'playing');
-                    }).catch(function (err) {
-                        if (err.name === 'NotAllowedError') {
-                            // Chrome blocked play — preserve mood state so the
-                            // pre-registered unlock listener can resume transparently.
-                            mxMood = mood; mxTrack = file; mxSongIdx = songIdx;
-                            mxUpdateActive();
-                            mxPaused = true;
-                            ppBtn.innerHTML = '&#9654;';
-                            ppBtn.classList.add('lp-mx-dim', 'lp-mx-paused');
-                            mxSetStatus('\u25b6 click play to start');
-                        } else {
-                            mxSetStatus(err.message, 'err');
-                        }
-                    });
-                }).catch(function (err) { mxSetStatus(err.message, 'err'); });
-            });
-        }
-
-        function mxStop() {
-            mxClearTimer();
-            try {
-                if (mxCur) { mxCur.audio.pause(); mxCur.audio.currentTime = 0; }
-                if (mxNxt) { mxNxt.audio.pause(); mxNxt.audio.currentTime = 0; }
-            } catch(e) {}
-            mxCur = mxNxt = null; mxMood = mxTrack = null; mxPaused = false;
-            mxSongIdx = 0; mxCurScene = null; mxSceneMoods = null; mxSceneMoodIdx = 0;
-            ppBtn.innerHTML = '&#9654;';
-            ppBtn.classList.add('lp-mx-dim');
-            ppBtn.classList.remove('lp-mx-paused');
-            mxUpdateActive();
-            mxSetStatus('select a mood');
-            mxSeekReset();
-        }
-
-        function mxTogglePlay() {
-            if (!mxCur) {
-                var mood = mxMood || Object.keys(MX_TRACKS)[0];
-                if (mood) mxSwitch(mood, mxSongIdx, mxSceneMoods !== null);
-                return;
-            }
-            mxEnsure().then(function () {
-                if (mxPaused) {
-                    mxCur.audio.play().then(function () {
-                        mxPaused = false;
-                        ppBtn.innerHTML = '&#x23F8;';
-                        ppBtn.classList.remove('lp-mx-paused');
-                        mxSchedule(mxMood, mxTrack, mxSongIdx);
-                        mxSetStatus(mxTrack, 'playing');
-                    });
-                } else {
-                    mxClearTimer();
-                    mxCur.audio.pause();
-                    mxPaused = true;
-                    ppBtn.innerHTML = '&#9654;';
-                    ppBtn.classList.add('lp-mx-paused');
-                    mxSetStatus('\u23f8 ' + mxTrack);
-                }
-            });
-        }
-
-        // Show/hide toggle — bar click (transport/knobs stop propagation)
-        (function () {
-            var bar     = document.getElementById('lpMusicBar');
-            var icon    = document.getElementById('lpMusicToggleIcon');
-            var grid    = document.getElementById('lpMusicGrid');
-            var songRow = document.querySelector('.lp-mx-song-row');
-            var collapsed = true; // default closed
-            grid.style.display    = 'none';
-            songRow.style.display = 'none';
-            icon.innerHTML        = '+';
-            bar.addEventListener('click', function () {
-                collapsed = !collapsed;
-                grid.style.display    = collapsed ? 'none' : '';
-                songRow.style.display = collapsed ? 'none' : '';
-                icon.innerHTML        = collapsed ? '+' : '&#8722;';
-            });
-        })();
-
-        mxBuildGrid();
-
-        // ── Rotary knob ──────────────────────────────────────────────
-        function MusicKnob(canvasId, inputId, min, max, step) {
-            var canvas = document.getElementById(canvasId);
-            var input  = document.getElementById(inputId);
-            if (!canvas || !input) return;
-
-            var val = parseFloat(input.value) || min;
-            var dragging = false, dragY0 = 0, dragV0 = 0;
-
-            function clamp(v) { return Math.max(min, Math.min(max, v)); }
-            function snap(v)  { return Math.round(v / step) * step; }
-
-            function set(v) {
-                val = clamp(snap(v));
-                // keep one decimal for non-integer steps
-                input.value = (step < 1) ? val.toFixed(1) : String(val);
-                input.dispatchEvent(new Event('input', { bubbles: true }));
-                draw();
-            }
-
-            function draw() {
-                var W = canvas.width, H = canvas.height;
-                var ctx = canvas.getContext('2d');
-                var cx = W / 2, cy = H / 2;
-                var R = Math.min(W, H) / 2 - 2;
-                var sc = W / 46; // scale factor relative to original 46px design
-                var pct = (val - min) / (max - min);
-
-                // Angles: start at 7:30, sweep 270° clockwise
-                var S = Math.PI * 0.75;
-                var SWEEP = Math.PI * 1.5;
-                var angle = S + pct * SWEEP;
-
-                ctx.clearRect(0, 0, W, H);
-
-                // Outer circle background
-                ctx.beginPath();
-                ctx.arc(cx, cy, R, 0, Math.PI * 2);
-                ctx.fillStyle = '#dde3ed';
-                ctx.fill();
-                ctx.strokeStyle = '#a8b4c8';
-                ctx.lineWidth = Math.max(1, 1.5 * sc);
-                ctx.stroke();
-
-                // Track arc (full range, gray)
-                var trackR = R - Math.max(3, 5 * sc);
-                ctx.beginPath();
-                ctx.arc(cx, cy, trackR, S, S + SWEEP, false);
-                ctx.strokeStyle = '#b8c4d4';
-                ctx.lineWidth = Math.max(1.5, 3.5 * sc);
-                ctx.lineCap = 'round';
-                ctx.stroke();
-
-                // Value arc (blue)
-                if (pct > 0.005) {
-                    ctx.beginPath();
-                    ctx.arc(cx, cy, trackR, S, angle, false);
-                    ctx.strokeStyle = '#3b82f6';
-                    ctx.lineWidth = Math.max(1.5, 3.5 * sc);
-                    ctx.lineCap = 'round';
-                    ctx.stroke();
-                }
-
-                // Dot indicator at current angle
-                var dotR = Math.max(3, 4 * sc);
-                var dotX = cx + (trackR) * Math.cos(angle);
-                var dotY = cy + (trackR) * Math.sin(angle);
-                ctx.beginPath();
-                ctx.arc(dotX, dotY, Math.max(1.5, 2.5 * sc), 0, Math.PI * 2);
-                ctx.fillStyle = '#1e293b';
-                ctx.fill();
-
-                // Center value text
-                ctx.fillStyle = '#1e293b';
-                var fontSize = Math.max(7, Math.round(10 * sc));
-                ctx.font = 'bold ' + fontSize + 'px Segoe UI, system-ui, sans-serif';
-                ctx.textAlign = 'center';
-                ctx.textBaseline = 'middle';
-                ctx.fillText((step < 1) ? val.toFixed(1) : String(val), cx, cy);
-            }
-
-            canvas.addEventListener('mousedown', function (e) {
-                dragging = true;
-                dragY0 = e.clientY;
-                dragV0 = val;
-                e.preventDefault();
-            });
-            window.addEventListener('mousemove', function (e) {
-                if (!dragging) return;
-                // 80px drag = full range
-                set(dragV0 + (dragY0 - e.clientY) * (max - min) / 80);
-            });
-            window.addEventListener('mouseup', function () { dragging = false; });
-            canvas.addEventListener('wheel', function (e) {
-                e.preventDefault();
-                set(val + (e.deltaY < 0 ? step : -step));
-            }, { passive: false });
-
-            // Sync if external code changes the hidden input
-            input.addEventListener('change', function () {
-                val = clamp(parseFloat(input.value) || min);
-                draw();
-            });
-
-            draw();
-        }
-
-        new MusicKnob('lpMusicVolKnob',  'lpMusicVol',  5, 100, 1);
-        new MusicKnob('lpMusicFadeKnob', 'lpMusicFade', 0, 10,  0.5);
-
-        // ── Config editors (Scene→Moods and Mood→Songs) ──────────────
-        (function () {
-            function mxSaveConfig(which, data, statusEl) {
-                fetch('?save_music_config=' + which, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify(data)
-                }).then(function (r) { return r.json(); }).then(function (res) {
-                    statusEl.textContent = res.ok ? 'Saved!' : ('Error: ' + res.error);
-                    setTimeout(function () { statusEl.textContent = ''; }, 3000);
-                }).catch(function (e) {
-                    statusEl.textContent = 'Network error';
-                    setTimeout(function () { statusEl.textContent = ''; }, 3000);
-                });
-            }
-
-            // Scene → Moods editor
-            var smmEd  = document.getElementById('mx-scene-map-editor');
-            var smmApp = document.getElementById('mx-scene-map-apply-btn');
-            var smmSav = document.getElementById('mx-scene-map-save-btn');
-            var smmSts = document.getElementById('mx-scene-map-status');
-            if (smmEd) smmEd.value = JSON.stringify(MX_SCENE_MAP, null, 2);
-            if (smmApp && smmEd) {
-                smmApp.addEventListener('click', function () {
-                    try {
-                        MX_SCENE_MAP = JSON.parse(smmEd.value);
-                        smmSts.textContent = 'Applied!';
-                        setTimeout(function () { smmSts.textContent = ''; }, 2000);
-                    } catch (e) { smmSts.textContent = 'JSON error: ' + e.message; }
-                });
-            }
-            if (smmSav && smmEd) {
-                smmSav.addEventListener('click', function () {
-                    try {
-                        var data = JSON.parse(smmEd.value);
-                        MX_SCENE_MAP = data;
-                        mxSaveConfig('scene_mood_map', data, smmSts);
-                    } catch (e) { smmSts.textContent = 'JSON error: ' + e.message; }
-                });
-            }
-
-            // Mood → Songs editor
-            var mseEd  = document.getElementById('mx-mood-songs-editor');
-            var mseApp = document.getElementById('mx-mood-songs-apply-btn');
-            var mseSav = document.getElementById('mx-mood-songs-save-btn');
-            var mseSts = document.getElementById('mx-mood-songs-status');
-            if (mseEd) mseEd.value = JSON.stringify(MX_TRACKS, null, 2);
-            if (mseApp && mseEd) {
-                mseApp.addEventListener('click', function () {
-                    try {
-                        MX_TRACKS = JSON.parse(mseEd.value);
-                        mxBuildGrid();
-                        mseSts.textContent = 'Applied!';
-                        setTimeout(function () { mseSts.textContent = ''; }, 2000);
-                    } catch (e) { mseSts.textContent = 'JSON error: ' + e.message; }
-                });
-            }
-            if (mseSav && mseEd) {
-                mseSav.addEventListener('click', function () {
-                    try {
-                        var data = JSON.parse(mseEd.value);
-                        MX_TRACKS = data;
-                        mxBuildGrid();
-                        mxSaveConfig('mood_songs', data, mseSts);
-                    } catch (e) { mseSts.textContent = 'JSON error: ' + e.message; }
-                });
-            }
-        })();
-
-        // ── Scene → Mood handler ─────────────────────────────────────
-        function mxOnSceneChange(key) {
-            var moods = MX_SCENE_MAP[key];
-            if (!moods || !moods.length) return;
-            // Pick a random starting mood from the scene's list
-            var randomIdx = Math.floor(Math.random() * moods.length);
-            var newMood   = moods[randomIdx];
-            // If same mood is already active, just update scene tracking — don't restart
-            if (newMood === mxMood) {
-                mxCurScene = key; mxSceneMoods = moods; mxSceneMoodIdx = randomIdx;
-                return;
-            }
-            mxCurScene = key; mxSceneMoods = moods; mxSceneMoodIdx = randomIdx;
-            if (mxCur && !mxPaused) {
-                mxSwitch(newMood, mxRandIdx(newMood), true);
-            } else {
-                mxMood = newMood; mxSongIdx = mxRandIdx(newMood);
-                mxUpdateActive();
-                mxSetStatus(mxPaused
-                    ? ('\u23f8 ' + (mxTrack || newMood))
-                    : ('ready \u2014 ' + newMood)
-                );
-            }
-        }
-        window.mxOnSceneChange = mxOnSceneChange;
-        window.mxBuildGrid    = mxBuildGrid;
-
-        var mxWasPausedByYt = false;
-        window.mxPauseForYt = function() {
-            if (mxCur && !mxPaused) {
-                mxWasPausedByYt = true;
-                mxClearTimer();
-                mxCur.audio.pause();
-                mxPaused = true;
-                ppBtn.innerHTML = '&#9654;';
-                ppBtn.classList.add('lp-mx-paused');
-                mxSetStatus('\u23f8 ' + mxTrack);
-            } else {
-                mxWasPausedByYt = false;
-            }
-        };
-        window.mxResumeForYt = function() {
-            if (!mxWasPausedByYt) return;
-            mxWasPausedByYt = false;
-            if (!mxCur || !mxPaused) return;
-            mxEnsure().then(function() {
-                mxCur.audio.play().then(function() {
-                    mxPaused = false;
-                    ppBtn.innerHTML = '&#x23F8;';
-                    ppBtn.classList.remove('lp-mx-paused');
-                    mxSchedule(mxMood, mxTrack, mxSongIdx);
-                });
-            });
-        };
-
-        // Unlock listener registered SYNCHRONOUSLY before the async play attempt,
-        // so it's always in place regardless of timing.
-        // Fires on first click anywhere → resumes AudioContext and starts music.
-        document.addEventListener('click', function mxUnlockOnce(e) {
-            // ppBtn's own handler calls mxTogglePlay; let it do so
-            if (e.target === ppBtn) return;
-            if (!mxCur) mxTogglePlay();
-        }, { once: true, capture: true });
-
-        // Auto-start on page load — random mood and random starting song.
-        (function () {
-            var moodKeys = Object.keys(MX_TRACKS);
-            if (!moodKeys.length) return;
-            var firstMood = moodKeys[Math.floor(Math.random() * moodKeys.length)];
-            mxSwitch(firstMood, mxRandIdx(firstMood));
-        })();
-    })();
-
-    // ── Scene → Music: wrap toggleSceneOverlay ───────────────────────────
-    (function () {
-        function doWrap() {
-            var orig = window.toggleSceneOverlay;
-            if (typeof orig !== 'function') return;
-            window.toggleSceneOverlay = function (key) {
-                // For SC2 scenes, the overlay is activated asynchronously (transition video),
-                // so capture the pre-toggle state to know if we're turning ON.
-                var sc2WasOn = false;
-                if (key === 'sc2' || key === 'sc2-quick') {
-                    var sc2ActiveBtnPre = document.getElementById('scene-btn-sc2');
-                    sc2WasOn = !!(sc2ActiveBtnPre && sc2ActiveBtnPre.classList.contains('active'));
-                }
-
-                orig.apply(this, arguments);
-
-                if (typeof window.mxOnSceneChange !== 'function') return;
-
-                if (key === 'sc2' || key === 'sc2-quick') {
-                    if (!sc2WasOn) {
-                        /* SC2 turning ON → battle moods for the specific button pressed */
-                        window.mxOnSceneChange(key);
-                    } else {
-                        /* SC2 turning OFF → relaxed moods (sc2-quick-off not in map = no change) */
-                        window.mxOnSceneChange(key === 'sc2' ? 'sc2-off' : 'sc2-quick-off');
-                    }
-                    return;
-                }
-                // For all other scenes, check button active class (set synchronously)
-                var btn = document.getElementById('scene-btn-' + key);
-                if (btn && btn.classList.contains('active')) {
-                    window.mxOnSceneChange(key);
-                }
-            };
-        }
-        // Run after DOM+scripts fully ready
-        if (document.readyState === 'complete') {
-            doWrap();
-        } else {
-            window.addEventListener('load', doWrap);
-        }
-    })();
-    </script>
+    <script src="js/music-player.js?v=<?php echo $v; ?>"></script>
 
 </body>
 

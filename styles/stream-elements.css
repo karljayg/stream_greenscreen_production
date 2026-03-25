@@ -1,0 +1,42 @@
+/* StreamElements live alert card overlay */
+#se-alert-overlay .se-card {
+    --ac: #9147ff;
+    width: 500px;
+    background: linear-gradient(135deg, #0a0a0f 0%, #12122a 100%);
+    border: 2px solid var(--ac);
+    border-radius: 14px;
+    padding: 24px 32px;
+    color: #fff;
+    font-family: 'Segoe UI', Arial, sans-serif;
+    text-align: center;
+    box-shadow: 0 0 40px var(--ac), 0 12px 48px rgba(0,0,0,0.9);
+    transform-origin: top left;
+    animation: seIn 0.65s cubic-bezier(0.34,1.56,0.64,1) forwards, seGlow 1.8s ease-in-out 0.65s infinite;
+}
+#se-alert-overlay .se-card.se-out {
+    animation: seOut 0.5s ease-in forwards !important;
+}
+@keyframes seIn {
+    0%   { transform: scale(0.08) translateY(400px); opacity: 0; }
+    70%  { transform: scale(0.42) translateY(-30px); opacity: 1; }
+    100% { transform: scale(0.4); opacity: 1; }
+}
+@keyframes seOut {
+    0%   { transform: scale(0.4); opacity: 1; }
+    100% { transform: scale(0.08) translateY(300px); opacity: 0; }
+}
+@keyframes seGlow {
+    0%,100% { box-shadow: 0 0 30px var(--ac), 0 12px 48px rgba(0,0,0,0.9); }
+    50%      { box-shadow: 0 0 70px var(--ac), 0 0 100px var(--ac), 0 12px 48px rgba(0,0,0,0.9); }
+}
+@keyframes sePulse {
+    0%,100% { transform: scale(1); }
+    50%     { transform: scale(1.18); }
+}
+.se-icon  { font-size: 3rem; display: block; margin-bottom: 8px; animation: sePulse 0.9s ease-in-out infinite; }
+.se-type  { font-size: 0.8rem; text-transform: uppercase; letter-spacing: 4px; color: var(--ac); font-weight: 700; margin-bottom: 8px; }
+.se-user  { font-size: 2.2rem; font-weight: 900; color: #fff; text-shadow: 0 0 24px var(--ac); line-height: 1.1; }
+.se-extra { font-size: 1rem; color: #bbb; margin-top: 6px; }
+.se-bar   { height: 4px; border-radius: 2px; background: var(--ac); margin-top: 16px;
+            animation: seBar 8s linear forwards; transform-origin: left; }
+@keyframes seBar { 0% { transform: scaleX(1); } 100% { transform: scaleX(0); } }
