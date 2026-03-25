@@ -3,6 +3,7 @@ session_start();
 require_once __DIR__ . '/asset_version.php';
 
 // ── Music config save endpoint ───────────────────────────────────────────────
+// Saves to data/{which}_{username}.json (user override), never touches global defaults.
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_GET['save_music_config'])) {
     if (empty($_SESSION['username'])) { http_response_code(403); echo json_encode(['error'=>'Not authenticated']); exit; }
     $which = $_GET['save_music_config'];
@@ -11,7 +12,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_GET['save_music_config'])) 
     $body = file_get_contents('php://input');
     $parsed = json_decode($body, true);
     if ($parsed === null) { http_response_code(400); echo json_encode(['error'=>'Invalid JSON']); exit; }
-    $path = __DIR__ . '/data/' . $which . '.json';
+    $safeUser = preg_replace('/[^a-zA-Z0-9_\-]/', '', $_SESSION['username']);
+    $path = __DIR__ . '/data/' . $which . '_' . $safeUser . '.json';
     $written = file_put_contents($path, json_encode($parsed, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE));
     echo json_encode($written !== false ? ['ok'=>true] : ['error'=>'Write failed']);
     exit;
@@ -150,16 +152,21 @@ if (empty($_SESSION['username'])) {
 $currentUser = htmlspecialchars($_SESSION['username'], ENT_QUOTES, 'UTF-8');
 require_once __DIR__ . '/config.local.php';
 
-// Load mood→songs mapping
+// Load mood→songs mapping — user override takes priority over global default
+$safeUser = preg_replace('/[^a-zA-Z0-9_\-]/', '', $_SESSION['username'] ?? '');
 $moodSongsFile = __DIR__ . '/data/mood_songs.json';
+$moodSongsUserFile = __DIR__ . '/data/mood_songs_' . $safeUser . '.json';
+if ($safeUser && file_exists($moodSongsUserFile)) $moodSongsFile = $moodSongsUserFile;
 $moodSongs = [];
 if (file_exists($moodSongsFile)) {
     $raw = @file_get_contents($moodSongsFile);
     if ($raw) $moodSongs = json_decode($raw, true) ?: [];
 }
 
-// Load scene→moods mapping
+// Load scene→moods mapping — user override takes priority over global default
 $sceneMoodMapFile = __DIR__ . '/data/scene_mood_map.json';
+$sceneMoodMapUserFile = __DIR__ . '/data/scene_mood_map_' . $safeUser . '.json';
+if ($safeUser && file_exists($sceneMoodMapUserFile)) $sceneMoodMapFile = $sceneMoodMapUserFile;
 $sceneMoodMap = [];
 if (file_exists($sceneMoodMapFile)) {
     $raw = @file_get_contents($sceneMoodMapFile);
@@ -263,7 +270,7 @@ if (file_exists($sceneMoodMapFile)) {
             overflow: auto; box-sizing: border-box;
         }
         .scoreboard-panel { padding: 0.35rem 0.5rem; color: #fff; font-family: 'Exo 2', sans-serif; box-sizing: border-box; width: 100%; max-width: 100%; min-width: 0; }
-        .scoreboard-panel-inner { max-width: 100%; min-width: 0; margin: 0 auto; }
+        .scoreboard-panel-inner { width: 100%; max-width: 100%; min-width: 0; margin: 0 auto; }
         .scoreboard-header { display: flex; justify-content: center; align-items: center; gap: 0.5rem; margin-bottom: 0.4rem; padding-bottom: 0.35rem; border-bottom: 2px solid rgba(108, 92, 231, 0.3); flex-wrap: nowrap; }
         .scoreboard-team-block { min-width: 0; flex: 1; }
         .scoreboard-team-a { text-align: center; }
@@ -657,6 +664,9 @@ if (file_exists($sceneMoodMapFile)) {
         }
         .lp-mx-song.playing { color: #15803d; font-style: normal; font-weight: 600; }
         .lp-mx-song.lp-mx-err { color: #b91c1c; font-style: normal; }
+        .lp-mx-seek-wrap { display:flex; align-items:center; gap:4px; padding:3px 0 1px; }
+        .lp-mx-time { font-size:0.52rem; color:#94a3b8; font-family:Consolas,monospace; flex-shrink:0; }
+        .lp-mx-seek { flex:1; height:3px; accent-color:#3b82f6; cursor:pointer; margin:0; padding:0; }
         /* Mood grid */
         .lp-music-grid {
             display: grid;
@@ -984,12 +994,17 @@ if (file_exists($sceneMoodMapFile)) {
                         <div class="lp-mx-knob-wrap" title="Crossfade — drag up/down or scroll">
                             <span class="lp-mx-dial-lbl">FADE</span>
                             <canvas id="lpMusicFadeKnob" class="lp-mx-knob" width="30" height="30"></canvas>
-                            <input type="number" id="lpMusicFade" min="0" max="10" step="0.5" value="4" style="display:none">
+                            <input type="number" id="lpMusicFade" min="0" max="10" step="0.5" value="1.5" style="display:none">
                         </div>
                     </div>
                 </div>
                 <div class="lp-mx-song-row">
                     <span class="lp-mx-song" id="lpMusicStatus">select a mood</span>
+                    <div class="lp-mx-seek-wrap">
+                        <span id="lpMusicTimeNow" class="lp-mx-time">0:00</span>
+                        <input type="range" id="lpMusicSeek" class="lp-mx-seek" min="0" max="1000" value="0" step="1">
+                        <span id="lpMusicTimeDur" class="lp-mx-time">-:--</span>
+                    </div>
                 </div>
                 <div class="lp-music-grid" id="lpMusicGrid"></div>
             </div>
@@ -1542,7 +1557,7 @@ if (file_exists($sceneMoodMapFile)) {
                     breakSettings: typeof getBreakSettings === "function" ? getBreakSettings() : DEFAULT_SETTINGS.breakSettings,
                     musicMode: (function() { var el = document.querySelector('input[name="music-mode"]:checked'); return el ? el.value : 'sequence'; })(),
                 musicVol: (function() { var el = document.getElementById('lpMusicVol'); return el ? parseFloat(el.value) : 22; })(),
-                musicFade: (function() { var el = document.getElementById('lpMusicFade'); return el ? parseFloat(el.value) : 4; })(),
+                musicFade: (function() { var el = document.getElementById('lpMusicFade'); return el ? parseFloat(el.value) : 1.5; })(),
                 sceneMoodMap: (typeof MX_SCENE_MAP !== 'undefined' ? MX_SCENE_MAP : {}),
                 moodSongs:    (typeof MX_TRACKS    !== 'undefined' ? MX_TRACKS    : {})
                 };
@@ -2389,24 +2404,11 @@ if (file_exists($sceneMoodMapFile)) {
             } else {
                 closeYtIframeScene(); /* clear any prior YT iframe state before switching */
                 if (typeof window.mxPauseForYt === 'function') window.mxPauseForYt();
-                /* Deactivate all other scenes */
-                VIDEO_OVERLAY_KEYS.forEach(function(k) {
-                    var b = document.getElementById('scene-btn-' + k);
-                    if (b) b.classList.remove('active');
-                });
-                var sbEl = document.getElementById('scoreboard-overlay');
-                var sbBtn = document.getElementById('scene-btn-scoreboard');
-                if (sbEl) { sbEl.style.display = 'none'; sbEl.style.zIndex = ''; }
-                if (sbBtn) sbBtn.classList.remove('active');
-                var csbEl = document.getElementById('custom-scoreboard-overlay');
-                var csbBtn = document.getElementById('scene-btn-custom-scoreboard');
-                if (csbEl) { csbEl.style.display = 'none'; csbEl.style.zIndex = ''; }
-                if (csbBtn) csbBtn.classList.remove('active');
+                clearExclusiveScenes();
                 var videos = getYtIframeVideos();
                 var videoIdx = which === 'intro' ? 0 : 1;
                 var url = videos[videoIdx].url;
                 /* Hide other overlays */
-                VIDEO_OVERLAY_KEYS.forEach(function(k) { var b = document.getElementById('scene-btn-' + k); if (b) b.classList.remove('active'); });
                 var bgOverlay = document.getElementById('scene-overlay-all-vdo');
                 if (bgOverlay) bgOverlay.style.display = 'none';
                 var sharedOverlay = document.getElementById('scene-overlay-shared-window');
@@ -2932,6 +2934,23 @@ if (file_exists($sceneMoodMapFile)) {
             var VIDEO_OVERLAY_FRONT = ['schedule', 'ash', 'pog', 'ptb', 'st'];
             var VIDEO_OVERLAY_AUDIO = { 'ash': 'angry_space_hares.wav', 'pog': 'FSL_PSISOP_Gaming.wav', 'ptb': 'pulled_the_boys.wav', 'st': 'FSL_SpecialTactics2.wav' };
 
+            // Deactivate all mutually-exclusive scenes: video overlay buttons, scoreboard, custom-scoreboard.
+            // Call this at the start of any scene activation. Does NOT touch SC2, VDO full, or Logos.
+            function clearExclusiveScenes() {
+                VIDEO_OVERLAY_KEYS.forEach(function(k) {
+                    var b = document.getElementById('scene-btn-' + k);
+                    if (b) b.classList.remove('active');
+                });
+                var sbEl = document.getElementById('scoreboard-overlay');
+                var sbBtn = document.getElementById('scene-btn-scoreboard');
+                if (sbEl) { sbEl.style.display = 'none'; sbEl.style.zIndex = ''; }
+                if (sbBtn) sbBtn.classList.remove('active');
+                var csbEl = document.getElementById('custom-scoreboard-overlay');
+                var csbBtn = document.getElementById('scene-btn-custom-scoreboard');
+                if (csbEl) { csbEl.style.display = 'none'; csbEl.style.zIndex = ''; }
+                if (csbBtn) csbBtn.classList.remove('active');
+            }
+
             function getVideoOverlayDefaultZIndex() {
                 try {
                     var raw = localStorage.getItem('stream_production_layer_order');
@@ -3268,41 +3287,63 @@ if (file_exists($sceneMoodMapFile)) {
 
                 var hasDesc = active.some(function(m) { return m.desc && m.desc.trim(); });
 
+                /*
+                 * ALL rows (header banner, column header, data rows) share these exact same
+                 * flex column definitions — that's what keeps every score vertically aligned.
+                 *
+                 * Layout: [NUM 2em] [NAMEA flex:1] [SCORE 10em] [NAMEB flex:1] [DESC 20%?]
+                 */
+                var SCORE_W  = '10em';
+                var DESC_W   = '22%';
+                var ROW_BASE = 'display:flex; align-items:center; width:100%; box-sizing:border-box;';
+                var NUM_S    = 'width:2em; flex-shrink:0; text-align:right; padding-right:6px;';
+                var NAMEA_S  = 'flex:1; min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; text-align:center; padding-left:0.5rem;';
+                var SCORE_S  = 'width:' + SCORE_W + '; flex-shrink:0; text-align:center; white-space:nowrap;';
+                var NAMEB_S  = 'flex:1; min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; text-align:center; padding-right:0.5rem;';
+                var DESC_S   = 'width:' + DESC_W + '; flex-shrink:0; text-align:left; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; padding-left:0.4rem;';
+
                 var sb = [];
                 sb.push('<div class="scoreboard-panel-inner">');
-                /* Header */
-                sb.push('<div class="scoreboard-header">');
-                sb.push('<div class="scoreboard-team-block scoreboard-team-a"><span class="scoreboard-team-name" style="font-size:2rem;">' + escapeHtml(labelA) + '</span></div>');
-                sb.push('<div class="scoreboard-vs-block"><span class="scoreboard-score-main">' + totalA + ' &ndash; ' + totalB + '</span></div>');
-                sb.push('<div class="scoreboard-team-block scoreboard-team-b"><span class="scoreboard-team-name" style="font-size:2rem;">' + escapeHtml(labelB) + '</span></div>');
+
+                /* ── Banner header: labelA | total score | labelB ── same columns as rows */
+                sb.push('<div style="' + ROW_BASE + ' padding:0.55rem 0 0.45rem; border-bottom:2px solid rgba(108,92,231,0.35); margin-bottom:0.2rem;">');
+                sb.push('<div style="' + NUM_S + '"></div>');
+                sb.push('<div style="' + NAMEA_S + ' font-family:\'Exo 2\',sans-serif; font-size:2.2rem; font-weight:700; color:#e0e0e0; overflow:visible; text-overflow:clip; padding-left:0.4rem;">' + escapeHtml(labelA) + '</div>');
+                sb.push('<div style="' + SCORE_S + '"><span class="scoreboard-score-main">' + totalA + ' &ndash; ' + totalB + '</span></div>');
+                sb.push('<div style="' + NAMEB_S + ' font-family:\'Exo 2\',sans-serif; font-size:2.2rem; font-weight:700; color:#e0e0e0; flex:1.6; overflow:visible; text-overflow:clip; padding-right:0.4rem;">' + escapeHtml(labelB) + '</div>');
                 sb.push('</div>');
-                /* Table — 5 cols: # | Side A | Score | Side B | Desc(optional) */
-                var colGroup = '<colgroup><col style="width:0.1%"><col><col style="width:7em"><col>' + (hasDesc ? '<col style="width:16%">' : '') + '</colgroup>';
-                sb.push('<div class="scoreboard-table-wrap"><table class="scoreboard-table">' + colGroup);
-                sb.push('<thead><tr>');
-                sb.push('<th class="scoreboard-th-empty"></th>');
-                sb.push('<th class="scoreboard-th-team" style="text-align:left; padding-left:0.7rem;">' + escapeHtml(labelA) + '</th>');
-                sb.push('<th style="text-align:center; background:rgba(108,92,231,0.25); color:#a29bfe; font-size:0.85rem; font-weight:500; white-space:nowrap;">Score</th>');
-                sb.push('<th class="scoreboard-th-team" style="text-align:right; padding-right:0.7rem;">' + escapeHtml(labelB) + '</th>');
-                if (hasDesc) sb.push('<th class="scoreboard-th-map" style="text-align:center;">Map / Desc</th>');
-                sb.push('</tr></thead><tbody>');
+
+                /* ── Column header row ── */
+                sb.push('<div class="scoreboard-table-wrap" style="margin-top:0.3rem;">');
+                sb.push('<div style="' + ROW_BASE + ' background:rgba(108,92,231,0.25); border-bottom:1px solid rgba(255,255,255,0.1); padding:0.32rem 0;">');
+                sb.push('<div style="' + NUM_S + '"></div>');
+                sb.push('<div style="' + NAMEA_S + ' font-weight:600; font-size:1.15rem; color:#fff;">' + escapeHtml(labelA) + '</div>');
+                sb.push('<div style="' + SCORE_S + ' color:#a29bfe; font-size:0.9rem; font-weight:500; letter-spacing:0.04em;">Score</div>');
+                sb.push('<div style="' + NAMEB_S + ' font-weight:600; font-size:1.15rem; color:#fff;">' + escapeHtml(labelB) + '</div>');
+                if (hasDesc) sb.push('<div style="' + DESC_S + ' color:#a29bfe; font-size:0.9rem; font-weight:500;">Map / Desc</div>');
+                sb.push('</div>');
+
+                /* ── Data rows ── */
                 active.forEach(function(m, i) {
                     var sA = parseInt(m.scoreA, 10) || 0;
                     var sB = parseInt(m.scoreB, 10) || 0;
                     var winA = sA > sB, winB = sB > sA;
                     var scoreCell =
-                        '<span style="font-size:1.35rem; font-weight:700; color:' + (winA ? '#ffe082' : '#FFD700') + ';">' + sA + '</span>' +
-                        '<span style="color:#444; font-size:1rem; margin:0 0.35em;">&ndash;</span>' +
-                        '<span style="font-size:1.35rem; font-weight:700; color:' + (winB ? '#ffe082' : '#a29bfe') + ';">' + sB + '</span>';
-                    sb.push('<tr>');
-                    sb.push('<td class="scoreboard-empty-cell" style="font-size:0.8rem; color:#555; padding-right:6px;">' + escapeHtml(String(i + 1)) + '</td>');
-                    sb.push('<td class="scoreboard-cell scoreboard-cell-team" style="text-align:left; padding-left:0.7rem;' + (winA ? 'font-weight:700; color:#ffe082;' : '') + '">' + escapeHtml(m.a || '') + '</td>');
-                    sb.push('<td style="text-align:center; white-space:nowrap; padding:0.28rem 0.5rem;">' + scoreCell + '</td>');
-                    sb.push('<td class="scoreboard-cell scoreboard-cell-team" style="text-align:right; padding-right:0.7rem;' + (winB ? 'font-weight:700; color:#ffe082;' : '') + '">' + escapeHtml(m.b || '') + '</td>');
-                    if (hasDesc) sb.push('<td class="scoreboard-map" style="text-align:center;">' + escapeHtml(m.desc || '') + '</td>');
-                    sb.push('</tr>');
+                        '<span style="font-size:1.5rem; font-weight:700; color:' + (winA ? '#ffe082' : '#FFD700') + ';">' + sA + '</span>' +
+                        '<span style="color:#444; font-size:1.1rem; margin:0 0.35em;">&ndash;</span>' +
+                        '<span style="font-size:1.5rem; font-weight:700; color:' + (winB ? '#ffe082' : '#a29bfe') + ';">' + sB + '</span>';
+                    var rowBg = (i % 2 === 1) ? 'background:rgba(255,255,255,0.03); ' : '';
+                    var border = (i < active.length - 1) ? 'border-bottom:1px solid rgba(255,255,255,0.07); ' : '';
+                    sb.push('<div style="' + ROW_BASE + rowBg + border + 'padding:0.38rem 0;">');
+                    sb.push('<div style="' + NUM_S + ' font-size:0.85rem; color:#555;">' + escapeHtml(String(i + 1)) + '</div>');
+                    sb.push('<div style="' + NAMEA_S + ' font-size:1.25rem;' + (winA ? 'font-weight:700; color:#ffe082;' : 'color:#e0e0e0;') + '">' + escapeHtml(m.a || '') + '</div>');
+                    sb.push('<div style="' + SCORE_S + ' padding:0.1rem 0;">' + scoreCell + '</div>');
+                    sb.push('<div style="' + NAMEB_S + ' font-size:1.25rem;' + (winB ? 'font-weight:700; color:#ffe082;' : 'color:#e0e0e0;') + '">' + escapeHtml(m.b || '') + '</div>');
+                    if (hasDesc) sb.push('<div style="' + DESC_S + ' font-size:0.9rem; color:#a29bfe;">' + escapeHtml(m.desc || '') + '</div>');
+                    sb.push('</div>');
                 });
-                sb.push('</tbody></table></div></div>');
+                sb.push('</div>'); /* scoreboard-table-wrap */
+                sb.push('</div>'); /* scoreboard-panel-inner */
                 return sb.join('');
             }
 
@@ -3458,15 +3499,7 @@ if (file_exists($sceneMoodMapFile)) {
                 if (ytIframePlayer) ytIframePlayer.src = '';
                 if (ytIframeIntroBtn) ytIframeIntroBtn.classList.remove('active');
                 if (ytIframeBreakBtn) ytIframeBreakBtn.classList.remove('active');
-                var scoreboardOverlaySc2 = document.getElementById('scoreboard-overlay');
-                var scoreboardBtnSc2 = document.getElementById('scene-btn-scoreboard');
-                if (scoreboardOverlaySc2) { scoreboardOverlaySc2.style.display = 'none'; scoreboardOverlaySc2.style.zIndex = ''; }
-                if (scoreboardBtnSc2) scoreboardBtnSc2.classList.remove('active');
-                var csbOverlaySc2 = document.getElementById('custom-scoreboard-overlay');
-                var csbBtnSc2 = document.getElementById('scene-btn-custom-scoreboard');
-                if (csbOverlaySc2) { csbOverlaySc2.style.display = 'none'; csbOverlaySc2.style.zIndex = ''; }
-                if (csbBtnSc2) csbBtnSc2.classList.remove('active');
-                VIDEO_OVERLAY_KEYS.forEach(function(k) { var b = document.getElementById('scene-btn-' + k); if (b) b.classList.remove('active'); });
+                clearExclusiveScenes();
                 if (sc2Overlay) sc2Overlay.style.display = 'block';
                 setSc2ButtonsActive(true);
                 if (sc2Panel) {
@@ -3665,30 +3698,19 @@ if (file_exists($sceneMoodMapFile)) {
                     return;
                 }
                 function doShowVideoOverlay() {
-                    VIDEO_OVERLAY_KEYS.forEach(function(key) {
-                        var b = document.getElementById('scene-btn-' + key);
-                        if (b) b.classList.remove('active');
-                    });
+                    clearExclusiveScenes();
                     var sharedOverlay = document.getElementById('scene-overlay-shared-window');
                     var sharedBtn = document.getElementById('scene-btn-shared-window');
                     var fullSharedOverlay = document.getElementById('scene-overlay-full-shared-panel');
                     var fullSharedBtn = document.getElementById('scene-btn-full-shared');
                     var ytOverlay = document.getElementById('scene-overlay-yt');
                     var ytBtn = document.getElementById('scene-btn-yt');
-                    var scoreboardOverlay = document.getElementById('scoreboard-overlay');
-                    var scoreboardBtn = document.getElementById('scene-btn-scoreboard');
                     if (sharedOverlay) sharedOverlay.style.display = 'none';
                     if (sharedBtn) sharedBtn.classList.remove('active');
                     if (fullSharedOverlay) fullSharedOverlay.style.display = 'none';
                     if (fullSharedBtn) fullSharedBtn.classList.remove('active');
                     if (ytOverlay) ytOverlay.style.display = 'none';
                     if (ytBtn) ytBtn.classList.remove('active');
-                    if (scoreboardOverlay) { scoreboardOverlay.style.display = 'none'; scoreboardOverlay.style.zIndex = ''; }
-                    if (scoreboardBtn) scoreboardBtn.classList.remove('active');
-                    var csbOverlayVo = document.getElementById('custom-scoreboard-overlay');
-                    var csbBtnVo = document.getElementById('scene-btn-custom-scoreboard');
-                    if (csbOverlayVo) { csbOverlayVo.style.display = 'none'; csbOverlayVo.style.zIndex = ''; }
-                    if (csbBtnVo) csbBtnVo.classList.remove('active');
                     var url = (file.indexOf('.html') !== -1) ? ('2026/' + file) : ('2026/video_player.php?v=' + encodeURIComponent(file) + '&_t=' + Date.now());
                     if (useFront && file.indexOf('.html') === -1) url += '&front=true';
                     iframe.src = url;
@@ -3706,6 +3728,7 @@ if (file_exists($sceneMoodMapFile)) {
                             ap.play();
                         }
                     }
+                    if (typeof window.mxOnSceneChange === 'function') window.mxOnSceneChange(sceneId);
                 }
                 if (useFront) {
                     fetch('2026/' + file, { method: 'HEAD' })
@@ -3744,11 +3767,7 @@ if (file_exists($sceneMoodMapFile)) {
                     scoreboardBtn.classList.remove('active');
                     applyLayoutFromSc2Button();
                 } else {
-                    VIDEO_OVERLAY_KEYS.forEach(function(k) { var b = document.getElementById('scene-btn-' + k); if (b) b.classList.remove('active'); });
-                    var csbOverlaySb = document.getElementById('custom-scoreboard-overlay');
-                    var csbBtnSb = document.getElementById('scene-btn-custom-scoreboard');
-                    if (csbOverlaySb) { csbOverlaySb.style.display = 'none'; csbOverlaySb.style.zIndex = ''; }
-                    if (csbBtnSb) csbBtnSb.classList.remove('active');
+                    clearExclusiveScenes();
                     var bgOverlay = document.getElementById('scene-overlay-all-vdo');
                     var videoIframe = document.getElementById('scene-overlay-all-vdo-iframe');
                     var bgBtn = document.getElementById('scene-btn-all-vdo');
@@ -3804,11 +3823,7 @@ if (file_exists($sceneMoodMapFile)) {
                     csbBtn.classList.remove('active');
                     applyLayoutFromSc2Button();
                 } else {
-                    VIDEO_OVERLAY_KEYS.forEach(function(k) { var b = document.getElementById('scene-btn-' + k); if (b) b.classList.remove('active'); });
-                    var sbOverlayCsb = document.getElementById('scoreboard-overlay');
-                    var sbBtnCsb = document.getElementById('scene-btn-scoreboard');
-                    if (sbOverlayCsb) { sbOverlayCsb.style.display = 'none'; sbOverlayCsb.style.zIndex = ''; }
-                    if (sbBtnCsb) sbBtnCsb.classList.remove('active');
+                    clearExclusiveScenes();
                     var bgOverlayCsb = document.getElementById('scene-overlay-all-vdo');
                     var videoIframeCsb = document.getElementById('scene-overlay-all-vdo-iframe');
                     var bgBtnCsb = document.getElementById('scene-btn-all-vdo');
@@ -3882,17 +3897,7 @@ if (file_exists($sceneMoodMapFile)) {
                     btn.classList.remove('active');
                 }
             } else if (sceneId === 'sc2' || sceneId === 'sc2-quick') {
-                /* Always hide scoreboard overlays on any SC2/Quick press */
-                (function() {
-                    var sbEl = document.getElementById('scoreboard-overlay');
-                    var sbBtn = document.getElementById('scene-btn-scoreboard');
-                    if (sbEl) { sbEl.style.display = 'none'; sbEl.style.zIndex = ''; }
-                    if (sbBtn) sbBtn.classList.remove('active');
-                    var csbEl = document.getElementById('custom-scoreboard-overlay');
-                    var csbBtn = document.getElementById('scene-btn-custom-scoreboard');
-                    if (csbEl) { csbEl.style.display = 'none'; csbEl.style.zIndex = ''; }
-                    if (csbBtn) csbBtn.classList.remove('active');
-                })();
+                clearExclusiveScenes();
                 var sc2Overlay = document.getElementById('sc2-overlay');
                 var sc2ActiveBtn = document.getElementById('scene-btn-sc2');
                 if (!sc2ActiveBtn || !sc2ActiveBtn.classList.contains('active')) {
@@ -4415,6 +4420,46 @@ if (file_exists($sceneMoodMapFile)) {
         var volInput  = document.getElementById('lpMusicVol');
         var fadeInput = document.getElementById('lpMusicFade');
         var ppBtn     = document.getElementById('lpMusicPlayPause');
+        var seekEl    = document.getElementById('lpMusicSeek');
+        var timeNow   = document.getElementById('lpMusicTimeNow');
+        var timeDur   = document.getElementById('lpMusicTimeDur');
+        var mxSeekDragging = false;
+
+        function mxFmtTime(s) {
+            if (!isFinite(s) || s < 0) return '-:--';
+            var m = Math.floor(s / 60);
+            var sec = Math.floor(s % 60);
+            return m + ':' + (sec < 10 ? '0' : '') + sec;
+        }
+
+        function mxSeekReset() {
+            seekEl.value = 0;
+            timeNow.textContent = '0:00';
+            timeDur.textContent = '-:--';
+        }
+
+        seekEl.addEventListener('mousedown',  function () { mxSeekDragging = true; });
+        seekEl.addEventListener('touchstart', function () { mxSeekDragging = true; }, { passive: true });
+        seekEl.addEventListener('change', function () {
+            mxSeekDragging = false;
+            if (!mxCur) return;
+            var dur = mxCur.audio.duration;
+            if (!isFinite(dur) || dur <= 0) return;
+            mxCur.audio.currentTime = (Number(seekEl.value) / 1000) * dur;
+            mxSchedule(mxMood, mxTrack, mxSongIdx);
+        });
+
+        (function mxRafLoop() {
+            requestAnimationFrame(mxRafLoop);
+            if (!mxCur || mxSeekDragging) return;
+            var dur = mxCur.audio.duration;
+            var cur = mxCur.audio.currentTime;
+            if (isFinite(dur) && dur > 0) {
+                seekEl.value = Math.round((cur / dur) * 1000);
+                timeNow.textContent = mxFmtTime(cur);
+                timeDur.textContent = mxFmtTime(dur);
+            }
+        })();
 
         volInput.addEventListener('input', function () {
             if (mxGain) mxGain.gain.value = Number(volInput.value) / 100;
@@ -4437,9 +4482,14 @@ if (file_exists($sceneMoodMapFile)) {
                 btn.dataset.mood = mood;
                 btn.title = mood;
                 btn.addEventListener('click', function () {
-                    // Manual select — clears scene context so mood loops itself
                     mxCurScene = null; mxSceneMoods = null; mxSceneMoodIdx = 0;
-                    mxSwitch(mood, 0);
+                    if (mxMood === mood && mxCur) {
+                        // Re-click on active mood — skip to next song sequentially
+                        var songs = MX_TRACKS[mood] || [];
+                        mxSwitch(mood, (mxSongIdx + 1) % songs.length);
+                    } else {
+                        mxSwitch(mood, mxRandIdx(mood));
+                    }
                 });
                 grid.appendChild(btn);
             });
@@ -4487,13 +4537,21 @@ if (file_exists($sceneMoodMapFile)) {
             if (mxTimer) { clearTimeout(mxTimer); mxTimer = null; }
         }
 
+        // Random starting index within a mood's song list.
+        function mxRandIdx(mood) {
+            var songs = MX_TRACKS[mood] || [];
+            if (songs.length <= 1) return 0;
+            return Math.floor(Math.random() * songs.length);
+        }
+
         // Advance to the next mood in the scene list (or loop current mood if no scene).
-        function mxAdvanceMood() {
+        function mxAdvanceMood(autoAdvance) {
             if (mxSceneMoods && mxSceneMoods.length > 0) {
                 mxSceneMoodIdx = (mxSceneMoodIdx + 1) % mxSceneMoods.length;
-                mxSwitch(mxSceneMoods[mxSceneMoodIdx], 0, true);
+                var nextMood = mxSceneMoods[mxSceneMoodIdx];
+                mxSwitch(nextMood, mxRandIdx(nextMood), true, autoAdvance);
             } else {
-                mxSwitch(mxMood, 0, true); // no scene → loop this mood
+                mxSwitch(mxMood, mxRandIdx(mxMood), true, autoAdvance); // no scene → loop this mood
             }
         }
 
@@ -4522,18 +4580,18 @@ if (file_exists($sceneMoodMapFile)) {
                 var nextIdx = songIdx + 1;
                 if (nextIdx < songs.length) {
                     // More songs left in this mood — play next
-                    mxSwitch(mood, nextIdx, true);
+                    mxSwitch(mood, nextIdx, true, true);
                 } else {
                     // Mood's song set finished — advance to next mood
-                    mxAdvanceMood();
+                    mxAdvanceMood(true);
                 }
             }, wait * 1000);
         }
 
         // Switch to mood at songIdx.
-        // keepScene=true: preserve scene tracking (internal auto-advance calls).
-        // keepScene=false/undefined: manual selection, clears scene context.
-        function mxSwitch(mood, songIdx, keepScene) {
+        // keepScene=true:   preserve scene tracking (internal auto-advance calls).
+        // autoAdvance=true: song ended naturally — start next song from 0, short fixed crossfade.
+        function mxSwitch(mood, songIdx, keepScene, autoAdvance) {
             if (songIdx === undefined || songIdx === null) songIdx = 0;
             if (!keepScene) {
                 mxCurScene = null; mxSceneMoods = null; mxSceneMoodIdx = 0;
@@ -4544,7 +4602,7 @@ if (file_exists($sceneMoodMapFile)) {
 
             mxEnsure().then(function () {
                 mxClearTimer();
-                var fp = mxGetFadeParams();
+                var fp = autoAdvance ? { startOffset: 0, crossfadeDuration: 0.5 } : mxGetFadeParams();
                 var startOffset = fp.startOffset;
                 var fade = fp.crossfadeDuration;
                 mxSetStatus('Loading\u2026');
@@ -4608,6 +4666,7 @@ if (file_exists($sceneMoodMapFile)) {
             ppBtn.classList.remove('lp-mx-paused');
             mxUpdateActive();
             mxSetStatus('select a mood');
+            mxSeekReset();
         }
 
         function mxTogglePlay() {
@@ -4849,9 +4908,9 @@ if (file_exists($sceneMoodMapFile)) {
             }
             mxCurScene = key; mxSceneMoods = moods; mxSceneMoodIdx = randomIdx;
             if (mxCur && !mxPaused) {
-                mxSwitch(newMood, 0, true);
+                mxSwitch(newMood, mxRandIdx(newMood), true);
             } else {
-                mxMood = newMood; mxSongIdx = 0;
+                mxMood = newMood; mxSongIdx = mxRandIdx(newMood);
                 mxUpdateActive();
                 mxSetStatus(mxPaused
                     ? ('\u23f8 ' + (mxTrack || newMood))
@@ -4899,11 +4958,12 @@ if (file_exists($sceneMoodMapFile)) {
             if (!mxCur) mxTogglePlay();
         }, { once: true, capture: true });
 
-        // Auto-start on page load (works immediately if browser allows;
-        // falls back to the unlock listener above on Chrome policy blocks)
+        // Auto-start on page load — random mood and random starting song.
         (function () {
-            var firstMood = Object.keys(MX_TRACKS)[0];
-            if (firstMood) mxSwitch(firstMood, 0);
+            var moodKeys = Object.keys(MX_TRACKS);
+            if (!moodKeys.length) return;
+            var firstMood = moodKeys[Math.floor(Math.random() * moodKeys.length)];
+            mxSwitch(firstMood, mxRandIdx(firstMood));
         })();
     })();
 
@@ -4915,18 +4975,24 @@ if (file_exists($sceneMoodMapFile)) {
             window.toggleSceneOverlay = function (key) {
                 // For SC2 scenes, the overlay is activated asynchronously (transition video),
                 // so capture the pre-toggle state to know if we're turning ON.
-                var sc2WasOff = false;
+                var sc2WasOn = false;
                 if (key === 'sc2' || key === 'sc2-quick') {
-                    var sc2ov = document.getElementById('sc2-overlay');
-                    sc2WasOff = !sc2ov || !sc2ov.style.display || sc2ov.style.display === 'none';
+                    var sc2ActiveBtnPre = document.getElementById('scene-btn-sc2');
+                    sc2WasOn = !!(sc2ActiveBtnPre && sc2ActiveBtnPre.classList.contains('active'));
                 }
 
                 orig.apply(this, arguments);
 
                 if (typeof window.mxOnSceneChange !== 'function') return;
 
-                if ((key === 'sc2' || key === 'sc2-quick') && sc2WasOff) {
-                    window.mxOnSceneChange(key);
+                if (key === 'sc2' || key === 'sc2-quick') {
+                    if (!sc2WasOn) {
+                        /* SC2 turning ON → battle moods for the specific button pressed */
+                        window.mxOnSceneChange(key);
+                    } else {
+                        /* SC2 turning OFF → relaxed moods (sc2-quick-off not in map = no change) */
+                        window.mxOnSceneChange(key === 'sc2' ? 'sc2-off' : 'sc2-quick-off');
+                    }
                     return;
                 }
                 // For all other scenes, check button active class (set synchronously)
