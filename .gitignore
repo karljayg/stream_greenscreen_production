@@ -1,6 +1,33 @@
 # Don't track media in production folders (code/config only)
 production_files/audio/
 production_files/video/
+production_files/images/
+production_files/TEMP/
+production_files/TEMP_OUTPUT/
+production_files/video_BACKUP_ORIGINALS/
+production_files/video_temp/
+production_files/video_temp_OUTPUT/
+production_files/process_videos.py
 
 # Local secrets
 config.local.php
+
+# Per-user settings (local/personal, not shared)
+data/settings_*.json
+data/users/
+
+# Music files (large binaries, not versioned)
+music/
+
+# Season 10 media
+2026/*.mp4
+2026/*.png
+
+# Backups and scratch files
+BACKUP/
+__pycache__/
+js/JS_BACKUP/
+js/*.BACKUP
+js/*.new
+styles/*.BACKUP
+test_music_include.php
