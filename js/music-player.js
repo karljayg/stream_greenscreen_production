@@ -25,6 +25,32 @@
     var mxSceneMoods = null;   // mood list for current scene
     var mxSceneMoodIdx = 0;    // current index into mxSceneMoods
 
+    // ── Variety mode: prevents endless repetition on short scene mood lists ──
+    // Problem: a scene with only 1-2 moods will loop those same tracks forever
+    // if the stream is left unattended (e.g. producer steps away mid-session).
+    // Solution: two complementary triggers — whichever fires first wins.
+    //
+    //   Trigger 1 — CYCLE COUNTER:
+    //     After VARIETY_CYCLE_THRESHOLD complete loops through the scene's mood
+    //     list, break out into full-random mode across all moods. A "loop" means
+    //     mxSceneMoodIdx wrapped from the last entry back to index 0.
+    //     A scene with 2 moods × 2 songs each ≈ 15 min/cycle → 3 cycles ≈ 45 min.
+    //     A scene with 6 moods × 2 songs each ≈ 45 min/cycle → threshold rarely
+    //     fires, which is intentional — long scene lists don't need variety help.
+    //
+    //   Trigger 2 — WALL-CLOCK TIMER (VARIETY_TIME_MS):
+    //     After this many ms of continuous scene play, trigger variety regardless
+    //     of cycle count. Safety net for very long sessions where the cycle
+    //     threshold alone might not be enough.
+    //
+    // Both counters reset whenever the user actively changes scene or mood, so
+    // manual control always wins over the automation.
+    var VARIETY_CYCLE_THRESHOLD = 3;             // full mood-list loops before variety kicks in
+    var VARIETY_TIME_MS         = 60 * 60 * 1000; // 60-min wall-clock fallback
+
+    var mxSceneCycles  = 0;    // counts complete loops through the scene mood list
+    var mxVarietyTimer = null; // handle for the wall-clock variety fallback
+
     var statusEl  = document.getElementById('lpMusicStatus');
     var volInput  = document.getElementById('lpMusicVol');
     var fadeInput = document.getElementById('lpMusicFade');
@@ -146,11 +172,18 @@
         e.stopPropagation();
         if (!mxRandom) {
             mxSetRandom(true);
-            // Switch immediately whether or not something is already playing
+            // Switch immediately whether or not something is already playing.
+            // Also clear the variety timer — we're already in random mode, so
+            // the timer has nothing left to do and shouldn't fire redundantly.
+            mxClearVarietyTimer();
             mxStats.onSkip();
             mxSwitchRandom(false);
         } else {
             mxSetRandom(false);
+            // User turned random OFF — if we're still in a scene context, restart
+            // the variety timer so the cycle-based protection kicks back in from
+            // this point forward (don't silently lose the safety net).
+            if (mxCurScene) { mxSceneCycles = 0; mxStartVarietyTimer(); }
         }
     });
     ppBtn.addEventListener('click', mxTogglePlay);
@@ -188,6 +221,10 @@
             btn.title = mood;
             btn.addEventListener('click', function () {
                 mxSetRandom(false);
+                // User is manually DJing — stop all variety automation so their
+                // explicit choice loops freely without being overridden.
+                mxClearVarietyTimer();
+                mxSceneCycles = 0;
                 mxCurScene = null; mxSceneMoods = null; mxSceneMoodIdx = 0;
                 if (mxMood === mood && mxCur) {
                     // Re-click on active mood — skip to next song sequentially
@@ -245,6 +282,35 @@
         if (mxTimer) { clearTimeout(mxTimer); mxTimer = null; }
     }
 
+    // Clear the wall-clock variety fallback timer.
+    function mxClearVarietyTimer() {
+        if (mxVarietyTimer) { clearTimeout(mxVarietyTimer); mxVarietyTimer = null; }
+    }
+
+    // Start (or restart) the wall-clock variety fallback timer.
+    // Called whenever a scene activates or re-activates.
+    function mxStartVarietyTimer() {
+        mxClearVarietyTimer();
+        mxVarietyTimer = setTimeout(function () {
+            // Only act if we're still in a scene context — if the user manually
+            // picked a mood this timer will still be running but mxCurScene is null,
+            // so we bail out and let them keep their manual choice.
+            if (!mxCurScene) return;
+            // Wall-clock threshold reached: open up to all moods randomly.
+            // This fires even if the cycle counter hasn't hit its limit yet,
+            // e.g. a scene with many moods that still feels stale after an hour.
+            mxSetRandom(true);
+            mxSwitchRandom(true);
+        }, VARIETY_TIME_MS);
+    }
+
+    // Reset variety state — call whenever the user actively starts a scene
+    // or the scene changes, so counting always begins fresh.
+    function mxResetVariety() {
+        mxSceneCycles = 0;
+        mxStartVarietyTimer();
+    }
+
     // Random starting index within a mood's song list.
     function mxRandIdx(mood) {
         var songs = MX_TRACKS[mood] || [];
@@ -255,12 +321,36 @@
     // Advance to the next mood in the scene list (or loop current mood if no scene).
     function mxAdvanceMood(autoAdvance) {
         if (mxRandom) { mxSwitchRandom(autoAdvance); return; }
+
         if (mxSceneMoods && mxSceneMoods.length > 0) {
-            mxSceneMoodIdx = (mxSceneMoodIdx + 1) % mxSceneMoods.length;
+            var nextIdx = (mxSceneMoodIdx + 1) % mxSceneMoods.length;
+
+            // Detect a completed loop: wrapping back to index 0 means we've played
+            // through the entire scene mood list one more time.
+            if (nextIdx === 0) {
+                mxSceneCycles++;
+
+                // Cycle threshold reached — the same short list has looped enough
+                // times that it's now audibly repetitive. Break out into full-random
+                // mode so the listener hears something fresh across all moods.
+                // The threshold is intentionally low (3) because a scene with only
+                // 1-2 moods can repeat noticeably within a single broadcast.
+                if (mxSceneCycles >= VARIETY_CYCLE_THRESHOLD) {
+                    mxClearVarietyTimer(); // wall-clock timer no longer needed
+                    mxSetRandom(true);
+                    mxSwitchRandom(autoAdvance);
+                    return;
+                }
+            }
+
+            mxSceneMoodIdx = nextIdx;
             var nextMood = mxSceneMoods[mxSceneMoodIdx];
             mxSwitch(nextMood, mxRandIdx(nextMood), true, autoAdvance);
         } else {
-            mxSwitch(mxMood, mxRandIdx(mxMood), true, autoAdvance); // no scene → loop this mood
+            // No scene context — the user manually chose this mood and expects it
+            // to loop. We don't apply variety logic here because manual choices
+            // should always be respected without automatic interference.
+            mxSwitch(mxMood, mxRandIdx(mxMood), true, autoAdvance);
         }
     }
 
@@ -431,9 +521,9 @@
         var helpWin = null;
         helpBtn.addEventListener('click', function (e) {
             e.stopPropagation();
-            var url = (typeof window.MX_HELP_URL !== 'undefined') ? window.MX_HELP_URL : 'music-help.php';
+            var url = (typeof window.MX_HELP_URL !== 'undefined') ? window.MX_HELP_URL : 'docs/music-help.php';
             if (helpWin && !helpWin.closed) { helpWin.focus(); return; }
-            helpWin = window.open(url, 'mx-help', 'width=440,height=640,resizable=yes,scrollbars=yes');
+            helpWin = window.open(url, 'mx-help', 'width=900,height=1640,resizable=yes,scrollbars=yes');
         });
     })();
 
@@ -619,9 +709,17 @@
     function mxOnSceneChange(key) {
         var moods = MX_SCENE_MAP[key];
         if (!moods || !moods.length) return;
+
         // Pick a random starting mood from the scene's list
         var randomIdx = Math.floor(Math.random() * moods.length);
         var newMood   = moods[randomIdx];
+
+        // Every scene activation (including re-activating the same scene) gets a
+        // fresh start on variety tracking. This way switching scenes always resets
+        // the clock — the listener gets a full window before variety kicks in again.
+        mxSetRandom(false);
+        mxResetVariety(); // resets mxSceneCycles = 0 and restarts the wall-clock timer
+
         // If same mood is already active, just update scene tracking — don't restart
         if (newMood === mxMood) {
             mxCurScene = key; mxSceneMoods = moods; mxSceneMoodIdx = randomIdx;

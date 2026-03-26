@@ -5,27 +5,18 @@
     var SE_TOKEN = window.SE_TOKEN || '';
 
     var TYPE_CFG = {
-        'follow':     { label: 'New Follower', icon: '💜', color: '#9147ff' },
-        'subscriber': { label: 'New Sub',      icon: '⭐', color: '#f0a500' },
-        'cheer':      { label: 'Cheer',        icon: '💎', color: '#1db954' },
-        'tip':        { label: 'Donation',     icon: '💰', color: '#e91e8c' },
-        'raid':       { label: 'Raid!',        icon: '⚔️', color: '#ff4500' },
-        'host':       { label: 'Host',         icon: '📡', color: '#1da1f2' },
+        'follow':     { label: 'New Follower', icon: '💜', color: '#9147ff', sound: 'production_files/audio/FSL_british_follow.mp3' },
+        'subscriber': { label: 'New Sub',      icon: '⭐', color: '#f0a500', sound: 'production_files/audio/FSL_british_subscribe.mp3' },
+        'cheer':      { label: 'Cheer',        icon: '💎', color: '#1db954', sound: 'production_files/audio/FSL_british_cheer.mp3' },
+        'tip':        { label: 'Donation',     icon: '💰', color: '#e91e8c', sound: 'production_files/audio/FSL_british_donation.mp3' },
+        'raid':       { label: 'Raid!',        icon: '⚔️', color: '#ff4500', sound: 'production_files/audio/FSL_british_raid.mp3' },
+        'host':       { label: 'Host',         icon: '📡', color: '#1da1f2', sound: 'production_files/audio/FSL_british_raid.mp3' },
     };
 
-    function playChime() {
+    function playAlertSound(src) {
         try {
-            var ctx = new (window.AudioContext || window.webkitAudioContext)();
-            [523, 659, 784, 1047].forEach(function(freq, i) {
-                var osc = ctx.createOscillator(), gain = ctx.createGain();
-                osc.connect(gain); gain.connect(ctx.destination);
-                osc.type = 'sine'; osc.frequency.value = freq;
-                var t = ctx.currentTime + i * 0.13;
-                gain.gain.setValueAtTime(0, t);
-                gain.gain.linearRampToValueAtTime(0.25, t + 0.04);
-                gain.gain.exponentialRampToValueAtTime(0.001, t + 0.5);
-                osc.start(t); osc.stop(t + 0.5);
-            });
+            var audio = new Audio(src);
+            audio.play();
         } catch(e) {}
     }
 
@@ -43,7 +34,7 @@
             (extra ? '<div class="se-extra">' + extra + '</div>' : '') +
             '<div class="se-bar"></div>';
         overlay.appendChild(card);
-        playChime();
+        playAlertSound(cfg.sound);
         setTimeout(function() {
             card.classList.add('se-out');
             setTimeout(function() { overlay.innerHTML = ''; }, 600);

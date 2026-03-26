@@ -108,7 +108,7 @@ if (!defined('MX_PLAYER_INCLUDED')) {
     <script>
         window.MX_MUSIC_PATH  = '<?= $mxBase ?>music/';
         window.MX_STATS_URL   = '<?= $mxBase ?>save_music_stats.php';
-        window.MX_HELP_URL    = '<?= $mxBase ?>music-help.php';
+        window.MX_HELP_URL    = '<?= $mxBase ?>docs/music-help.php';
         window.MX_TRACKS      = <?= json_encode($moodSongs,    JSON_UNESCAPED_SLASHES) ?>;
         window.MX_SCENE_MAP   = <?= json_encode($sceneMoodMap, JSON_UNESCAPED_SLASHES) ?>;
         window.MX_MUSIC_FILES = <?= json_encode($musicFiles,   JSON_UNESCAPED_SLASHES) ?>;

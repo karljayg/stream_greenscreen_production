@@ -1,0 +1,542 @@
+# ?? Dynamic Music System for SC2 Broadcast (Full Specification)
+
+---
+
+## ?? Goal
+
+Create a real-time adaptive music system for StarCraft II broadcasts that dynamically selects and transitions music based on:
+
+* Game state (via SC2 Client API)
+* Production actions (observer / director inputs)
+* Twitch chat signals (mood, hype, warnings)
+
+The system should feel like a **cinematic film score** that evolves naturally with each match.
+
+---
+
+# ?? Core Principles
+
+1. **Game-driven, not chat-driven**
+
+   * Game state defines structure
+   * Chat modifies intensity and early warnings
+
+2. **Cinematic flow over reactivity**
+
+   * Avoid rapid switching
+   * Prioritize smooth transitions and narrative arc
+
+3. **Production overrides everything**
+
+   * Manual/production triggers take priority over all signals
+
+4. **Consistency of style**
+
+   * All music follows epic cinematic orchestral style
+
+---
+
+# ??? System Architecture
+
+## Components
+
+### 1. SC2 Client (Local)
+
+* Endpoint: http://localhost:6119/game
+* Provides:
+
+  * game time
+  * players
+  * game state (in-game, replay, score screen)
+
+---
+
+### 2. Local Bridge (Helper App)
+
+Runs on observer PC
+
+Responsibilities:
+
+* Poll SC2 API (every 250–500ms)
+* Normalize data
+* Send updates to backend (PHP API)
+
+Endpoints:
+
+* `/game`
+* `/ui` (optional)
+
+---
+
+### 3. Twitch Chat Reader
+
+* Parses messages in real-time
+* Extracts:
+
+  * hype level
+  * fear/suspense
+  * rush/cheese detection
+  * message velocity
+
+---
+
+### 4. Production Web App (PHP)
+
+Main orchestration layer
+
+Responsibilities:
+
+* Receives:
+
+  * SC2 data
+  * chat signals
+  * production actions
+* Maintains current **music state**
+* Outputs:
+
+  * target music state
+  * transition type
+  * intensity level
+
+---
+
+### 5. Music Engine (Local Playback)
+
+Runs on production machine
+
+Responsibilities:
+
+* Plays music tracks
+* Handles transitions (crossfade, stingers)
+* Maintains playback state
+
+---
+
+# ?? Music Design
+
+## Style (Global)
+
+* Epic cinematic orchestral
+* No vocals
+* Loopable tracks
+* Film-score inspired
+
+---
+
+## Music Categories
+
+### Gameplay States
+
+* opening
+* suspense
+* combat_low
+* combat_mid
+* combat_high
+* combat_extreme
+* boss_intro
+* boss_main
+* boss_final
+* climax
+
+### Non-Gameplay
+
+* analysis
+* chill
+* idle
+* replay
+
+### Outcomes
+
+* victory
+* defeat
+
+### Special
+
+* chaos (funny/chat-driven)
+* hype_override
+
+---
+
+## Track Requirements
+
+* Length: 2–4 minutes
+* Seamless looping
+* Consistent intensity (no big swings inside track)
+
+---
+
+## Naming Convention
+
+```text
+combat_mid_01
+combat_high_02
+boss_main_01
+analysis_01
+victory_01
+```
+
+---
+
+# ?? Game Phase Model
+
+## Time-Based Structure
+
+### 0:00–2:00 ? Opening
+
+* Default: opening
+* Chat alert ? suspense
+
+---
+
+### 2:00–5:00 ? Build-Up Phase
+
+* Default: combat_mid
+* Small skirmishes possible
+* Chat alert (rush/cheese) ? combat_high early
+* Calm chat ? remain combat_mid
+
+---
+
+### ~5:00 ? First Major Fight (Critical Anchor)
+
+* Force escalation ? combat_high
+* Chat hype spike ? combat_extreme
+
+---
+
+### 5:00–10:00 ? Core Mid Game
+
+* Alternate between:
+
+  * combat_mid
+  * combat_high
+* Chat modifies intensity (NOT state spam)
+
+---
+
+### >10:00 ? Late Game
+
+* Bias toward:
+
+  * combat_high
+  * combat_extreme
+* Larger fights, higher stakes
+
+---
+
+### Endgame
+
+* Trigger:
+
+  * production GG
+  * base destruction
+  * chat “GG” spam
+
+Flow:
+
+```text
+combat_extreme ? climax ? victory/defeat
+```
+
+---
+
+# ?? Chat Signal System
+
+## Categories
+
+### Alert (early danger)
+
+* rush
+* cheese
+* proxy
+* cannon
+
+### Hype
+
+* caps spam
+* POG
+* LETS GO
+* high velocity
+
+### Fear
+
+* monkaS
+* oh no
+* ????
+
+### Calm
+
+* normal discussion
+* low velocity
+
+---
+
+## Usage Rules
+
+* NEVER directly switch tracks
+* ONLY:
+
+  * adjust intensity
+  * trigger early escalation
+  * influence next transition
+
+---
+
+# ?? Production Events (Top Priority)
+
+## Events
+
+* game_start
+* replay_start
+* replay_end
+* analysis_mode
+* break_mode
+* gg_triggered
+
+---
+
+## Behavior
+
+| Event      | Music                    |
+| ---------- | ------------------------ |
+| game_start | opening_high             |
+| replay     | replay_music             |
+| analysis   | analysis                 |
+| GG         | stinger ? victory/defeat |
+| break      | chill                    |
+
+---
+
+# ?? Transition System
+
+## Types
+
+### Crossfade (default)
+
+* 3–5 seconds
+
+### Fast crossfade
+
+* 1–2 seconds
+
+### Stinger + transition
+
+* major moments only
+
+---
+
+## Rules
+
+* Minimum track play time: 60–90s
+* Cooldown between switches: ~60s
+* Max ~4 tracks per match
+
+---
+
+# ?? State Machine
+
+## Priority
+
+```text
+Production > SC2 > Chat
+```
+
+---
+
+## Output Example
+
+```json
+{
+  "state": "combat_high",
+  "intensity": 75,
+  "transition": "fast",
+  "reason": ["sc2.major_fight", "chat.hype"]
+}
+```
+
+---
+
+# ?? EXTENDED SPEC — IMPLEMENTATION DETAILS
+
+---
+
+# ?? API DESIGN
+
+## SC2 ? Backend
+
+```text
+POST /api/sc2/update
+```
+
+```json
+{
+  "timestamp": 1710000000,
+  "game_time": 125,
+  "is_replay": false,
+  "players": [],
+  "ui": { "active_screen": "in_game" }
+}
+```
+
+---
+
+## Chat ? Backend
+
+```text
+POST /api/chat/update
+```
+
+```json
+{
+  "velocity": 120,
+  "hype_score": 0.8,
+  "fear_score": 0.3,
+  "alert_score": 0.6
+}
+```
+
+---
+
+## Production ? Backend
+
+```text
+POST /api/production/event
+```
+
+---
+
+## Backend ? Music Engine
+
+```text
+GET /api/music/state
+```
+
+---
+
+# ?? STATE MACHINE (DETAILED)
+
+## States
+
+```text
+idle
+game_loading
+opening
+opening_alert
+macro_mid
+combat_mid
+combat_high
+combat_extreme
+climax
+victory
+defeat
+analysis
+replay
+break
+```
+
+---
+
+# ??? INTENSITY MODEL
+
+```text
+0–100
+```
+
+```text
+intensity =
+  (chat.hype_score * 50)
++ (chat.alert_score * 30)
++ (time_progress * 20)
+```
+
+---
+
+# ?? TRACK LOGIC
+
+* rotate tracks
+* avoid repeats
+* allow hints
+
+---
+
+# ?? MUSIC ENGINE
+
+## Dual Deck System
+
+```text
+Deck A ? current
+Deck B ? next
+```
+
+Flow:
+
+```text
+load B ? fade A down ? fade B up ? stop A
+```
+
+---
+
+# ?? CONFIG
+
+```json
+{
+  "cooldown_seconds": 60,
+  "min_track_time": 45,
+  "crossfade_default": 4,
+  "crossfade_fast": 2
+}
+```
+
+---
+
+# ?? DEBUG UI
+
+Show:
+
+* state
+* intensity
+* current track
+* reason
+
+---
+
+# ?? TEST SCENARIOS
+
+1. Normal game flow
+2. Early rush
+3. Long macro
+4. Replay interrupt
+
+---
+
+# ?? DEVELOPMENT PHASES
+
+### Phase 1
+
+* SC2 only
+* basic switching
+
+### Phase 2
+
+* add chat
+
+### Phase 3
+
+* transitions
+
+### Phase 4
+
+* full integration
+
+---
+
+# ?? FINAL RESULT
+
+A system that feels:
+
+* ?? Game-aware
+* ?? Broadcast-integrated
+* ?? Audience-influenced
+* ?? Cinematically scored
+
+---

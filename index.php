@@ -526,8 +526,8 @@ require_once __DIR__ . '/partials/music-config.php'; // defines $safeUser, $mood
         window.MX_TRACKS      = <?php echo json_encode($moodSongs,    JSON_UNESCAPED_SLASHES); ?>;
         window.MX_SCENE_MAP   = <?php echo json_encode($sceneMoodMap, JSON_UNESCAPED_SLASHES); ?>;
         window.MX_MUSIC_FILES = <?php echo json_encode($musicFiles,   JSON_UNESCAPED_SLASHES); ?>;
-        window.MX_STATS_URL   = 'save_music_stats.php';
-        window.MX_HELP_URL    = 'music-help.php';
+        window.MX_STATS_URL   = '<?php echo rtrim(dirname($_SERVER["SCRIPT_NAME"]), "/"); ?>/save_music_stats.php';
+        window.MX_HELP_URL    = '<?php echo rtrim(dirname($_SERVER["SCRIPT_NAME"]), "/"); ?>/docs/music-help.php';
     </script>
     <script type="module" src="js/stream_production.js?v=<?php echo $v; ?>"></script>
 
@@ -3445,7 +3445,7 @@ require_once __DIR__ . '/partials/music-config.php'; // defines $safeUser, $mood
     <script src="js/auth.js?v=<?php echo $v; ?>"></script>
 
     <!-- StreamElements live alerts -->
-    <div id="se-alert-overlay" style="position:fixed;top:8px;left:270px;z-index:99998;pointer-events:none;width:200px;overflow:visible;"></div>
+    <div id="se-alert-overlay" style="position:fixed;top:28px;left:290px;z-index:99998;pointer-events:none;width:200px;overflow:visible;"></div>
 
     <script src="https://cdn.socket.io/4.7.5/socket.io.min.js"></script>
     <script src="js/stream-elements.js?v=<?php echo $v; ?>"></script>

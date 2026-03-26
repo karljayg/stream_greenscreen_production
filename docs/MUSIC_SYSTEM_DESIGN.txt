@@ -1,0 +1,196 @@
+MUSIC SYSTEM DESIGN
+===================
+Stream Greenscreen Production Tool
+Written:  2026-03-24
+Updated:  2026-03-25  — variety mode, JS refactor to music-player.js
+
+
+OVERVIEW
+--------
+The music system has two layers of configuration stored in data/ as JSON files:
+
+  1. data/mood_songs.json    — maps each mood name to its list of audio files
+  2. data/scene_mood_map.json — maps each scene key to an ordered list of moods
+
+
+MOOD → SONGS  (data/mood_songs.json)
+-------------------------------------
+Each mood is a named key. Its value is an ordered array of .mp3 filenames
+(located in the music/ folder).  Currently every mood has exactly 2 tracks
+(an A version and a B version), but the system supports any number.
+
+  "opening_high":      ["sc2_opening_high_heroic_01_A.mp3",     "sc2_opening_high_heroic_01_B.mp3"]
+  "opening_alert":     ["sc2_opening_alert_suspense_01_A.mp3",  "sc2_opening_alert_suspense_01_B.mp3"]
+  "combat_mid":        ["sc2_combat_mid_driving_01_A.mp3",      "sc2_combat_mid_driving_01_B.mp3"]
+  "combat_high":       ["sc2_combat_high_aggressive_01_A.mp3",  "sc2_combat_high_aggressive_01_B.mp3"]
+  "combat_extreme":    ["sc2_combat_extreme_clutch_01_A.mp3",   "sc2_combat_extreme_clutch_01_B.mp3"]
+  "climax":            ["sc2_climax_finalpush_01_A.mp3",        "sc2_climax_finalpush_01_B.mp3"]
+  "analysis":          ["sc2_analysis_light_clean_01_A.mp3",    "sc2_analysis_light_clean_01_B.mp3"]
+  "analysis_low":      ["sc2_analysis_low_thoughtful_01_A.mp3", "sc2_analysis_low_thoughtful_01_B.mp3"]
+  "chill":             ["sc2_chill_upbeat_warm_01_A.mp3",       "sc2_chill_upbeat_warm_01_B.mp3"]
+  "chill_low":         ["sc2_chill_low_ambient_01_A.mp3",       "sc2_chill_low_ambient_01_B.mp3"]
+  "replay":            ["sc2_replay_clean_focused_01_A.mp3",    "sc2_replay_clean_focused_01_B.mp3"]
+  "replay_reflective": ["sc2_replay_mid_reflective_01_A.mp3",   "sc2_replay_mid_reflective_01_B.mp3"]
+  "victory":           ["sc2_victory_high_triumphant_01_A.mp3", "sc2_victory_high_triumphant_01_B.mp3"]
+  "defeat":            ["sc2_defeat_neutral_reset_01_A.mp3",    "sc2_defeat_neutral_reset_01_B.mp3"]
+  "defeat_somber":     ["sc2_defeat_low_somber_01_A.mp3",       "sc2_defeat_low_somber_01_B.mp3"]
+  "suspense":          ["sc2_suspense_mid_dark_01_A.mp3",       "sc2_suspense_mid_dark_01_B.mp3"]
+
+
+SCENE → MOODS  (data/scene_mood_map.json)
+------------------------------------------
+Each scene key maps to an ordered list of mood names.  The system uses this
+list to choose what to play when that scene is activated, and to advance
+through moods automatically during long sessions.
+
+  "sc2":               ["opening_high","opening_alert","combat_mid","combat_high",
+                         "combat_extreme","climax","victory","defeat","defeat_somber","suspense"]
+
+  "sc2-quick":         ["combat_mid","combat_high","combat_extreme","climax",
+                         "opening_alert","victory","defeat","defeat_somber","suspense"]
+
+  "schedule":          ["analysis","analysis_low","chill","chill_low","replay","replay_reflective"]
+
+  "scoreboard":        ["analysis","analysis_low","chill","chill_low","replay","replay_reflective"]
+
+  "custom-scoreboard": ["analysis","analysis_low","chill","chill_low","replay","replay_reflective"]
+
+  "ash":               ["opening_high","analysis","analysis_low","chill","chill_low","combat_mid"]
+  "pog":               ["opening_high","analysis","analysis_low","chill","chill_low","combat_mid"]
+  "ptb":               ["opening_high","analysis","analysis_low","chill","chill_low","combat_mid"]
+  "st":                ["opening_high","analysis","analysis_low","chill","chill_low","combat_mid"]
+
+
+PLAYBACK FLOW
+-------------
+
+ON SCENE ACTIVATION (user clicks a scene button):
+  1. Look up the scene key in scene_mood_map.json.
+  2. Pick a RANDOM starting mood index from that scene's mood list.
+  3. If the random mood picked is the SAME mood already playing → do nothing
+     (no restart; continuity is preserved).
+  4. Otherwise → start playing song index 0 of the new mood.
+     The current scene key, mood list, and mood index are all stored in state.
+
+SONG PROGRESSION WITHIN A MOOD:
+  - Songs in a mood play in ORDER (index 0, 1, 2, …).
+  - A timer is set when each song starts, calculated as:
+      (song duration) - (current position) - (crossfade seconds) - 0.15s buffer
+  - When the timer fires, the NEXT song in the mood starts (index + 1).
+  - Crossfade duration is set by the Fade knob in the UI (0–10 s).
+
+MOOD ADVANCEMENT (when all songs in a mood finish):
+  - If playing in a SCENE CONTEXT (scene was clicked):
+      Advance to the NEXT mood in that scene's ordered list.
+      Wraps around (cycles) when it reaches the end.
+      Start from song index 0 of the new mood.
+  - If playing WITHOUT a scene context (mood was clicked manually):
+      Loop back to song index 0 of the SAME mood indefinitely.
+
+MANUAL MOOD SELECTION (user clicks a mood button in the grid):
+  - Clears any scene context.
+  - Starts playing that mood from song index 0.
+  - When all songs finish, loops the same mood (no scene advancement).
+
+IF THE SAME MOOD IS ALREADY ACTIVE WHEN A SCENE SWITCHES:
+  - The scene context is updated (new scene, new mood list) but playback
+    continues uninterrupted — no restart, no crossfade.
+
+
+VARIETY MODE  (anti-repetition for long unattended sessions)
+-------------------------------------------------------------
+Problem: a scene with only 1-2 moods will loop those same tracks indefinitely
+if the stream is left running unattended (e.g. producer steps away).
+
+Solution: two complementary triggers — whichever fires first opens up playback
+to all moods randomly (same behaviour as pressing the 🔀 Random button):
+
+  Trigger 1 — CYCLE COUNTER  (VARIETY_CYCLE_THRESHOLD = 3)
+    After 3 complete loops through the scene's mood list, switch to full-random.
+    A "loop" = mxSceneMoodIdx wraps from the last mood back to index 0.
+
+    Why 3 loops?  A scene with 2 moods × 2 songs each ≈ 15 min/loop, so the
+    threshold fires after ≈ 45 min.  A scene with 6+ moods rarely hits it at
+    all — intentionally, because long lists don't need variety help.
+
+  Trigger 2 — WALL-CLOCK TIMER  (VARIETY_TIME_MS = 60 min)
+    After 60 minutes of continuous scene play, trigger variety regardless of
+    cycle count.  Safety net for very long sessions where the cycle threshold
+    alone might not be sufficient.
+
+Reset conditions (manual control always overrides automation):
+  - User changes scene           → mxSceneCycles = 0, timer restarted
+  - User clicks a mood button    → timer cleared, cycles reset, scene context cleared
+  - User enables Random (🔀)    → timer cleared (already random, no need for it)
+  - User disables Random (🔀)   → if still in a scene, cycles = 0 and timer restarted
+
+
+SETTINGS EDITORS (in Settings panel → Music section)
+------------------------------------------------------
+Both JSON configs are editable live in the Settings panel:
+
+  "Scene → Moods" textarea  — edit scene_mood_map.json
+    [Apply]          — updates the in-memory map immediately (no page reload)
+    [Save to Server] — writes the change back to data/scene_mood_map.json via PHP
+
+  "Mood → Songs" textarea   — edit mood_songs.json
+    [Apply]          — updates the in-memory track list and rebuilds mood buttons
+    [Save to Server] — writes the change back to data/mood_songs.json via PHP
+
+Changes to Mood → Songs take effect for the NEXT mxSwitch call; currently
+playing audio finishes its crossfade normally.
+
+
+IMPLEMENTATION  (js/music-player.js)
+-------------------------------------
+The music player lives entirely in js/music-player.js and is included by both
+the main tool (index.php) and the standalone player (music/index.php).
+Config data is injected as globals by PHP before the script loads.
+
+Key JavaScript state variables:
+  mxMood          — currently active mood key (string)
+  mxTrack         — currently playing filename (string)
+  mxSongIdx       — index of mxTrack within mxMood's song array (int)
+  mxCurScene      — active scene key, or null if mood was chosen manually
+  mxSceneMoods    — the mood list for the current scene (array), or null
+  mxSceneMoodIdx  — which index in mxSceneMoods is currently active (int)
+  mxRandom        — true when full-random mode is active (🔀 button)
+  mxSceneCycles   — number of complete loops through the scene mood list
+  mxVarietyTimer  — handle for the 60-min wall-clock variety fallback
+
+Key functions:
+  mxSwitch(mood, songIdx, keepScene, autoAdvance)
+    — core playback function; creates a new WebAudio deck and crossfades
+    — keepScene=true  preserves scene state (internal auto-advance calls)
+    — autoAdvance=true uses a short fixed crossfade instead of the knob value
+
+  mxSchedule(mood, file, songIdx)
+    — sets a setTimeout for the end of the current track
+    — when it fires: if more songs remain → mxSwitch(mood, nextIdx, true, true)
+                     if mood is done      → mxAdvanceMood(true)
+
+  mxAdvanceMood(autoAdvance)
+    — if scene context exists: increments mxSceneMoodIdx (wraps), tracks cycles,
+      checks variety thresholds, then calls mxSwitch or mxSwitchRandom
+    — if no scene context: loops mxSwitch(mxMood, ...) indefinitely
+
+  mxOnSceneChange(key)  [exposed as window.mxOnSceneChange]
+    — called when a scene button is clicked (via toggleSceneOverlay wrapper)
+    — looks up MX_SCENE_MAP[key], picks random starting mood
+    — resets variety counters (mxSceneCycles = 0, restarts wall-clock timer)
+    — if same mood already playing: just update scene state, no restart
+    — if different mood: mxSwitch(newMood, ...)
+
+  mxSwitchRandom(autoAdvance)
+    — picks a random mood from all of MX_TRACKS, then calls mxSwitch
+
+PHP globals injected before the script:
+  window.MX_TRACKS      = json_encode($moodSongs)    // mood → songs map
+  window.MX_SCENE_MAP   = json_encode($sceneMoodMap) // scene → moods map
+  window.MX_MUSIC_PATH  = base URL to music/ folder
+  window.MX_STATS_URL   = URL of save_music_stats.php
+  window.MX_HELP_URL    = URL of music-help.php
+
+PHP save endpoint (save_music_config.php):
+  POST ?which=mood_songs       → writes data/mood_songs.json
+  POST ?which=scene_mood_map   → writes data/scene_mood_map.json
