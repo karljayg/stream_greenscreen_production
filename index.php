@@ -443,13 +443,15 @@ require_once __DIR__ . '/partials/music-config.php'; // defines $safeUser, $mood
                 "></div>
                 <div class="player-name-box" data-layer-id="player-name-box"></div>
                 <!-- Matchup Overlay: two-column player stats comparison -->
-                <div id="matchup-overlay" data-layer-id="matchup-overlay" style="display: none; position: absolute; top: 0; left: 0; width: 100%; height: 100%; z-index: 99990; background: rgba(0,0,0,0.88); pointer-events: none; flex-direction: row; justify-content: space-evenly; align-items: center;">
+                <div id="matchup-overlay" data-layer-id="matchup-overlay" style="display: none; position: absolute; top: 0; left: 0; width: 100%; height: 100%; z-index: 99990; background: rgba(0,0,0,0.92); pointer-events: none; flex-direction: row; justify-content: space-evenly; align-items: center;">
                     <div class="matchup-col matchup-col-a">
                         <div class="external-chart-player-label"></div>
+                        <div class="matchup-chart-slot"></div>
                     </div>
                     <div class="matchup-vs">VS</div>
                     <div class="matchup-col matchup-col-b">
                         <div class="external-chart-player-label"></div>
+                        <div class="matchup-chart-slot"></div>
                     </div>
                 </div>
             </div>
@@ -3411,7 +3413,7 @@ require_once __DIR__ . '/partials/music-config.php'; // defines $safeUser, $mood
             }
             
             if (playerName && division) {
-                const baseUrl = window.spiderChartBaseUrl || "http://localhost/psistorm.com/fsl/view_spider_chart_player.php";
+                const baseUrl = window.spiderChartBaseUrl || "http://localhost/psistorm.com/fsl/view_spider_chart_player_matchup.php";
                 const chartUrl = `${baseUrl}?name=${encodeURIComponent(playerName)}&division=${encodeURIComponent(division)}`;
                 
                 const pos = window.displayPositions ? window.displayPositions.externalChart : {scale: '1.1'};
@@ -3517,20 +3519,80 @@ require_once __DIR__ . '/partials/music-config.php'; // defines $safeUser, $mood
                     window.setPlayerLabelContent(boxA, nameA);
                     window.setPlayerLabelContent(boxB, nameB);
                 }
+                // Clear any stale chart content before loading
+                var slotA = overlay.querySelector('.matchup-col-a .matchup-chart-slot');
+                var slotB = overlay.querySelector('.matchup-col-b .matchup-chart-slot');
                 overlay.style.display = 'flex';
                 if (btn) { btn.classList.add('active'); btn.classList.remove('armed'); }
                 matchupArmed = false;
                 matchupPicks = [];
                 refreshMatchupPickHighlights();
                 setSceneVideoError('');
+                // Load spider charts asynchronously (S → A → B fallback)
+                loadMatchupChart(slotA, nameA);
+                loadMatchupChart(slotB, nameB);
             }
 
             function closeMatchupOverlay() {
                 var overlay = document.getElementById('matchup-overlay');
                 var btn = document.getElementById('scene-btn-matchup');
-                if (overlay) overlay.style.display = 'none';
+                if (overlay) {
+                    // Clear chart iframes to stop network requests
+                    overlay.querySelectorAll('.matchup-chart-slot').forEach(function(s) { s.innerHTML = ''; });
+                    overlay.style.display = 'none';
+                }
                 if (btn) { btn.classList.remove('active'); btn.classList.remove('armed'); }
                 disarmMatchup();
+            }
+
+            function loadMatchupChart(slot, name) {
+                if (!slot) return;
+                slot.innerHTML = '<div class="matchup-chart-loading">Loading\u2026</div>';
+                tryMatchupDivision(slot, name, 0);
+            }
+
+            function tryMatchupDivision(slot, name, divIdx) {
+                var divisions = ['S', 'A', 'B'];
+                if (divIdx >= divisions.length) {
+                    slot.innerHTML = '<div class="matchup-chart-none">No chart found</div>';
+                    return;
+                }
+                var division = divisions[divIdx];
+                var chartUrl = 'http://localhost/psistorm.com/fsl/view_spider_chart_player_matchup.php'
+                    + '?name=' + encodeURIComponent(name)
+                    + '&division=' + encodeURIComponent(division);
+
+                fetch(chartUrl)
+                    .then(function(res) { return res.text(); })
+                    .then(function(text) {
+                        var t = text.toLowerCase();
+                        var isError = (
+                            t.indexOf('no spider chart data available') !== -1 ||
+                            t.indexOf('has not been analyzed') !== -1 ||
+                            t.indexOf('not found in division') !== -1 ||
+                            t.indexOf('player name is required') !== -1 ||
+                            t.indexOf('division parameter is required') !== -1 ||
+                            t.indexOf('database connection failed') !== -1
+                        );
+                        if (isError) {
+                            tryMatchupDivision(slot, name, divIdx + 1);
+                        } else {
+                            var wrap = document.createElement('div');
+                            wrap.className = 'matchup-chart-frame-wrap';
+                            var iframe = document.createElement('iframe');
+                            iframe.className = 'matchup-chart-iframe';
+                            iframe.setAttribute('frameborder', '0');
+                            iframe.setAttribute('scrolling', 'no');
+                            iframe.src = chartUrl;
+                            wrap.appendChild(iframe);
+                            slot.innerHTML = '';
+                            slot.appendChild(wrap);
+                        }
+                    })
+                    .catch(function(err) {
+                        console.warn('[matchup] fetch failed for', division, err);
+                        tryMatchupDivision(slot, name, divIdx + 1);
+                    });
             }
 
             function disarmMatchup() {
