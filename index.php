@@ -324,6 +324,7 @@ require_once __DIR__ . '/partials/music-config.php'; // defines $safeUser, $mood
                 </div>
                 <span class="scenes-shared-group" style="display: inline-flex; align-items: center; gap: 0.25rem;">
                     <button type="button" id="scene-btn-shared-window" onclick="toggleSceneOverlay('shared-window')">Shared Window</button>
+                    <button type="button" id="scene-btn-matchup" onclick="toggleMatchup()">Matchup</button>
                     <button type="button" id="scene-btn-full-shared" onclick="toggleSceneOverlay('full-shared')" style="display: none;">Shared (Partial)</button>
                     <button type="button" id="scene-btn-yt" onclick="toggleSceneOverlay('yt')" style="display: none;">YT</button>
                 </span>
@@ -441,6 +442,16 @@ require_once __DIR__ . '/partials/music-config.php'; // defines $safeUser, $mood
                     align-items: center;
                 "></div>
                 <div class="player-name-box" data-layer-id="player-name-box"></div>
+                <!-- Matchup Overlay: two-column player stats comparison -->
+                <div id="matchup-overlay" data-layer-id="matchup-overlay" style="display: none; position: absolute; top: 0; left: 0; width: 100%; height: 100%; z-index: 99990; background: rgba(0,0,0,0.88); pointer-events: none; flex-direction: row; justify-content: space-evenly; align-items: center;">
+                    <div class="matchup-col matchup-col-a">
+                        <div class="external-chart-player-label"></div>
+                    </div>
+                    <div class="matchup-vs">VS</div>
+                    <div class="matchup-col matchup-col-b">
+                        <div class="external-chart-player-label"></div>
+                    </div>
+                </div>
             </div>
 
             <!-- VDO full: full-size overlay; inner panel is draggable/resizable and saveable like SC2 -->
@@ -2195,6 +2206,17 @@ require_once __DIR__ . '/partials/music-config.php'; // defines $safeUser, $mood
                 var csbBtn = document.getElementById('scene-btn-custom-scoreboard');
                 if (csbEl) { csbEl.style.display = 'none'; csbEl.style.zIndex = ''; }
                 if (csbBtn) csbBtn.classList.remove('active');
+                var matchupOverlayEl = document.getElementById('matchup-overlay');
+                var matchupBtnEl = document.getElementById('scene-btn-matchup');
+                if (matchupOverlayEl) matchupOverlayEl.style.display = 'none';
+                if (matchupBtnEl) { matchupBtnEl.classList.remove('active'); matchupBtnEl.classList.remove('armed'); }
+                if (typeof disarmMatchup === 'function') {
+                    disarmMatchup();
+                } else if (typeof matchupArmed !== 'undefined') {
+                    matchupArmed = false;
+                    matchupPicks = [];
+                    if (typeof refreshMatchupPickHighlights === 'function') refreshMatchupPickHighlights();
+                }
             }
 
             function getVideoOverlayDefaultZIndex() {
@@ -3440,6 +3462,135 @@ require_once __DIR__ . '/partials/music-config.php'; // defines $safeUser, $mood
                 document.getElementById("error-message").textContent = "Please enter both player name and division";
             }
         }
+
+            // ---- Matchup scene ----
+            var matchupArmed = false;
+            var matchupPicks = []; // up to 2 .player-name-input elements
+
+            function toggleMatchup() {
+                var overlay = document.getElementById('matchup-overlay');
+                var isOpen = overlay && overlay.style.display === 'flex';
+
+                if (isOpen) {
+                    closeMatchupOverlay();
+                    return;
+                }
+
+                if (!matchupArmed) {
+                    matchupArmed = true;
+                    matchupPicks = [];
+                    var btn = document.getElementById('scene-btn-matchup');
+                    if (btn) btn.classList.add('armed');
+                    var intros = document.getElementById('player-intros-section');
+                    if (intros) intros.classList.add('matchup-picking-mode');
+                    setSceneVideoError('Pick Player A field, then Player B field, then press Matchup again.');
+                    return;
+                }
+
+                // Already armed — check picks
+                if (matchupPicks.length === 0) {
+                    disarmMatchup();
+                    return;
+                }
+                if (matchupPicks.length === 1) {
+                    setSceneVideoError('Need a second player field — click another name input, then press Matchup.');
+                    return;
+                }
+                // Two picks — validate and open
+                var nameA = matchupPicks[0].value.trim();
+                var nameB = matchupPicks[1].value.trim();
+                if (!nameA || !nameB) {
+                    setSceneVideoError('Both player name fields must be filled in before opening Matchup.');
+                    return;
+                }
+                openMatchupOverlay(nameA, nameB);
+            }
+
+            function openMatchupOverlay(nameA, nameB) {
+                var overlay = document.getElementById('matchup-overlay');
+                var btn = document.getElementById('scene-btn-matchup');
+                if (!overlay) return;
+                clearExclusiveScenes();
+                var boxA = overlay.querySelector('.matchup-col-a .external-chart-player-label');
+                var boxB = overlay.querySelector('.matchup-col-b .external-chart-player-label');
+                if (typeof window.setPlayerLabelContent === 'function') {
+                    window.setPlayerLabelContent(boxA, nameA);
+                    window.setPlayerLabelContent(boxB, nameB);
+                }
+                overlay.style.display = 'flex';
+                if (btn) { btn.classList.add('active'); btn.classList.remove('armed'); }
+                matchupArmed = false;
+                matchupPicks = [];
+                refreshMatchupPickHighlights();
+                setSceneVideoError('');
+            }
+
+            function closeMatchupOverlay() {
+                var overlay = document.getElementById('matchup-overlay');
+                var btn = document.getElementById('scene-btn-matchup');
+                if (overlay) overlay.style.display = 'none';
+                if (btn) { btn.classList.remove('active'); btn.classList.remove('armed'); }
+                disarmMatchup();
+            }
+
+            function disarmMatchup() {
+                matchupArmed = false;
+                matchupPicks = [];
+                refreshMatchupPickHighlights();
+                var btn = document.getElementById('scene-btn-matchup');
+                if (btn) btn.classList.remove('armed');
+                var intros = document.getElementById('player-intros-section');
+                if (intros) intros.classList.remove('matchup-picking-mode');
+                setSceneVideoError('');
+            }
+
+            function refreshMatchupPickHighlights() {
+                document.querySelectorAll('.player-name-input').forEach(function(inp) {
+                    inp.classList.remove('matchup-pick-first', 'matchup-pick-second');
+                    var form = inp.closest ? inp.closest('.media-form') : inp.parentElement;
+                    if (form) form.classList.remove('matchup-form-first', 'matchup-form-second');
+                });
+                if (matchupPicks[0]) {
+                    matchupPicks[0].classList.add('matchup-pick-first');
+                    var formA = matchupPicks[0].closest ? matchupPicks[0].closest('.media-form') : matchupPicks[0].parentElement;
+                    if (formA) formA.classList.add('matchup-form-first');
+                }
+                if (matchupPicks[1]) {
+                    matchupPicks[1].classList.add('matchup-pick-second');
+                    var formB = matchupPicks[1].closest ? matchupPicks[1].closest('.media-form') : matchupPicks[1].parentElement;
+                    if (formB) formB.classList.add('matchup-form-second');
+                }
+            }
+
+            // Event delegation on player-intros-section for input pick clicks while armed
+            (function() {
+                var introsContainer = document.getElementById('player-intros-section');
+                if (!introsContainer) return;
+                introsContainer.addEventListener('click', function(e) {
+                    if (!matchupArmed) return;
+                    // Ignore clicks on the Go submit button — let it fire the intro normally
+                    if (e.target.type === 'submit' || (e.target.closest && e.target.closest('button[type="submit"]'))) return;
+                    // Find the form row that was clicked (input, label, or the form bg itself)
+                    var form = e.target.closest ? e.target.closest('.media-form') : null;
+                    if (!form) return;
+                    var inp = form.querySelector('.player-name-input');
+                    if (!inp) return;
+                    var idx = matchupPicks.indexOf(inp);
+                    if (idx !== -1) {
+                        matchupPicks.splice(idx, 1);
+                    } else if (matchupPicks.length < 2) {
+                        matchupPicks.push(inp);
+                    }
+                    refreshMatchupPickHighlights();
+                    if (matchupPicks.length === 0) {
+                        setSceneVideoError('Pick Player A field, then Player B field, then press Matchup again.');
+                    } else if (matchupPicks.length === 1) {
+                        setSceneVideoError('\u25b6 A: ' + (matchupPicks[0].value.trim() || '(empty)') + ' \u2014 click Player B field, then press Matchup.');
+                    } else {
+                        setSceneVideoError('\u25b6 A: ' + (matchupPicks[0].value.trim() || '(empty)') + ' vs B: ' + (matchupPicks[1].value.trim() || '(empty)') + ' \u2014 press Matchup to open.');
+                    }
+                });
+            })();
     </script>
 
     <script src="js/auth.js?v=<?php echo $v; ?>"></script>

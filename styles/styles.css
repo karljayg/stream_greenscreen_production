@@ -63,6 +63,7 @@
     /* freeze size so suggestion does not make it wider */
     width: 260px;
     height: 40px;
+    padding-left: 20px;
 }
 
 .scenes-buttons {
@@ -548,4 +549,90 @@ body.layer-outline-debug [data-layer-id].layer-outline-active {
     width: 100%;
     height: 100%;
     object-fit: cover;
+}
+
+/* ---- Matchup overlay ---- */
+.matchup-col {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    flex: 1;
+}
+
+.matchup-vs {
+    font-family: "Rajdhani", "Teko", "Orbitron", sans-serif;
+    font-size: 72px;
+    font-weight: 900;
+    color: #ff4fff;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    flex-shrink: 0;
+    text-shadow:
+        0 0 20px rgba(255, 70, 245, 0.7),
+        0 0 40px rgba(150, 50, 255, 0.5),
+        3px 0 0 #22002e,
+        -3px 0 0 #22002e,
+        0 3px 0 #22002e,
+        0 -3px 0 #22002e;
+}
+
+/* Armed state: pulsing orange */
+#scene-btn-matchup.armed {
+    background: #b85c00;
+    color: #fff;
+    animation: matchup-arm-pulse 0.85s ease-in-out infinite alternate;
+}
+
+@keyframes matchup-arm-pulse {
+    from { box-shadow: 0 0 0 0 rgba(255, 120, 0, 0.55); }
+    to   { box-shadow: 0 0 0 7px rgba(255, 120, 0, 0); }
+}
+
+/* Cursor hint while picking mode is active */
+.matchup-picking-mode .media-form {
+    cursor: pointer;
+}
+.matchup-picking-mode .media-form input[type="text"],
+.matchup-picking-mode .media-form button[type="submit"] {
+    cursor: pointer;
+}
+
+/* Player A pick: dark — deep navy bg, bright cyan text */
+.media-form.matchup-form-first {
+    background: #001a30;
+    border-radius: 5px;
+    border-left: 5px solid #00d4ff;
+    outline: 2px solid #00d4ff;
+}
+.media-form.matchup-form-first input[type="text"] {
+    background: #002a45 !important;
+    color: #b8f0ff !important;
+    border-color: #00d4ff !important;
+    font-weight: 700 !important;
+}
+.media-form.matchup-form-first button[type="submit"] {
+    background: #00d4ff !important;
+    color: #001a30 !important;
+    border-color: #00b8e0 !important;
+    font-weight: 900 !important;
+}
+
+/* Player B pick: dark — deep purple bg, bright pink text */
+.media-form.matchup-form-second {
+    background: #1a0030;
+    border-radius: 5px;
+    border-left: 5px solid #ff80ab;
+    outline: 2px solid #ff80ab;
+}
+.media-form.matchup-form-second input[type="text"] {
+    background: #2d0045 !important;
+    color: #ffd6ea !important;
+    border-color: #ff80ab !important;
+    font-weight: 700 !important;
+}
+.media-form.matchup-form-second button[type="submit"] {
+    background: #ff80ab !important;
+    color: #1a0030 !important;
+    border-color: #e0608a !important;
+    font-weight: 900 !important;
 }
