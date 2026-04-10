@@ -3558,7 +3558,10 @@ require_once __DIR__ . '/partials/music-config.php'; // defines $safeUser, $mood
                     return;
                 }
                 var division = divisions[divIdx];
-                var chartUrl = 'http://localhost/psistorm.com/fsl/view_spider_chart_player_matchup.php'
+                var chartBase = window.location.hostname === 'localhost'
+                    ? 'http://localhost/psistorm.com/fsl/view_spider_chart_player_matchup.php'
+                    : 'https://psistorm.com/fsl/view_spider_chart_player_matchup.php';
+                var chartUrl = chartBase
                     + '?name=' + encodeURIComponent(name)
                     + '&division=' + encodeURIComponent(division);
 
