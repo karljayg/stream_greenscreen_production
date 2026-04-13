@@ -9,6 +9,10 @@ header('Pragma: no-cache');
 require_once __DIR__ . '/config.local.php';
 
 require_once __DIR__ . '/partials/music-config.php'; // defines $safeUser, $moodSongs, $sceneMoodMap, $musicFiles
+require_once __DIR__ . '/partials/production-files-bootstrap.php'; // $streamPfBootstrap, $streamPfIconHref, $streamPfGifHref, $streamMxMusicPath, $streamSceneAssetsBase
+
+$streamLogoS10Src = ($streamSceneAssetsBase !== '') ? ($streamSceneAssetsBase . '2026/FSL_s10_logo.png') : '2026/FSL_s10_logo.png';
+$streamLogoSmallSrc = ($streamSceneAssetsBase !== '') ? ($streamSceneAssetsBase . '2026/fsl_sc2_logo_small.png') : '2026/fsl_sc2_logo_small.png';
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -19,8 +23,8 @@ require_once __DIR__ . '/partials/music-config.php'; // defines $safeUser, $mood
     <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
     <meta http-equiv="Pragma" content="no-cache">
     <title>Stream Production Tool</title>
-    <link rel="icon" href="production_files/images/favicon.ico?v=<?php echo $v; ?>" type="image/x-icon">
-    <link rel="shortcut icon" href="production_files/images/favicon.ico?v=<?php echo $v; ?>" type="image/x-icon">
+    <link rel="icon" href="<?php echo htmlspecialchars($streamPfIconHref, ENT_QUOTES, 'UTF-8'); ?>?v=<?php echo $v; ?>" type="image/x-icon">
+    <link rel="shortcut icon" href="<?php echo htmlspecialchars($streamPfIconHref, ENT_QUOTES, 'UTF-8'); ?>?v=<?php echo $v; ?>" type="image/x-icon">
     <link rel="stylesheet" href="styles/styles.css?v=<?php echo $v; ?>">
     <link rel="stylesheet" href="styles/main.css?v=<?php echo $v; ?>">
     <link rel="stylesheet" href="https://code.jquery.com/ui/1.13.1/themes/smoothness/jquery-ui.css">
@@ -44,6 +48,21 @@ require_once __DIR__ . '/partials/music-config.php'; // defines $safeUser, $mood
                 <button id="user-bar-logout">Logout</button>
             </div>
             <div class="collapsible-content" id="settings-section" style="display: none;">
+                <h3 class="settings-group-heading">Production files</h3>
+                <button type="button" class="collapsible-btn" id="btn-production-files" onclick="toggleSection('production-files-section', this)">Media file location</button>
+                <div class="collapsible-content" id="production-files-section" style="display: none;">
+                    <p class="layer-order-hint">Intro videos, GIFs, and team audio live under <code>production_files/</code>. Use <strong>Local</strong> when this app and files are on the same host, or <strong>Remote</strong> when files are served from a URL with the same folder layout (<code>audio/</code>, <code>video/</code>, <code>images/</code>).</p>
+                    <div style="margin-bottom:8px;">
+                        <label style="display:block;margin-bottom:4px;"><input type="radio" name="production-files-mode" value="local" checked> Local (relative <code>production_files/</code> on this site)</label>
+                        <label style="display:block;"><input type="radio" name="production-files-mode" value="remote"> Remote (base URL for the <code>production_files</code> folder)</label>
+                    </div>
+                    <label for="production-files-remote-url" style="font-size:12px;color:#aaa;">Remote base URL</label>
+                    <input type="url" id="production-files-remote-url" placeholder="https://psistorm.com/stream_production/production_files/" autocomplete="off" style="width:100%;max-width:40rem;display:block;margin:4px 0 8px;padding:4px 6px;font-size:12px;background:#111;color:#eee;border:1px solid #444;border-radius:3px;">
+                    <div style="display:flex;flex-wrap:wrap;align-items:center;gap:8px;">
+                        <button type="button" id="production-files-apply-btn" style="font-size:12px;padding:4px 10px;cursor:pointer;">Apply to page</button>
+                        <span style="font-size:12px;color:#888;" id="production-files-status"></span>
+                    </div>
+                </div>
                 <h3 class="settings-group-heading">Onscreen Messages</h3>
                 <button class="collapsible-btn" id="btn-status" onclick="toggleStatus(this)">Status Message</button>
                 <div class="collapsible-content" id="status-section" style="display: none;">
@@ -423,7 +442,7 @@ require_once __DIR__ . '/partials/music-config.php'; // defines $safeUser, $mood
                     <div id="custom-scoreboard-content" class="scoreboard-panel scoreboard-content-wrap"></div>
                 </div>
                 <div id="gif-container" data-layer-id="gif-container">
-                    <img id="gif-image" src="production_files/images/transparent_greenscreen.gif?v=<?php echo $v; ?>" alt="GIF">
+                    <img id="gif-image" src="<?php echo htmlspecialchars($streamPfGifHref, ENT_QUOTES, 'UTF-8'); ?>?v=<?php echo $v; ?>" alt="GIF">
                     <canvas id="gif-chroma-canvas" style="display:none; position:absolute; pointer-events:none;"></canvas>
                 </div>
                 <div id="chart-container" data-layer-id="chart-container" style="display: none;"></div>
@@ -466,10 +485,10 @@ require_once __DIR__ . '/partials/music-config.php'; // defines $safeUser, $mood
             <!-- Logos overlay: each logo is a wrapper div (dragged/resized) with img inside -->
             <div id="logos-overlay" data-layer-id="logos-overlay" class="logos-overlay" style="display: none; position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none;">
                 <div id="logo-s10-wrap" class="logo-wrap" style="display: none; position: absolute;">
-                    <img src="2026/FSL_s10_logo.png?v=<?php echo $v; ?>" alt="FSL S10" draggable="false">
+                    <img src="<?php echo htmlspecialchars($streamLogoS10Src, ENT_QUOTES, 'UTF-8'); ?>?v=<?php echo $v; ?>" alt="FSL S10" draggable="false">
                 </div>
                 <div id="logo-fsl-small-wrap" class="logo-wrap" style="display: none; position: absolute;">
-                    <img src="2026/fsl_sc2_logo_small.png?v=<?php echo $v; ?>" alt="FSL SC2" draggable="false">
+                    <img src="<?php echo htmlspecialchars($streamLogoSmallSrc, ENT_QUOTES, 'UTF-8'); ?>?v=<?php echo $v; ?>" alt="FSL SC2" draggable="false">
                 </div>
             </div>
 
@@ -541,7 +560,18 @@ require_once __DIR__ . '/partials/music-config.php'; // defines $safeUser, $mood
         window.MX_MUSIC_FILES = <?php echo json_encode($musicFiles,   JSON_UNESCAPED_SLASHES); ?>;
         window.MX_STATS_URL   = '<?php echo rtrim(dirname($_SERVER["SCRIPT_NAME"]), "/"); ?>/save_music_stats.php';
         window.MX_HELP_URL    = '<?php echo rtrim(dirname($_SERVER["SCRIPT_NAME"]), "/"); ?>/docs/music-help.php';
+        window.MX_MUSIC_PATH  = <?php echo json_encode($streamMxMusicPath, JSON_UNESCAPED_SLASHES); ?>;
+        window.MX_MUSIC_PATH_LOCKED = <?php echo $streamMxMusicPathLocked ? 'true' : 'false'; ?>;
+        window.__INITIAL_PRODUCTION_FILES__ = <?php echo json_encode($streamPfBootstrap, JSON_UNESCAPED_SLASHES); ?>;
+        window.STREAM_SCENE_ASSETS_BASE = <?php echo json_encode($streamSceneAssetsBase, JSON_UNESCAPED_SLASHES); ?>;
+        window.STREAM_SCENE_ASSETS_BASE_LOCKED = <?php echo $streamSceneAssetsBaseLocked ? 'true' : 'false'; ?>;
+        window.STREAM_REMOTE_SITE_ORIGIN = <?php echo json_encode($streamRemoteSiteOrigin, JSON_UNESCAPED_SLASHES); ?>;
+        window.STREAM_FSL_SPIDER_PLAYER_URL = <?php echo json_encode($streamFslSpiderPlayerUrl, JSON_UNESCAPED_SLASHES); ?>;
+        window.STREAM_FSL_SPIDER_MATCHUP_URL = <?php echo json_encode($streamFslSpiderMatchupUrl, JSON_UNESCAPED_SLASHES); ?>;
+        window.STREAM_FSL_IMAGES_BASE = <?php echo json_encode($streamFslImagesBase, JSON_UNESCAPED_SLASHES); ?>;
+        window.STREAM_FSL_PROXY_MATCHUP_URL = '<?php echo rtrim(dirname($_SERVER['SCRIPT_NAME']), '/'); ?>/fsl_proxy_matchup.php';
     </script>
+    <script src="js/production-files.js?v=<?php echo $v; ?>"></script>
     <script type="module" src="js/stream_production.js?v=<?php echo $v; ?>"></script>
 
     <script>
@@ -740,7 +770,8 @@ require_once __DIR__ . '/partials/music-config.php'; // defines $safeUser, $mood
                 breakSettings: { min: 5, sec: 0, msg: "be right back..." },
                 musicMode: 'sequence',
                 musicVol: 22,
-                musicFade: 4
+                musicFade: 4,
+                productionFiles: { mode: "remote", remoteBaseUrl: "https://psistorm.com/stream_production/production_files/" }
             };
 
             function persistEditModePositions() {
@@ -818,7 +849,11 @@ require_once __DIR__ . '/partials/music-config.php'; // defines $safeUser, $mood
                 musicVol: (function() { var el = document.getElementById('lpMusicVol'); return el ? parseFloat(el.value) : 22; })(),
                 musicFade: (function() { var el = document.getElementById('lpMusicFade'); return el ? parseFloat(el.value) : 1.5; })(),
                 sceneMoodMap: (typeof MX_SCENE_MAP !== 'undefined' ? MX_SCENE_MAP : {}),
-                moodSongs:    (typeof MX_TRACKS    !== 'undefined' ? MX_TRACKS    : {})
+                moodSongs:    (typeof MX_TRACKS    !== 'undefined' ? MX_TRACKS    : {}),
+                productionFiles: {
+                    mode: (function() { var el = document.querySelector('input[name="production-files-mode"]:checked'); return el && el.value === "remote" ? "remote" : "local"; })(),
+                    remoteBaseUrl: (function() { var el = document.getElementById("production-files-remote-url"); return el ? el.value.trim() : ""; })()
+                }
                 };
                 return out;
             }
@@ -826,6 +861,18 @@ require_once __DIR__ . '/partials/music-config.php'; // defines $safeUser, $mood
             function importAllSettings(parsed) {
                 var def = DEFAULT_SETTINGS;
                 if (!parsed || typeof parsed !== "object") return;
+                var pfDef = def.productionFiles || { mode: "local", remoteBaseUrl: "" };
+                var pf = Object.assign({}, pfDef, (parsed.productionFiles && typeof parsed.productionFiles === "object") ? parsed.productionFiles : {});
+                var modeRadio = document.querySelector('input[name="production-files-mode"][value="' + (pf.mode === "remote" ? "remote" : "local") + '"]');
+                if (modeRadio) modeRadio.checked = true;
+                var pfUrl = document.getElementById("production-files-remote-url");
+                if (pfUrl) {
+                    if (pf.remoteBaseUrl) pfUrl.value = String(pf.remoteBaseUrl);
+                    else if (!pfUrl.value && window.PRODUCTION_FILES_DEFAULT_REMOTE) pfUrl.value = window.PRODUCTION_FILES_DEFAULT_REMOTE + "/";
+                }
+                if (typeof window.applyProductionFilesSettings === "function") {
+                    window.applyProductionFilesSettings(pf);
+                }
                 var set = function(id, val) { var el = document.getElementById(id); if (el && val !== undefined) el.value = String(val); };
                 var setCheck = function(id, val) { var el = document.getElementById(id); if (el) el.checked = !!val; };
                 if (parsed.volume !== undefined) { var vs = document.getElementById("volume-slider"); if (vs) vs.value = Math.max(5, Math.min(100, parseInt(parsed.volume, 10) || 50)); }
@@ -1231,8 +1278,27 @@ require_once __DIR__ . '/partials/music-config.php'; // defines $safeUser, $mood
             applyOrder(getStoredOrder());
             buildLayerList();
 
+            (function initProductionFilesUi() {
+                var urlEl = document.getElementById("production-files-remote-url");
+                if (urlEl && !urlEl.value && window.PRODUCTION_FILES_DEFAULT_REMOTE) {
+                    urlEl.value = window.PRODUCTION_FILES_DEFAULT_REMOTE + "/";
+                }
+                var btn = document.getElementById("production-files-apply-btn");
+                if (!btn) return;
+                btn.addEventListener("click", function() {
+                    var modeEl = document.querySelector('input[name="production-files-mode"]:checked');
+                    var st = document.getElementById("production-files-status");
+                    if (typeof window.applyProductionFilesSettings !== "function") return;
+                    window.applyProductionFilesSettings({ mode: modeEl ? modeEl.value : "local", remoteBaseUrl: urlEl ? urlEl.value.trim() : "" });
+                    if (st) {
+                        st.textContent = "Applied.";
+                        setTimeout(function() { st.textContent = ""; }, 2500);
+                    }
+                });
+            })();
+
             fetch("settings.php").then(function(r) { return r.json(); }).then(function(parsed) {
-                if (parsed && (parsed.layerOrder !== undefined || parsed.order !== undefined || parsed.status !== undefined || parsed.version !== undefined)) {
+                if (parsed && (parsed.layerOrder !== undefined || parsed.order !== undefined || parsed.status !== undefined || parsed.version !== undefined || parsed.productionFiles !== undefined)) {
                     importAllSettings(parsed);
                 }
                 var shouldShowBg = !parsed || !parsed.scenes || parsed.scenes.bg === true;
@@ -2124,9 +2190,19 @@ require_once __DIR__ . '/partials/music-config.php'; // defines $safeUser, $mood
          * Reusable fullscreen transition: play a video with fade-in at start and fade-out at end.
          * @param {Object} options - videoSrc (string), fadeInMs (number), fadeOutMs (number), onComplete (function)
          */
+        function resolveStreamSceneVideoSrc(videoSrc) {
+            if (!videoSrc) return videoSrc;
+            if (/^https?:\/\//i.test(videoSrc)) return videoSrc;
+            var base = (typeof window.STREAM_SCENE_ASSETS_BASE === 'string') ? window.STREAM_SCENE_ASSETS_BASE : '';
+            if (base) {
+                return String(base).replace(/\/?$/, '/') + String(videoSrc).replace(/^\.?\//, '');
+            }
+            return videoSrc;
+        }
+
         function playTransitionVideo(options) {
             var opts = options || {};
-            var videoSrc = opts.videoSrc;
+            var videoSrc = resolveStreamSceneVideoSrc(opts.videoSrc);
             var fadeInMs = opts.fadeInMs != null ? opts.fadeInMs : 500;
             var fadeOutMs = opts.fadeOutMs != null ? opts.fadeOutMs : 500;
             var onComplete = typeof opts.onComplete === 'function' ? opts.onComplete : function() {};
@@ -2148,6 +2224,9 @@ require_once __DIR__ . '/partials/music-config.php'; // defines $safeUser, $mood
             video.style.transition = 'opacity ' + (fadeInMs / 1000) + 's ease';
             video.style.opacity = '0';
             overlay.style.display = 'block';
+            if (typeof window.applyAnonymousCORSIfNeeded === 'function') {
+                window.applyAnonymousCORSIfNeeded(video, videoSrc);
+            }
             video.src = videoSrc;
 
             var fadeInStarted = false;
@@ -2241,7 +2320,7 @@ require_once __DIR__ . '/partials/music-config.php'; // defines $safeUser, $mood
 
             /* ---------- Scoreboard image/style replacements (adjust here for icons and formatting) ---------- */
             window.SCOREBOARD_REPLACEMENTS = {
-                raceIconBase: 'https://psistorm.com/fsl/images/',
+                raceIconBase: (typeof window.STREAM_FSL_IMAGES_BASE === 'string' && window.STREAM_FSL_IMAGES_BASE) ? window.STREAM_FSL_IMAGES_BASE : 'https://psistorm.com/fsl/images/',
                 raceIcons: {
                     Z: 'zerg_icon.png',
                     T: 'terran_icon.png',
@@ -2991,7 +3070,11 @@ require_once __DIR__ . '/partials/music-config.php'; // defines $safeUser, $mood
                     if (teamAudio) {
                         var ap = document.querySelector('#audio-player');
                         if (ap) {
-                            ap.src = 'production_files/audio/' + teamAudio;
+                            var teamSrc = typeof window.resolveProductionUrl === 'function' ? window.resolveProductionUrl('production_files/audio/' + teamAudio) : ('production_files/audio/' + teamAudio);
+                            if (typeof window.applyAnonymousCORSIfNeeded === 'function') {
+                                window.applyAnonymousCORSIfNeeded(ap, teamSrc);
+                            }
+                            ap.src = teamSrc;
                             var vol = document.getElementById('volume-slider');
                             ap.volume = vol ? vol.value / 100 : 1;
                             ap.load();
@@ -3001,12 +3084,20 @@ require_once __DIR__ . '/partials/music-config.php'; // defines $safeUser, $mood
                     if (typeof window.mxOnSceneChange === 'function') window.mxOnSceneChange(sceneId);
                 }
                 if (useFront) {
-                    fetch('2026/' + file, { method: 'HEAD' })
-                        .then(function(r) {
-                            if (!r.ok) { setSceneVideoError('error: ' + file + ' not found'); return; }
-                            doShowVideoOverlay();
-                        })
-                        .catch(function() { setSceneVideoError('error: ' + file + ' not found'); });
+                    var skipHead = !!(typeof window.STREAM_SCENE_ASSETS_BASE === 'string' && window.STREAM_SCENE_ASSETS_BASE);
+                    if (!skipHead && typeof window.getProductionFilesMode === 'function' && window.getProductionFilesMode() === 'remote') {
+                        skipHead = true;
+                    }
+                    if (skipHead) {
+                        doShowVideoOverlay();
+                    } else {
+                        fetch('2026/' + file, { method: 'HEAD' })
+                            .then(function(r) {
+                                if (!r.ok) { setSceneVideoError('error: ' + file + ' not found'); return; }
+                                doShowVideoOverlay();
+                            })
+                            .catch(function() { setSceneVideoError('error: ' + file + ' not found'); });
+                    }
                 } else {
                     doShowVideoOverlay();
                 }
@@ -3413,7 +3504,9 @@ require_once __DIR__ . '/partials/music-config.php'; // defines $safeUser, $mood
             }
             
             if (playerName && division) {
-                const baseUrl = window.spiderChartBaseUrl || "http://localhost/psistorm.com/fsl/view_spider_chart_player_matchup.php";
+                const baseUrl = (typeof window.STREAM_FSL_SPIDER_MATCHUP_URL === 'string' && window.STREAM_FSL_SPIDER_MATCHUP_URL.trim())
+                    ? window.STREAM_FSL_SPIDER_MATCHUP_URL.trim()
+                    : ((window.spiderChartBaseUrl || '').replace(/view_spider_chart_player\.php$/i, 'view_spider_chart_player_matchup.php') || 'https://psistorm.com/fsl/view_spider_chart_player_matchup.php');
                 const chartUrl = `${baseUrl}?name=${encodeURIComponent(playerName)}&division=${encodeURIComponent(division)}`;
                 
                 const pos = window.displayPositions ? window.displayPositions.externalChart : {scale: '1.1'};
@@ -3558,14 +3651,20 @@ require_once __DIR__ . '/partials/music-config.php'; // defines $safeUser, $mood
                     return;
                 }
                 var division = divisions[divIdx];
-                var chartBase = window.location.hostname === 'localhost'
-                    ? 'http://localhost/psistorm.com/fsl/view_spider_chart_player_matchup.php'
+                var chartBase = (typeof window.STREAM_FSL_SPIDER_MATCHUP_URL === 'string' && window.STREAM_FSL_SPIDER_MATCHUP_URL.trim())
+                    ? window.STREAM_FSL_SPIDER_MATCHUP_URL.trim()
                     : 'https://psistorm.com/fsl/view_spider_chart_player_matchup.php';
                 var chartUrl = chartBase
                     + '?name=' + encodeURIComponent(name)
                     + '&division=' + encodeURIComponent(division);
+                var proxyBase = (typeof window.STREAM_FSL_PROXY_MATCHUP_URL === 'string' && window.STREAM_FSL_PROXY_MATCHUP_URL.trim())
+                    ? window.STREAM_FSL_PROXY_MATCHUP_URL.trim()
+                    : 'fsl_proxy_matchup.php';
+                var sniffUrl = proxyBase + (proxyBase.indexOf('?') === -1 ? '?' : '&')
+                    + 'name=' + encodeURIComponent(name)
+                    + '&division=' + encodeURIComponent(division);
 
-                fetch(chartUrl)
+                fetch(sniffUrl)
                     .then(function(res) { return res.text(); })
                     .then(function(text) {
                         var t = text.toLowerCase();

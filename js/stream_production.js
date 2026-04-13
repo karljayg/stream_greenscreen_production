@@ -1,14 +1,26 @@
-var projectpath = "psistorm.com/tools/stream_greenscreen_production"; // base path for asset URLs; test by running Random Music
-var masterpath = ".";
-var production_files = masterpath + "/production_files";
-var audiopath = production_files + "/audio/";
-var videopath = production_files + "/video/";
-var imagepath = production_files + "/images/";
+function productionAudioBase() {
+	return (typeof window.getProductionAudioBase === 'function' && window.getProductionAudioBase()) || 'production_files/audio/';
+}
+function productionVideoBase() {
+	return (typeof window.getProductionVideoBase === 'function' && window.getProductionVideoBase()) || 'production_files/video/';
+}
+function productionImageBase() {
+	return (typeof window.getProductionImagesBase === 'function' && window.getProductionImagesBase()) || 'production_files/images/';
+}
+function resolveMediaUrl(path) {
+	return typeof window.resolveProductionUrl === 'function' ? window.resolveProductionUrl(path) : path;
+}
 
-// Spider Chart URL Configuration - Change this for live vs dev
-//var spiderChartBaseUrl = "http://localhost/psistorm.com/fsl/view_spider_chart_player.php";
-// For LIVE use: 
-var spiderChartBaseUrl = "https://psistorm.com/fsl/view_spider_chart_player.php";
+function applyMediaCORSIfNeeded(mediaEl, resolvedSrc) {
+	if (typeof window.applyAnonymousCORSIfNeeded === 'function') {
+		window.applyAnonymousCORSIfNeeded(mediaEl, resolvedSrc);
+	}
+}
+
+// Spider chart: PHP injects window.STREAM_FSL_SPIDER_PLAYER_URL from same origin as production_files remote (see production-files-bootstrap.php).
+var spiderChartBaseUrl = (typeof window.STREAM_FSL_SPIDER_PLAYER_URL === 'string' && window.STREAM_FSL_SPIDER_PLAYER_URL.trim())
+	? window.STREAM_FSL_SPIDER_PLAYER_URL.trim()
+	: 'https://psistorm.com/fsl/view_spider_chart_player.php';
 
 const _v = window.ASSET_VERSION || Date.now();
 const { default: playerList } = await import(`./playerlist.js?v=${_v}`);
@@ -214,17 +226,20 @@ function startGifChromaLoop(img, canvas, durationMs) {
 const forms = document.querySelectorAll('.media-form');
 const audioPlayer = document.querySelector('#audio-player');
 
+/** Wav paths for chained playback on #audio-player (shared across media forms; not per-form closure). */
+let introWavQueue = [];
+
 // add an event listener for the "ended" event on the audio player
 audioPlayer.addEventListener('ended', function() {
-	const audioPlayer = this;
-	// play the next audio file in the array
-	if (audioFiles.length > 0) {
-		const nextAudioPath = audioFiles.shift();
-		audioPlayer.setAttribute('src', nextAudioPath);
-		audioPlayer.load();
-        audioPlayer.volume = document.getElementById('volume-slider').value / 100;
-		audioPlayer.play();
-	}
+	const el = this;
+	if (!introWavQueue.length) return;
+	const nextAudioPath = introWavQueue.shift();
+	const nextResolved = resolveMediaUrl(nextAudioPath);
+	applyMediaCORSIfNeeded(el, nextResolved);
+	el.setAttribute('src', nextResolved);
+	el.load();
+	el.volume = document.getElementById('volume-slider').value / 100;
+	el.play();
 });
 
 // Attach the functions to the global window object to make them accessible in the HTML
@@ -304,7 +319,7 @@ function playRandomAudio() {
     } else {
         audioPath = randomAudioFiles[Math.floor(Math.random() * randomAudioFiles.length)];
     }
-    const audio = new Audio(audioPath);
+    const audio = new Audio(resolveMediaUrl(audioPath));
     audio.volume = document.getElementById('volume-slider').value / 100;
     audio.play();
 }
@@ -318,8 +333,6 @@ forms.forEach((form) => {
 	const audioPlayer = document.querySelector('#audio-player');
 	const errorMessage = document.querySelector('#error-message');
 	const videoContainer = document.querySelector('#video-container');
-
-	let audioFiles = [];
 
 	const onVideoEnded = () => {
 		stopVideoChromaLoop();
@@ -336,17 +349,18 @@ forms.forEach((form) => {
 			errorMessage.textContent = `Error: Player "${playerName}" not found.`;
 			return;
 		}
-		const videoPath = videopath + matchingPlayer[1];
+		const videoPath = productionVideoBase() + matchingPlayer[1];
 
+		introWavQueue.length = 0;
 		if (matchingPlayer[2]) {
-			audioFiles.push(audiopath + matchingPlayer[2]);
+			introWavQueue.push(productionAudioBase() + matchingPlayer[2]);
 		}
 
 		videoPlayer.removeEventListener('ended', onVideoEnded);
 
 		const playNextAudio = (index) => {
-			if (index < audioFiles.length) {
-				const audio = new Audio(audioFiles[index]);
+			if (index < introWavQueue.length) {
+				const audio = new Audio(resolveMediaUrl(introWavQueue[index]));
 				audio.load();
 				audio.volume = document.getElementById('volume-slider').value / 100;
 				audio.play();
@@ -354,14 +368,15 @@ forms.forEach((form) => {
 					playNextAudio(index + 1);
 				});
 			} else {
-				audioFiles = [];
+				introWavQueue.length = 0;
 			}
-		};   
+		};
 
-		if (audioFiles.length === 1) {
+		if (introWavQueue.length === 1) {
 			playNextAudio(0);
 		}
 
+		applyMediaCORSIfNeeded(videoPlayer, videoPath);
 		videoPlayer.setAttribute('src', videoPath);
 		videoPlayer.load();
 
@@ -456,7 +471,7 @@ forms.forEach((form) => {
 
 	function gifPlayer(gifIndex = 0) {
 	  const gifFileName = gifFiles.find(file => file[0] === gifIndex)[1];
-	  let gifPath = imagepath + gifFileName;
+	  let gifPath = productionImageBase() + gifFileName;
 	  if (typeof window.ASSET_VERSION !== 'undefined') gifPath += '?v=' + window.ASSET_VERSION;
 	  // Force reload each time so GIF always restarts from frame 0
 	  gifPath += (gifPath.includes('?') ? '&' : '?') + 't=' + Date.now();
@@ -467,6 +482,7 @@ forms.forEach((form) => {
 
 	  // Hiding the <img> freezes GIF animation on frame 1, so skip canvas chroma key.
 	  // OBS applies chroma key directly from the browser source.
+	  applyMediaCORSIfNeeded(gifImage, gifPath.split('?')[0]);
 	  gifImage.src = gifPath;
 	  gifContainer.style.display = 'flex';
 	  setTimeout(() => {

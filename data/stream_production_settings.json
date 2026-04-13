@@ -100,5 +100,9 @@
         "min": 0,
         "sec": 20,
         "msg": "be right back..."
+    },
+    "productionFiles": {
+        "mode": "remote",
+        "remoteBaseUrl": "https://psistorm.com/stream_production/production_files/"
     }
 }

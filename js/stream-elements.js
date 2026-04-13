@@ -34,7 +34,7 @@
             (extra ? '<div class="se-extra">' + extra + '</div>' : '') +
             '<div class="se-bar"></div>';
         overlay.appendChild(card);
-        playAlertSound(cfg.sound);
+        playAlertSound(typeof window.resolveProductionUrl === 'function' ? window.resolveProductionUrl(cfg.sound) : cfg.sound);
         setTimeout(function() {
             card.classList.add('se-out');
             setTimeout(function() { overlay.innerHTML = ''; }, 600);

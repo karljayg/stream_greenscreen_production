@@ -16,6 +16,10 @@ config.local.php
 data/settings_*.json
 data/users/
 
+# Runtime / synced stats (local only, not versioned)
+data/music_stats.json
+data/rankings.json
+
 # Music files (large binaries, not versioned)
 music/
 

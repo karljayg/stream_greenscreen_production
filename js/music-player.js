@@ -257,9 +257,45 @@
         return Promise.resolve();
     }
 
+    function mxMusicBase() {
+        var b = (window.MX_MUSIC_PATH !== undefined && window.MX_MUSIC_PATH !== '') ? String(window.MX_MUSIC_PATH) : 'music/';
+        if (b.indexOf('/') === -1) return b + '/';
+        return /\/$/.test(b) ? b : b + '/';
+    }
+
+    /** Full URL for a track entry (filename, site-absolute path, or absolute URL). */
+    function mxResolveMusicSrc(file) {
+        var f = String(file || '').trim();
+        if (!f) return '';
+        if (/^https?:\/\//i.test(f) || f.indexOf('//') === 0) return f;
+        try {
+            if (f.charAt(0) === '/') {
+                return new URL(f, window.location.origin).href;
+            }
+            return new URL(f, new URL(mxMusicBase(), window.location.href)).href;
+        } catch (e) {
+            return mxMusicBase() + f;
+        }
+    }
+
+    function mxMusicNeedsAnonymousCORS(absUrl) {
+        try {
+            return new URL(absUrl, window.location.href).origin !== window.location.origin;
+        } catch (e2) {
+            return false;
+        }
+    }
+
     function mxMakeDeck(file) {
-        var audio = new Audio((window.MX_MUSIC_PATH !== undefined ? window.MX_MUSIC_PATH : 'music/') + file);
-        audio.crossOrigin = 'anonymous'; audio.loop = false; audio.preload = 'auto';
+        var url = mxResolveMusicSrc(file);
+        try {
+            console.log('[MX music] resolved URL:', url, '| MX_MUSIC_PATH:', (typeof window.MX_MUSIC_PATH !== 'undefined' ? window.MX_MUSIC_PATH : '(unset)'), '| entry:', file);
+        } catch (logErr) { /* ignore */ }
+        var audio = new Audio(url);
+        // CORS mode breaks many same-origin static hosts (no ACAO on mp3). Only
+        // set anonymous crossOrigin when the track is actually cross-origin.
+        if (mxMusicNeedsAnonymousCORS(url)) audio.crossOrigin = 'anonymous';
+        audio.loop = false; audio.preload = 'auto';
         var src  = mx.createMediaElementSource(audio);
         var gain = mx.createGain(); gain.gain.value = 0;
         src.connect(gain); gain.connect(mxGain);
@@ -271,7 +307,13 @@
         return new Promise(function (res, rej) {
             var done = function () { audio.removeEventListener('canplay', ok); audio.removeEventListener('error', er); };
             var ok = function () { done(); res(); };
-            var er = function () { done(); rej(new Error('Load failed')); };
+            var er = function () {
+                done();
+                var err = audio.error;
+                var code = err && err.code ? err.code : 0;
+                var detail = err && err.message ? err.message : 'Load failed';
+                rej(new Error(detail + (code ? ' (' + code + ')' : '')));
+            };
             audio.addEventListener('canplay', ok);
             audio.addEventListener('error', er);
             audio.load();
