@@ -127,6 +127,10 @@ $streamLogoSmallSrc = ($streamSceneAssetsBase !== '') ? ($streamSceneAssetsBase 
                         <input type="text" id="csb-label-a" placeholder="Side A" style="background:#1a2a1a; color:#8f8; border:1px solid #484; border-radius:3px; padding:3px 6px; font-size:12px;">
                         <label style="font-size:12px; color:#88f;">Side B label:</label>
                         <input type="text" id="csb-label-b" placeholder="Side B" style="background:#1a1a2a; color:#88f; border:1px solid #448; border-radius:3px; padding:3px 6px; font-size:12px;">
+                        <label style="grid-column:1 / -1; font-size:12px; color:#ccc; display:flex; align-items:center; gap:6px;">
+                            <input type="checkbox" id="csb-show-summary">
+                            Show top summary and labels
+                        </label>
                         <label style="font-size:12px; color:#aaa;">Matches:</label>
                         <div style="display:flex; gap:6px; align-items:center;">
                             <input type="number" id="csb-num-matches" min="1" max="20" value="5" style="width:52px; text-align:center; padding:3px 4px;">
@@ -229,6 +233,88 @@ $streamLogoSmallSrc = ($streamSceneAssetsBase !== '') ? ($streamSceneAssetsBase 
                         <span style="font-size: 0.85rem;">%</span>
                     </div>
                 </div>
+                <button class="collapsible-btn" id="btn-scene-videos-settings" onclick="toggleSection('scene-videos-settings-section', this)">Scene Videos</button>
+                <div class="collapsible-content" id="scene-videos-settings-section" style="display: none;">
+                    <h2 class="layer-order-heading">Schedule / Bracket media files</h2>
+                    <p class="layer-order-hint">Schedule/Bracket list is scoped to <code style="font-size:0.78rem;">production_files/</code>. Team button list uses the selected root (<code style="font-size:0.78rem;">2026/</code> or <code style="font-size:0.78rem;">production_files/</code>). Upload target is chosen below.</p>
+                    <div style="display: grid; grid-template-columns: auto 1fr auto; gap: 0.45rem 0.5rem; align-items: center; margin-top: 6px;">
+                        <label style="font-size: 0.85rem; white-space: nowrap;">Folder:</label>
+                        <select id="scene-video-folder" style="min-width: 0; background:#fff; color:#111; border:1px solid #888;"></select>
+                        <button type="button" id="scene-video-refresh-btn">Refresh</button>
+
+                        <label style="font-size: 0.85rem; white-space: nowrap;">Schedule file:</label>
+                        <div style="position: relative;">
+                            <input type="text" id="scene-video-schedule-file" style="min-width: 0; width: 100%; background:#fff; color:#111; border:1px solid #888;" placeholder="Type 3+ letters to search files...">
+                            <div id="scene-video-schedule-suggestions" style="display:none; position:absolute; left:0; right:0; top:100%; z-index:1001; max-height:220px; overflow-y:auto; background:#fff; color:#111; border:1px solid #888;"></div>
+                        </div>
+                        <span></span>
+
+                        <label style="font-size: 0.85rem; white-space: nowrap;">Bracket file:</label>
+                        <div style="position: relative;">
+                            <input type="text" id="scene-video-bracket-file" style="min-width: 0; width: 100%; background:#fff; color:#111; border:1px solid #888;" placeholder="Type 3+ letters to search files...">
+                            <div id="scene-video-bracket-suggestions" style="display:none; position:absolute; left:0; right:0; top:100%; z-index:1001; max-height:220px; overflow-y:auto; background:#fff; color:#111; border:1px solid #888;"></div>
+                        </div>
+                        <span></span>
+
+                        <label style="font-size: 0.85rem; white-space: nowrap; grid-column: 1 / -1; margin-top: 0.35rem;">Team buttons (paths under <code style="font-size:0.78rem;">2026/</code> or <code style="font-size:0.78rem;">production_files/</code>)</label>
+                        <span style="grid-column: 1 / -1;"></span>
+                        <span style="grid-column: 1 / -1;"></span>
+
+                        <label style="font-size: 0.85rem; white-space: nowrap;">Media root:</label>
+                        <select id="scene-team-media-root" style="min-width: 0; background:#fff; color:#111; border:1px solid #888;">
+                            <option value="2026" selected>2026</option>
+                            <option value="production_files">production_files</option>
+                        </select>
+                        <span></span>
+
+                        <label style="font-size: 0.85rem; white-space: nowrap;">Folder:</label>
+                        <select id="scene-team-video-folder" style="min-width: 0; background:#fff; color:#111; border:1px solid #888;"></select>
+                        <button type="button" id="scene-team-video-refresh-btn">Refresh</button>
+
+                        <label style="font-size: 0.85rem; white-space: nowrap;">ASH:</label>
+                        <div style="position: relative;">
+                            <input type="text" id="scene-video-team-ash-file" style="min-width: 0; width: 100%; background:#fff; color:#111; border:1px solid #888;" placeholder="Type 3+ letters...">
+                            <div id="scene-video-team-ash-suggestions" style="display:none; position:absolute; left:0; right:0; top:100%; z-index:1001; max-height:220px; overflow-y:auto; background:#fff; color:#111; border:1px solid #888;"></div>
+                        </div>
+                        <span></span>
+
+                        <label style="font-size: 0.85rem; white-space: nowrap;">POG:</label>
+                        <div style="position: relative;">
+                            <input type="text" id="scene-video-team-pog-file" style="min-width: 0; width: 100%; background:#fff; color:#111; border:1px solid #888;" placeholder="Type 3+ letters...">
+                            <div id="scene-video-team-pog-suggestions" style="display:none; position:absolute; left:0; right:0; top:100%; z-index:1001; max-height:220px; overflow-y:auto; background:#fff; color:#111; border:1px solid #888;"></div>
+                        </div>
+                        <span></span>
+
+                        <label style="font-size: 0.85rem; white-space: nowrap;">PTB:</label>
+                        <div style="position: relative;">
+                            <input type="text" id="scene-video-team-ptb-file" style="min-width: 0; width: 100%; background:#fff; color:#111; border:1px solid #888;" placeholder="Type 3+ letters...">
+                            <div id="scene-video-team-ptb-suggestions" style="display:none; position:absolute; left:0; right:0; top:100%; z-index:1001; max-height:220px; overflow-y:auto; background:#fff; color:#111; border:1px solid #888;"></div>
+                        </div>
+                        <span></span>
+
+                        <label style="font-size: 0.85rem; white-space: nowrap;">ST:</label>
+                        <div style="position: relative;">
+                            <input type="text" id="scene-video-team-st-file" style="min-width: 0; width: 100%; background:#fff; color:#111; border:1px solid #888;" placeholder="Type 3+ letters...">
+                            <div id="scene-video-team-st-suggestions" style="display:none; position:absolute; left:0; right:0; top:100%; z-index:1001; max-height:220px; overflow-y:auto; background:#fff; color:#111; border:1px solid #888;"></div>
+                        </div>
+                        <span></span>
+                    </div>
+                    <div style="margin-top: 8px; font-size: 0.78rem; color: #ccc;">
+                        <span style="margin-right: 0.5rem;">Upload goes to:</span>
+                        <label style="margin-right: 0.75rem;"><input type="radio" name="scene-upload-dest" id="scene-upload-dest-schedule" value="schedule" checked> Schedule/Bracket folder (above)</label>
+                        <label><input type="radio" name="scene-upload-dest" id="scene-upload-dest-team" value="team"> Team folder (above)</label>
+                    </div>
+                    <div style="display: flex; gap: 0.5rem; align-items: center; margin-top: 8px;">
+                        <input type="file" id="scene-video-upload-file" accept=".mp4,.png,.jpg,.jpeg,.webp,.gif,video/mp4,image/png,image/jpeg,image/webp,image/gif">
+                    </div>
+                    <div style="margin-top: 6px;">
+                        <button type="button" id="scene-video-upload-btn" style="font-weight:700; border:1px solid #777; width:100%;">Upload Media</button>
+                    </div>
+                    <div style="margin-top: 6px;">
+                        <span id="scene-video-status" style="font-size: 0.8rem; min-height: 1em; display:block;"></span>
+                    </div>
+                    <p class="layer-order-hint" style="margin-top:6px;">After choosing a file, click <strong>Upload Media</strong>.</p>
+                </div>
                 <button class="collapsible-btn" id="btn-break-settings" onclick="toggleSection('break-settings-section', this)">Break</button>
                 <div class="collapsible-content" id="break-settings-section" style="display: none;">
                     <h2 class="layer-order-heading">Break</h2>
@@ -330,9 +416,12 @@ $streamLogoSmallSrc = ($streamSceneAssetsBase !== '') ? ($streamSceneAssetsBase 
                     <button type="button" id="scene-btn-sc2" class="scene-btn-major" onclick="toggleSceneOverlay('sc2')" style="flex:5;">SC2 (animated)</button>
                     <button type="button" id="scene-btn-sc2-quick" class="scene-btn-major" onclick="toggleSceneOverlay('sc2-quick')" style="flex:1;">Quick</button>
                 </div>
-                <button type="button" id="scene-btn-schedule" onclick="toggleSceneOverlay('schedule')">Schedule</button>
                 <div style="display:flex; gap:8px;">
-                    <button type="button" id="scene-btn-scoreboard" onclick="toggleSceneOverlay('scoreboard')">FSL Scoreboard</button>
+                    <button type="button" id="scene-btn-schedule" onclick="toggleSceneOverlay('schedule')">Schedule</button>
+                    <button type="button" id="scene-btn-bracket" onclick="toggleSceneOverlay('bracket')">Bracket</button>
+                </div>
+                <div style="display:flex; gap:8px;">
+                    <button type="button" id="scene-btn-scoreboard" onclick="toggleSceneOverlay('scoreboard')">FSL TeamLeague Scoreboard</button>
                     <button type="button" id="scene-btn-custom-scoreboard" onclick="toggleSceneOverlay('custom-scoreboard')">Custom Scoreboard</button>
                 </div>
                 <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px;">
@@ -605,6 +694,16 @@ $streamLogoSmallSrc = ($streamSceneAssetsBase !== '') ? ($streamSceneAssetsBase 
             if (btn) btn.classList.toggle('open', el.style.display === 'block');
         }
 
+        /** Path passed to 2026/video_player.php?v= — project-root-relative. */
+        function videoPlayerMediaPath(file) {
+            if (!file) return '';
+            var f = String(file).replace(/\\/g, '/').trim();
+            if (!f) return '';
+            if (f.indexOf('production_files/') === 0) return f;
+            if (f.indexOf('2026/') === 0) return f;
+            return '2026/' + f;
+        }
+
         (function() {
             var LAYER_STORAGE_KEY = "stream_production_layer_order";
             var DEFAULT_ORDER = [
@@ -767,6 +866,11 @@ $streamLogoSmallSrc = ($streamSceneAssetsBase !== '') ? ($streamSceneAssetsBase 
                     { label: "INTRO", url: "https://www.youtube.com/watch?v=vt04Xbq57Dk", vol: 100 },
                     { label: "BREAK", url: "https://youtu.be/O9lNetcn9Y8?si=FaqwLX5I9KkoJecK", vol: 100 }
                 ],
+                sceneVideos: {
+                    schedule: "production_files/2026_FSL_schedule_now.mp4",
+                    bracket: "production_files/2026_FSL_schedule_now.mp4",
+                    teams: { ash: "2026/ASH.mp4", pog: "2026/POG.mp4", ptb: "2026/PTB.mp4", st: "2026/ST.mp4" }
+                },
                 breakSettings: { min: 5, sec: 0, msg: "be right back..." },
                 musicMode: 'sequence',
                 musicVol: 22,
@@ -844,6 +948,7 @@ $streamLogoSmallSrc = ($streamSceneAssetsBase !== '') ? ($streamSceneAssetsBase 
                     chromaKey: !!document.getElementById("chroma-key-cb") && document.getElementById("chroma-key-cb").checked,
                     ytCrop: typeof getYtCrop === "function" ? getYtCrop() : { top: 150, left: 10, right: 20, bottom: 100 },
                     ytIframeVideos: typeof getYtIframeVideos === "function" ? getYtIframeVideos() : DEFAULT_SETTINGS.ytIframeVideos,
+                    sceneVideos: typeof getSceneVideoSettings === "function" ? getSceneVideoSettings() : DEFAULT_SETTINGS.sceneVideos,
                     breakSettings: typeof getBreakSettings === "function" ? getBreakSettings() : DEFAULT_SETTINGS.breakSettings,
                     musicMode: (function() { var el = document.querySelector('input[name="music-mode"]:checked'); return el ? el.value : 'sequence'; })(),
                 musicVol: (function() { var el = document.getElementById('lpMusicVol'); return el ? parseFloat(el.value) : 22; })(),
@@ -907,7 +1012,7 @@ $streamLogoSmallSrc = ($streamSceneAssetsBase !== '') ? ($streamSceneAssetsBase 
                     if (o1 && b1) {
                         if (sc.bg) {
                             VIDEO_OVERLAY_KEYS.forEach(function(k) { var b = document.getElementById("scene-btn-" + k); if (b) b.classList.remove("active"); });
-                            if (videoIframe) videoIframe.src = "2026/video_player.php?v=" + encodeURIComponent(VIDEO_OVERLAY_FILES["all-vdo"]) + "&_t=" + Date.now();
+                            if (videoIframe) videoIframe.src = "2026/video_player.php?v=" + encodeURIComponent(videoPlayerMediaPath(VIDEO_OVERLAY_FILES["all-vdo"])) + "&_t=" + Date.now();
                             o1.style.zIndex = typeof getVideoOverlayDefaultZIndex === 'function' ? getVideoOverlayDefaultZIndex() : '1';
                             o1.style.display = "block";
                             b1.classList.add("active");
@@ -964,6 +1069,10 @@ $streamLogoSmallSrc = ($streamSceneAssetsBase !== '') ? ($streamSceneAssetsBase 
                         setYtIframeVideos(ytv);
                         if (typeof saveYtIframeVideos === "function") saveYtIframeVideos();
                     }
+                }
+                var sv = parsed.sceneVideos;
+                if (sv && typeof sv === "object") {
+                    if (typeof setSceneVideoSettings === "function") setSceneVideoSettings(sv);
                 }
                 var bks = parsed.breakSettings;
                 if (bks && typeof bks === "object") {
@@ -1651,7 +1760,8 @@ $streamLogoSmallSrc = ($streamSceneAssetsBase !== '') ? ($streamSceneAssetsBase 
         }
 
         /* Shared teardown: hide the YT iframe scene and restore the non-SC2 layout */
-        function closeYtIframeScene() {
+        /** @param {boolean} [skipMusicResume] if true, do not resume mood deck (used when swapping Intro↔Break). */
+        function closeYtIframeScene(skipMusicResume) {
             var overlay = document.getElementById('scene-overlay-yt-iframe');
             var iframe = document.getElementById('yt-iframe-player');
             var introBtn = document.getElementById('scene-btn-yt-intro');
@@ -1662,7 +1772,7 @@ $streamLogoSmallSrc = ($streamSceneAssetsBase !== '') ? ($streamSceneAssetsBase 
             if (introBtn) introBtn.classList.remove('active');
             if (breakBtn) breakBtn.classList.remove('active');
             applyLayoutFromSc2Button();
-            if (typeof window.mxResumeForYt === 'function') window.mxResumeForYt();
+            if (!skipMusicResume && typeof window.mxResumeForYt === 'function') window.mxResumeForYt();
         }
 
         (function initBreakSettings() {
@@ -1697,19 +1807,33 @@ $streamLogoSmallSrc = ($streamSceneAssetsBase !== '') ? ($streamSceneAssetsBase 
             closeYtIframeScene();
         });
 
+        var ytIframeVolumeApplyGen = 0;
+
+        function ytIframePostSetVolume(iframe, vol) {
+            if (!iframe || !iframe.contentWindow) return;
+            var v = Math.max(0, Math.min(100, vol != null ? Number(vol) : 100));
+            if (!isFinite(v)) v = 100;
+            try {
+                iframe.contentWindow.postMessage(JSON.stringify({ event: 'command', func: 'setVolume', args: [v] }), 'https://www.youtube.com');
+            } catch (e) {}
+        }
+
         function subscribeYtIframe(iframe, vol) {
             if (!iframe || !iframe.contentWindow) return;
+            var v = vol != null ? Math.max(0, Math.min(100, Number(vol))) : 100;
+            if (!isFinite(v)) v = 100;
+            var gen = ++ytIframeVolumeApplyGen;
             try {
                 iframe.contentWindow.postMessage(JSON.stringify({ event: 'listening', id: 1 }), 'https://www.youtube.com');
-                if (vol != null && vol !== 100) {
-                    /* Small delay so the player is ready to receive commands */
-                    setTimeout(function() {
-                        try {
-                            iframe.contentWindow.postMessage(JSON.stringify({ event: 'command', func: 'setVolume', args: [vol] }), 'https://www.youtube.com');
-                        } catch (e) {}
-                    }, 800);
-                }
             } catch (e) {}
+            ytIframePostSetVolume(iframe, v);
+            /* YouTube often ignores the first command until the player is ready — fire now then retry. */
+            [16, 50, 120, 300, 600].forEach(function (ms) {
+                setTimeout(function () {
+                    if (gen !== ytIframeVolumeApplyGen) return;
+                    ytIframePostSetVolume(iframe, v);
+                }, ms);
+            });
         }
 
         function applyYtCropToIframe() {
@@ -1727,7 +1851,8 @@ $streamLogoSmallSrc = ($streamSceneAssetsBase !== '') ? ($streamSceneAssetsBase 
             if (isActive && currentWhich === which) {
                 closeYtIframeScene(); /* mxResumeForYt called inside */
             } else {
-                closeYtIframeScene(); /* clear any prior YT iframe state before switching */
+                /* Skip deck resume when only swapping Intro↔Break so mxPauseForYt / mxResumeForYt stay consistent. */
+                closeYtIframeScene(isActive);
                 if (typeof window.mxPauseForYt === 'function') window.mxPauseForYt();
                 clearExclusiveScenes();
                 var videos = getYtIframeVideos();
@@ -2267,10 +2392,379 @@ $streamLogoSmallSrc = ($streamSceneAssetsBase !== '') ? ($streamSceneAssetsBase 
             };
         }
 
-        var VIDEO_OVERLAY_KEYS = ['all-vdo', 'schedule', 'ash', 'pog', 'ptb', 'st'];
-            var VIDEO_OVERLAY_FILES = { 'all-vdo': '2026_FSL_BG.mp4', 'schedule': '2026_FSL_schedule_now.mp4', 'ash': 'ASH.mp4', 'pog': 'POG.mp4', 'ptb': 'PTB.mp4', 'st': 'ST.mp4' };
-            var VIDEO_OVERLAY_FRONT = ['schedule', 'ash', 'pog', 'ptb', 'st'];
+        var VIDEO_OVERLAY_KEYS = ['all-vdo', 'schedule', 'bracket', 'ash', 'pog', 'ptb', 'st'];
+            var VIDEO_OVERLAY_FILES = {
+                'all-vdo': '2026/2026_FSL_BG.mp4',
+                'schedule': 'production_files/2026_FSL_schedule_now.mp4',
+                'bracket': 'production_files/2026_FSL_schedule_now.mp4',
+                'ash': '2026/ASH.mp4',
+                'pog': '2026/POG.mp4',
+                'ptb': '2026/PTB.mp4',
+                'st': '2026/ST.mp4'
+            };
+            var VIDEO_OVERLAY_FRONT = ['schedule', 'bracket', 'ash', 'pog', 'ptb', 'st'];
             var VIDEO_OVERLAY_AUDIO = { 'ash': 'angry_space_hares.wav', 'pog': 'FSL_PSISOP_Gaming.wav', 'ptb': 'pulled_the_boys.wav', 'st': 'FSL_SpecialTactics2.wav' };
+
+            function getSceneVideoSettings() {
+                return {
+                    schedule: VIDEO_OVERLAY_FILES.schedule || 'production_files/2026_FSL_schedule_now.mp4',
+                    bracket: VIDEO_OVERLAY_FILES.bracket || 'production_files/2026_FSL_schedule_now.mp4',
+                    teams: {
+                        ash: VIDEO_OVERLAY_FILES.ash || '2026/ASH.mp4',
+                        pog: VIDEO_OVERLAY_FILES.pog || '2026/POG.mp4',
+                        ptb: VIDEO_OVERLAY_FILES.ptb || '2026/PTB.mp4',
+                        st: VIDEO_OVERLAY_FILES.st || '2026/ST.mp4'
+                    }
+                };
+            }
+
+            function syncSceneVideoInputValue(inputId, filePath) {
+                var input = document.getElementById(inputId);
+                if (!input || !filePath) return;
+                input.value = filePath;
+            }
+
+            function setSceneVideoSettings(sceneVideos) {
+                if (!sceneVideos || typeof sceneVideos !== 'object') return;
+                if (typeof sceneVideos.schedule === 'string' && sceneVideos.schedule.trim()) VIDEO_OVERLAY_FILES.schedule = sceneVideos.schedule.trim();
+                if (typeof sceneVideos.bracket === 'string' && sceneVideos.bracket.trim()) VIDEO_OVERLAY_FILES.bracket = sceneVideos.bracket.trim();
+                var teams = sceneVideos.teams;
+                if (teams && typeof teams === 'object') {
+                    ['ash', 'pog', 'ptb', 'st'].forEach(function(k) {
+                        if (typeof teams[k] === 'string' && teams[k].trim()) VIDEO_OVERLAY_FILES[k] = teams[k].trim();
+                    });
+                }
+                syncSceneVideoInputValue('scene-video-schedule-file', VIDEO_OVERLAY_FILES.schedule);
+                syncSceneVideoInputValue('scene-video-bracket-file', VIDEO_OVERLAY_FILES.bracket);
+                syncSceneVideoInputValue('scene-video-team-ash-file', VIDEO_OVERLAY_FILES.ash);
+                syncSceneVideoInputValue('scene-video-team-pog-file', VIDEO_OVERLAY_FILES.pog);
+                syncSceneVideoInputValue('scene-video-team-ptb-file', VIDEO_OVERLAY_FILES.ptb);
+                syncSceneVideoInputValue('scene-video-team-st-file', VIDEO_OVERLAY_FILES.st);
+            }
+
+            window.getSceneVideoSettings = getSceneVideoSettings;
+            window.setSceneVideoSettings = setSceneVideoSettings;
+
+            function setupSceneVideoSettingsUi() {
+                var folderSelect = document.getElementById('scene-video-folder');
+                var scheduleInput = document.getElementById('scene-video-schedule-file');
+                var bracketInput = document.getElementById('scene-video-bracket-file');
+                var scheduleSuggestions = document.getElementById('scene-video-schedule-suggestions');
+                var bracketSuggestions = document.getElementById('scene-video-bracket-suggestions');
+                var teamRootSelect = document.getElementById('scene-team-media-root');
+                var teamFolderSelect = document.getElementById('scene-team-video-folder');
+                var teamRefreshBtn = document.getElementById('scene-team-video-refresh-btn');
+                var ashInput = document.getElementById('scene-video-team-ash-file');
+                var pogInput = document.getElementById('scene-video-team-pog-file');
+                var ptbInput = document.getElementById('scene-video-team-ptb-file');
+                var stInput = document.getElementById('scene-video-team-st-file');
+                var ashSuggestions = document.getElementById('scene-video-team-ash-suggestions');
+                var pogSuggestions = document.getElementById('scene-video-team-pog-suggestions');
+                var ptbSuggestions = document.getElementById('scene-video-team-ptb-suggestions');
+                var stSuggestions = document.getElementById('scene-video-team-st-suggestions');
+                var refreshBtn = document.getElementById('scene-video-refresh-btn');
+                var uploadBtn = document.getElementById('scene-video-upload-btn');
+                var uploadFile = document.getElementById('scene-video-upload-file');
+                var statusEl = document.getElementById('scene-video-status');
+                var uploadDestSchedule = document.getElementById('scene-upload-dest-schedule');
+                var uploadDestTeam = document.getElementById('scene-upload-dest-team');
+                if (!folderSelect || !scheduleInput || !bracketInput || !scheduleSuggestions || !bracketSuggestions || !refreshBtn || !uploadBtn || !uploadFile || !statusEl) return;
+                if (!teamRootSelect || !teamFolderSelect || !teamRefreshBtn) return;
+                if (!ashInput || !pogInput || !ptbInput || !stInput || !ashSuggestions || !pogSuggestions || !ptbSuggestions || !stSuggestions) return;
+                if (!uploadDestSchedule || !uploadDestTeam) return;
+
+                var availableFiles = [];
+                var availableTeamFiles = [];
+
+                function setStatus(msg, isError) {
+                    statusEl.textContent = msg || '';
+                    statusEl.style.color = isError ? '#c55' : '#8bc34a';
+                }
+
+                function inferFolderUnderPrefix(paths, prefix) {
+                    for (var i = 0; i < paths.length; i++) {
+                        var fp = String(paths[i] || '').replace(/\\/g, '/');
+                        if (!fp) continue;
+                        if (fp.indexOf(prefix + '/') !== 0) continue;
+                        var rel = fp.slice((prefix + '/').length);
+                        var slash = rel.lastIndexOf('/');
+                        return slash >= 0 ? rel.slice(0, slash) : '';
+                    }
+                    return '';
+                }
+
+                function inferFolderFromCurrentSelection() {
+                    return inferFolderUnderPrefix([VIDEO_OVERLAY_FILES.schedule, VIDEO_OVERLAY_FILES.bracket], 'production_files');
+                }
+
+                function inferTeamFolderFromCurrentSelection() {
+                    var root = teamRootSelect ? teamRootSelect.value : '2026';
+                    var paths = [VIDEO_OVERLAY_FILES.ash, VIDEO_OVERLAY_FILES.pog, VIDEO_OVERLAY_FILES.ptb, VIDEO_OVERLAY_FILES.st];
+                    return inferFolderUnderPrefix(paths, root);
+                }
+
+                function renderSuggestions(containerEl, matches, onPick) {
+                    containerEl.innerHTML = '';
+                    if (!matches.length) {
+                        containerEl.style.display = 'none';
+                        return;
+                    }
+                    matches.forEach(function(fp) {
+                        var row = document.createElement('div');
+                        row.textContent = fp;
+                        row.style.padding = '4px 8px';
+                        row.style.cursor = 'pointer';
+                        row.style.fontSize = '12px';
+                        row.style.color = '#111';
+                        row.style.background = '#fff';
+                        row.style.borderBottom = '1px solid #ddd';
+                        row.addEventListener('mousedown', function(e) {
+                            e.preventDefault();
+                            onPick(fp);
+                            containerEl.style.display = 'none';
+                        });
+                        row.addEventListener('mouseenter', function() { row.style.background = '#eaf2ff'; });
+                        row.addEventListener('mouseleave', function() { row.style.background = '#fff'; });
+                        containerEl.appendChild(row);
+                    });
+                    containerEl.style.display = 'block';
+                }
+
+                function saveGlobalSceneVideoSettings() {
+                    var payload = getSceneVideoSettings();
+                    return fetch('scene_video_settings.php', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(payload)
+                    }).then(function(r) { return r.json(); });
+                }
+
+                function commitScheduleBracketValue(sceneKey, value, list) {
+                    if (!value) return;
+                    var exists = list.indexOf(value) !== -1;
+                    if (!exists) {
+                        setStatus('File not in current list for this folder.', true);
+                        return;
+                    }
+                    if (sceneKey === 'schedule') VIDEO_OVERLAY_FILES.schedule = value;
+                    if (sceneKey === 'bracket') VIDEO_OVERLAY_FILES.bracket = value;
+                    saveGlobalSceneVideoSettings().then(function() {
+                        setStatus('Saved ' + sceneKey + ' file.', false);
+                    }).catch(function() {});
+                }
+
+                function commitTeamValue(overlayKey, value, list) {
+                    if (!value) return;
+                    var exists = list.indexOf(value) !== -1;
+                    if (!exists) {
+                        setStatus('File not in current team folder list.', true);
+                        return;
+                    }
+                    VIDEO_OVERLAY_FILES[overlayKey] = value;
+                    saveGlobalSceneVideoSettings().then(function() {
+                        setStatus('Saved ' + String(overlayKey).toUpperCase() + ' file.', false);
+                    }).catch(function() {});
+                }
+
+                function wireAutocomplete(inputEl, listEl, sceneKey, listGetter, commitFn) {
+                    inputEl.addEventListener('input', function() {
+                        var q = String(inputEl.value || '').trim().toLowerCase();
+                        if (q.length < 3) {
+                            listEl.style.display = 'none';
+                            listEl.innerHTML = '';
+                            return;
+                        }
+                        var list = listGetter();
+                        var matches = list.filter(function(fp) { return fp.toLowerCase().indexOf(q) !== -1; }).slice(0, 40);
+                        renderSuggestions(listEl, matches, function(picked) {
+                            inputEl.value = picked;
+                            commitFn(sceneKey, picked, list);
+                        });
+                    });
+                    inputEl.addEventListener('keydown', function(e) {
+                        if (e.key === 'Enter') {
+                            e.preventDefault();
+                            commitFn(sceneKey, String(inputEl.value || '').trim(), listGetter());
+                            listEl.style.display = 'none';
+                        }
+                    });
+                    inputEl.addEventListener('blur', function() {
+                        commitFn(sceneKey, String(inputEl.value || '').trim(), listGetter());
+                        setTimeout(function() { listEl.style.display = 'none'; }, 150);
+                    });
+                }
+
+                function loadGlobalSceneVideoSettings() {
+                    return fetch('scene_video_settings.php')
+                        .then(function(r) { return r.json(); })
+                        .then(function(data) {
+                            if (data && data.ok && data.settings) {
+                                setSceneVideoSettings(data.settings);
+                            }
+                        })
+                        .catch(function() {});
+                }
+
+                function loadSceneVideoList() {
+                    var folder = folderSelect.value || '';
+                    setStatus('Loading...', false);
+                    fetch('scene_videos.php?root=production_files&folder=' + encodeURIComponent(folder))
+                        .then(function(r) { return r.json(); })
+                        .then(function(data) {
+                            if (!data || !data.ok) {
+                                setStatus((data && data.error) ? data.error : 'Failed to load list', true);
+                                return;
+                            }
+                            var folders = data.folders || [];
+                            var files = data.files || [];
+                            var prevFolder = folderSelect.value || '';
+                            folderSelect.innerHTML = '';
+                            var rootOpt = document.createElement('option');
+                            rootOpt.value = '';
+                            rootOpt.textContent = '(production_files root)';
+                            folderSelect.appendChild(rootOpt);
+                            folders.forEach(function(f) {
+                                var opt = document.createElement('option');
+                                opt.value = f;
+                                opt.textContent = f;
+                                folderSelect.appendChild(opt);
+                            });
+                            folderSelect.value = folders.indexOf(prevFolder) !== -1 || prevFolder === '' ? prevFolder : '';
+
+                            availableFiles = files.slice();
+                            if (availableFiles.indexOf(VIDEO_OVERLAY_FILES.schedule) === -1 && availableFiles.length) {
+                                VIDEO_OVERLAY_FILES.schedule = availableFiles[0];
+                            }
+                            if (availableFiles.indexOf(VIDEO_OVERLAY_FILES.bracket) === -1 && availableFiles.length) {
+                                VIDEO_OVERLAY_FILES.bracket = availableFiles[0];
+                            }
+                            scheduleInput.value = VIDEO_OVERLAY_FILES.schedule || '';
+                            bracketInput.value = VIDEO_OVERLAY_FILES.bracket || '';
+                            setStatus('Loaded ' + files.length + ' media file(s) (production_files).', false);
+                        })
+                        .catch(function() {
+                            setStatus('Failed to load list', true);
+                        });
+                }
+
+                function loadTeamSceneVideoList() {
+                    var root = teamRootSelect.value || '2026';
+                    var folder = teamFolderSelect.value || '';
+                    setStatus('Loading team list...', false);
+                    fetch('scene_videos.php?root=' + encodeURIComponent(root) + '&folder=' + encodeURIComponent(folder))
+                        .then(function(r) { return r.json(); })
+                        .then(function(data) {
+                            if (!data || !data.ok) {
+                                setStatus((data && data.error) ? data.error : 'Failed to load team list', true);
+                                return;
+                            }
+                            var folders = data.folders || [];
+                            var files = data.files || [];
+                            var prevFolder = teamFolderSelect.value || '';
+                            teamFolderSelect.innerHTML = '';
+                            var tro = document.createElement('option');
+                            tro.value = '';
+                            tro.textContent = '(' + root + ' root)';
+                            teamFolderSelect.appendChild(tro);
+                            folders.forEach(function(f) {
+                                var opt = document.createElement('option');
+                                opt.value = f;
+                                opt.textContent = f;
+                                teamFolderSelect.appendChild(opt);
+                            });
+                            teamFolderSelect.value = folders.indexOf(prevFolder) !== -1 || prevFolder === '' ? prevFolder : '';
+
+                            availableTeamFiles = files.slice();
+                            function pathMatchesRoot(fp, r) {
+                                fp = String(fp || '').replace(/\\/g, '/');
+                                if (!fp) return false;
+                                if (r === 'production_files') return fp.indexOf('production_files/') === 0;
+                                return fp.indexOf('2026/') === 0;
+                            }
+                            ['ash', 'pog', 'ptb', 'st'].forEach(function(k) {
+                                var cur = VIDEO_OVERLAY_FILES[k];
+                                if (availableTeamFiles.indexOf(cur) !== -1) return;
+                                if (availableTeamFiles.length && (!pathMatchesRoot(cur, root) || !cur)) {
+                                    VIDEO_OVERLAY_FILES[k] = availableTeamFiles[0];
+                                }
+                            });
+                            ashInput.value = VIDEO_OVERLAY_FILES.ash || '';
+                            pogInput.value = VIDEO_OVERLAY_FILES.pog || '';
+                            ptbInput.value = VIDEO_OVERLAY_FILES.ptb || '';
+                            stInput.value = VIDEO_OVERLAY_FILES.st || '';
+                            setStatus('Loaded ' + files.length + ' media file(s) (' + root + ').', false);
+                        })
+                        .catch(function() {
+                            setStatus('Failed to load team list', true);
+                        });
+                }
+
+                wireAutocomplete(scheduleInput, scheduleSuggestions, 'schedule', function() { return availableFiles; }, commitScheduleBracketValue);
+                wireAutocomplete(bracketInput, bracketSuggestions, 'bracket', function() { return availableFiles; }, commitScheduleBracketValue);
+                wireAutocomplete(ashInput, ashSuggestions, 'ash', function() { return availableTeamFiles; }, commitTeamValue);
+                wireAutocomplete(pogInput, pogSuggestions, 'pog', function() { return availableTeamFiles; }, commitTeamValue);
+                wireAutocomplete(ptbInput, ptbSuggestions, 'ptb', function() { return availableTeamFiles; }, commitTeamValue);
+                wireAutocomplete(stInput, stSuggestions, 'st', function() { return availableTeamFiles; }, commitTeamValue);
+
+                folderSelect.addEventListener('change', loadSceneVideoList);
+                refreshBtn.addEventListener('click', loadSceneVideoList);
+                teamFolderSelect.addEventListener('change', loadTeamSceneVideoList);
+                teamRefreshBtn.addEventListener('click', loadTeamSceneVideoList);
+                teamRootSelect.addEventListener('change', function() {
+                    teamFolderSelect.value = inferTeamFolderFromCurrentSelection();
+                    loadTeamSceneVideoList();
+                });
+
+                function uploadSelectedMedia() {
+                    if (!uploadFile.files || !uploadFile.files.length) {
+                        setStatus('Pick a media file first.', true);
+                        return;
+                    }
+                    var toTeam = uploadDestTeam && uploadDestTeam.checked;
+                    var mediaRoot = toTeam ? (teamRootSelect.value || '2026') : 'production_files';
+                    var targetFolder = toTeam ? (teamFolderSelect.value || '') : (folderSelect.value || '');
+                    var targetLabel = mediaRoot + (targetFolder ? '/' + targetFolder : '');
+                    var fd = new FormData();
+                    fd.append('video_file', uploadFile.files[0]);
+                    fd.append('media_root', mediaRoot);
+                    fd.append('target_folder', targetFolder);
+                    uploadBtn.disabled = true;
+                    setStatus('Uploading to ' + targetLabel + ' ...', false);
+                    fetch('scene_videos.php', { method: 'POST', body: fd })
+                        .then(function(r) { return r.json(); })
+                        .then(function(data) {
+                            if (!data || !data.ok) {
+                                setStatus((data && data.error) ? data.error : 'Upload failed', true);
+                                return;
+                            }
+                            setStatus('Uploaded: ' + data.path, false);
+                            uploadFile.value = '';
+                            if (toTeam) loadTeamSceneVideoList();
+                            else loadSceneVideoList();
+                        })
+                        .catch(function() {
+                            setStatus('Upload failed', true);
+                        })
+                        .finally(function() {
+                            uploadBtn.disabled = false;
+                        });
+                }
+
+                uploadBtn.addEventListener('click', uploadSelectedMedia);
+
+                loadGlobalSceneVideoSettings().finally(function() {
+                    folderSelect.value = inferFolderFromCurrentSelection();
+                    loadSceneVideoList();
+                    teamRootSelect.value = (function() {
+                        var p = String(VIDEO_OVERLAY_FILES.ash || '').replace(/\\/g, '/');
+                        if (p.indexOf('production_files/') === 0) return 'production_files';
+                        return '2026';
+                    })();
+                    teamFolderSelect.value = inferTeamFolderFromCurrentSelection();
+                    loadTeamSceneVideoList();
+                });
+            }
+            setupSceneVideoSettingsUi();
 
             // Deactivate all mutually-exclusive scenes: video overlay buttons, scoreboard, custom-scoreboard.
             // Call this at the start of any scene activation. Does NOT touch SC2, VDO full, or Logos.
@@ -2568,6 +3062,7 @@ $streamLogoSmallSrc = ($streamSceneAssetsBase !== '') ? ($streamSceneAssetsBase 
                 return {
                     labelA: (document.getElementById('csb-label-a') || {}).value || '',
                     labelB: (document.getElementById('csb-label-b') || {}).value || '',
+                    showSummary: !!((document.getElementById('csb-show-summary') || {}).checked),
                     matches: matches
                 };
             }
@@ -2576,6 +3071,7 @@ $streamLogoSmallSrc = ($streamSceneAssetsBase !== '') ? ($streamSceneAssetsBase 
                 var collected = csbCollect();
                 _csbData.labelA = collected.labelA;
                 _csbData.labelB = collected.labelB;
+                _csbData.showSummary = !!collected.showSummary;
                 _csbData.matches = collected.matches;
                 var btn = document.getElementById('csb-save-btn');
                 var status = document.getElementById('csb-save-status');
@@ -2611,8 +3107,10 @@ $streamLogoSmallSrc = ($streamSceneAssetsBase !== '') ? ($streamSceneAssetsBase 
                         }
                         var inpA = document.getElementById('csb-label-a');
                         var inpB = document.getElementById('csb-label-b');
+                        var cbSummary = document.getElementById('csb-show-summary');
                         if (inpA) inpA.value = _csbData.labelA || '';
                         if (inpB) inpB.value = _csbData.labelB || '';
+                        if (cbSummary) cbSummary.checked = !!_csbData.showSummary;
                         csbRenderRows();
                     })
                     .catch(function() {
@@ -2630,6 +3128,7 @@ $streamLogoSmallSrc = ($streamSceneAssetsBase !== '') ? ($streamSceneAssetsBase 
 
                 var labelA = (data && data.labelA && data.labelA.trim()) ? data.labelA.trim() : 'Side A';
                 var labelB = (data && data.labelB && data.labelB.trim()) ? data.labelB.trim() : 'Side B';
+                var showSummary = !!(data && data.showSummary);
 
                 var totalA = 0, totalB = 0;
                 active.forEach(function(m) { totalA += (parseInt(m.scoreA, 10) || 0); totalB += (parseInt(m.scoreB, 10) || 0); });
@@ -2654,23 +3153,25 @@ $streamLogoSmallSrc = ($streamSceneAssetsBase !== '') ? ($streamSceneAssetsBase 
                 var sb = [];
                 sb.push('<div class="scoreboard-panel-inner">');
 
-                /* ── Banner header: labelA | total score | labelB ── same columns as rows */
-                sb.push('<div style="' + ROW_BASE + ' padding:0.55rem 0 0.45rem; border-bottom:2px solid rgba(108,92,231,0.35); margin-bottom:0.2rem;">');
-                sb.push('<div style="' + NUM_S + '"></div>');
-                sb.push('<div style="' + NAMEA_S + ' font-family:\'Exo 2\',sans-serif; font-size:2.2rem; font-weight:700; color:#e0e0e0; overflow:visible; text-overflow:clip; padding-left:0.4rem;">' + escapeHtml(labelA) + '</div>');
-                sb.push('<div style="' + SCORE_S + '"><span class="scoreboard-score-main">' + totalA + ' &ndash; ' + totalB + '</span></div>');
-                sb.push('<div style="' + NAMEB_S + ' font-family:\'Exo 2\',sans-serif; font-size:2.2rem; font-weight:700; color:#e0e0e0; flex:1.6; overflow:visible; text-overflow:clip; padding-right:0.4rem;">' + escapeHtml(labelB) + '</div>');
-                sb.push('</div>');
-
-                /* ── Column header row ── */
                 sb.push('<div class="scoreboard-table-wrap" style="margin-top:0.3rem;">');
-                sb.push('<div style="' + ROW_BASE + ' background:rgba(108,92,231,0.25); border-bottom:1px solid rgba(255,255,255,0.1); padding:0.32rem 0;">');
-                sb.push('<div style="' + NUM_S + '"></div>');
-                sb.push('<div style="' + NAMEA_S + ' font-weight:600; font-size:1.15rem; color:#fff;">' + escapeHtml(labelA) + '</div>');
-                sb.push('<div style="' + SCORE_S + ' color:#a29bfe; font-size:0.9rem; font-weight:500; letter-spacing:0.04em;">Score</div>');
-                sb.push('<div style="' + NAMEB_S + ' font-weight:600; font-size:1.15rem; color:#fff;">' + escapeHtml(labelB) + '</div>');
-                if (hasDesc) sb.push('<div style="' + DESC_S + ' color:#a29bfe; font-size:0.9rem; font-weight:500;">Map / Desc</div>');
-                sb.push('</div>');
+                if (showSummary) {
+                    /* ── Banner header: labelA | total score | labelB ── same columns as rows */
+                    sb.push('<div style="' + ROW_BASE + ' padding:0.55rem 0 0.45rem; border-bottom:2px solid rgba(108,92,231,0.35); margin-bottom:0.2rem;">');
+                    sb.push('<div style="' + NUM_S + '"></div>');
+                    sb.push('<div style="' + NAMEA_S + ' font-family:\'Exo 2\',sans-serif; font-size:2.2rem; font-weight:700; color:#e0e0e0; overflow:visible; text-overflow:clip; padding-left:0.4rem;">' + escapeHtml(labelA) + '</div>');
+                    sb.push('<div style="' + SCORE_S + '"><span class="scoreboard-score-main">' + totalA + ' &ndash; ' + totalB + '</span></div>');
+                    sb.push('<div style="' + NAMEB_S + ' font-family:\'Exo 2\',sans-serif; font-size:2.2rem; font-weight:700; color:#e0e0e0; flex:1.6; overflow:visible; text-overflow:clip; padding-right:0.4rem;">' + escapeHtml(labelB) + '</div>');
+                    sb.push('</div>');
+
+                    /* ── Column header row ── */
+                    sb.push('<div style="' + ROW_BASE + ' background:rgba(108,92,231,0.25); border-bottom:1px solid rgba(255,255,255,0.1); padding:0.32rem 0;">');
+                    sb.push('<div style="' + NUM_S + '"></div>');
+                    sb.push('<div style="' + NAMEA_S + ' font-weight:600; font-size:1.15rem; color:#fff;">' + escapeHtml(labelA) + '</div>');
+                    sb.push('<div style="' + SCORE_S + ' color:#a29bfe; font-size:0.9rem; font-weight:500; letter-spacing:0.04em;">Score</div>');
+                    sb.push('<div style="' + NAMEB_S + ' font-weight:600; font-size:1.15rem; color:#fff;">' + escapeHtml(labelB) + '</div>');
+                    if (hasDesc) sb.push('<div style="' + DESC_S + ' color:#a29bfe; font-size:0.9rem; font-weight:500;">Map / Desc</div>');
+                    sb.push('</div>');
+                }
 
                 /* ── Data rows ── */
                 active.forEach(function(m, i) {
@@ -2874,7 +3375,7 @@ $streamLogoSmallSrc = ($streamSceneAssetsBase !== '') ? ($streamSceneAssetsBase 
                     bgOverlay.style.zIndex = typeof getVideoOverlayDefaultZIndex === 'function' ? getVideoOverlayDefaultZIndex() : '1';
                 }
                 if (videoIframe) {
-                    videoIframe.src = '2026/video_player.php?v=' + encodeURIComponent(VIDEO_OVERLAY_FILES['all-vdo']) + '&_t=' + Date.now();
+                    videoIframe.src = '2026/video_player.php?v=' + encodeURIComponent(videoPlayerMediaPath(VIDEO_OVERLAY_FILES['all-vdo'])) + '&_t=' + Date.now();
                 }
                 VIDEO_OVERLAY_KEYS.forEach(function(key) {
                     var b = document.getElementById('scene-btn-' + key);
@@ -3013,7 +3514,7 @@ $streamLogoSmallSrc = ($streamSceneAssetsBase !== '') ? ($streamSceneAssetsBase 
                 if (fullSharedBtn) fullSharedBtn.classList.remove('active');
                 if (ytOverlay) ytOverlay.style.display = 'none';
                 if (ytBtn) ytBtn.classList.remove('active');
-                iframe.src = '2026/video_player.php?v=' + encodeURIComponent(VIDEO_OVERLAY_FILES['all-vdo']) + '&_t=' + Date.now();
+                iframe.src = '2026/video_player.php?v=' + encodeURIComponent(videoPlayerMediaPath(VIDEO_OVERLAY_FILES['all-vdo'])) + '&_t=' + Date.now();
                 overlay.style.zIndex = getVideoOverlayDefaultZIndex();
                 overlay.style.display = 'block';
                 bgBtn.classList.add('active');
@@ -3032,6 +3533,7 @@ $streamLogoSmallSrc = ($streamSceneAssetsBase !== '') ? ($streamSceneAssetsBase 
                 if (!overlay || !iframe || !btn) return;
                 var file = VIDEO_OVERLAY_FILES[sceneId];
                 if (!file) return;
+                var mediaPath = videoPlayerMediaPath(file);
                 setSceneVideoError('');
                 var isThisActive = btn.classList.contains('active');
                 var useFront = VIDEO_OVERLAY_FRONT.indexOf(sceneId) !== -1;
@@ -3060,7 +3562,7 @@ $streamLogoSmallSrc = ($streamSceneAssetsBase !== '') ? ($streamSceneAssetsBase 
                     if (fullSharedBtn) fullSharedBtn.classList.remove('active');
                     if (ytOverlay) ytOverlay.style.display = 'none';
                     if (ytBtn) ytBtn.classList.remove('active');
-                    var url = (file.indexOf('.html') !== -1) ? ('2026/' + file) : ('2026/video_player.php?v=' + encodeURIComponent(file) + '&_t=' + Date.now());
+                    var url = (file.indexOf('.html') !== -1) ? ('2026/' + file) : ('2026/video_player.php?v=' + encodeURIComponent(mediaPath) + '&_t=' + Date.now());
                     if (useFront && file.indexOf('.html') === -1) url += '&front=true';
                     iframe.src = url;
                     overlay.style.zIndex = useFront ? '99999' : getVideoOverlayDefaultZIndex();
@@ -3091,12 +3593,12 @@ $streamLogoSmallSrc = ($streamSceneAssetsBase !== '') ? ($streamSceneAssetsBase 
                     if (skipHead) {
                         doShowVideoOverlay();
                     } else {
-                        fetch('2026/' + file, { method: 'HEAD' })
+                        fetch('2026/video_player.php?stream=1&v=' + encodeURIComponent(mediaPath), { method: 'HEAD', cache: 'no-store' })
                             .then(function(r) {
-                                if (!r.ok) { setSceneVideoError('error: ' + file + ' not found'); return; }
+                                if (!r.ok) { setSceneVideoError('error: ' + mediaPath + ' not found'); return; }
                                 doShowVideoOverlay();
                             })
-                            .catch(function() { setSceneVideoError('error: ' + file + ' not found'); });
+                            .catch(function() { setSceneVideoError('error: ' + mediaPath + ' not found'); });
                     }
                 } else {
                     doShowVideoOverlay();
@@ -3152,7 +3654,7 @@ $streamLogoSmallSrc = ($streamSceneAssetsBase !== '') ? ($streamSceneAssetsBase 
                     if (ytOverlay) ytOverlay.style.display = 'none';
                     if (ytBtn) ytBtn.classList.remove('active');
                     if (bgOverlay) { bgOverlay.style.display = 'block'; bgOverlay.style.zIndex = typeof getVideoOverlayDefaultZIndex === 'function' ? getVideoOverlayDefaultZIndex() : '1'; }
-                    if (videoIframe) videoIframe.src = '2026/video_player.php?v=' + encodeURIComponent(VIDEO_OVERLAY_FILES['all-vdo']) + '&_t=' + Date.now();
+                    if (videoIframe) videoIframe.src = '2026/video_player.php?v=' + encodeURIComponent(videoPlayerMediaPath(VIDEO_OVERLAY_FILES['all-vdo'])) + '&_t=' + Date.now();
                     if (bgBtn) bgBtn.classList.add('active');
                     if (logosOverlay) { logosOverlay.style.display = 'block'; if (logosBtn) logosBtn.classList.add('active'); }
                     if (typeof updateLogosOverlay === 'function') updateLogosOverlay();
@@ -3208,7 +3710,7 @@ $streamLogoSmallSrc = ($streamSceneAssetsBase !== '') ? ($streamSceneAssetsBase 
                     if (ytOverlayCsb) ytOverlayCsb.style.display = 'none';
                     if (ytBtnCsb) ytBtnCsb.classList.remove('active');
                     if (bgOverlayCsb) { bgOverlayCsb.style.display = 'block'; bgOverlayCsb.style.zIndex = typeof getVideoOverlayDefaultZIndex === 'function' ? getVideoOverlayDefaultZIndex() : '1'; }
-                    if (videoIframeCsb) videoIframeCsb.src = '2026/video_player.php?v=' + encodeURIComponent(VIDEO_OVERLAY_FILES['all-vdo']) + '&_t=' + Date.now();
+                    if (videoIframeCsb) videoIframeCsb.src = '2026/video_player.php?v=' + encodeURIComponent(videoPlayerMediaPath(VIDEO_OVERLAY_FILES['all-vdo'])) + '&_t=' + Date.now();
                     if (bgBtnCsb) bgBtnCsb.classList.add('active');
                     if (logosOverlayCsb) { logosOverlayCsb.style.display = 'block'; if (logosBtnCsb) logosBtnCsb.classList.add('active'); }
                     if (typeof updateLogosOverlay === 'function') updateLogosOverlay();
@@ -3268,11 +3770,21 @@ $streamLogoSmallSrc = ($streamSceneAssetsBase !== '') ? ($streamSceneAssetsBase 
                         if (randomMusicForm) randomMusicForm.requestSubmit();
                         var fslIntroForm = document.getElementById('media-form-8');
                         if (fslIntroForm) fslIntroForm.requestSubmit();
+                        if (typeof window.mxSc2AnimatedIntroArmIntroVideoListener === 'function') {
+                            window.mxSc2AnimatedIntroArmIntroVideoListener();
+                        }
+                        var sc2IntroMxSession = (typeof window.mxSc2IntroPeekSession === 'function')
+                            ? window.mxSc2IntroPeekSession() : null;
                         playTransitionVideo({
                             videoSrc: '2026/2026_FSL_logo_reveal_GS_fast.mp4',
                             fadeInMs: 500,
                             fadeOutMs: 500,
-                            onComplete: function() { activateSc2Scene(); }
+                            onComplete: function() {
+                                activateSc2Scene();
+                                if (typeof window.mxSc2AnimatedIntroMarkTransitionDone === 'function') {
+                                    window.mxSc2AnimatedIntroMarkTransitionDone(sc2IntroMxSession);
+                                }
+                            }
                         });
                     } else {
                         /* Quick on: no animation, immediately activate */
@@ -3358,7 +3870,7 @@ $streamLogoSmallSrc = ($streamSceneAssetsBase !== '') ? ($streamSceneAssetsBase 
                                 if (showPartial) {
                                     if (bgOverlay) { bgOverlay.style.display = 'block'; bgOverlay.style.zIndex = typeof getVideoOverlayDefaultZIndex === 'function' ? getVideoOverlayDefaultZIndex() : '1'; }
                                     var videoIframe = document.getElementById('scene-overlay-all-vdo-iframe');
-                                    if (videoIframe) videoIframe.src = '2026/video_player.php?v=' + encodeURIComponent(VIDEO_OVERLAY_FILES['all-vdo']) + '&_t=' + Date.now();
+                                    if (videoIframe) videoIframe.src = '2026/video_player.php?v=' + encodeURIComponent(videoPlayerMediaPath(VIDEO_OVERLAY_FILES['all-vdo'])) + '&_t=' + Date.now();
                                     if (bgBtn) bgBtn.classList.add('active');
                                     fullSharedOverlay.style.zIndex = '25000'; /* above BG, below logos when in layer order */
                                     fullSharedOverlay.style.display = 'block';
@@ -3425,7 +3937,7 @@ $streamLogoSmallSrc = ($streamSceneAssetsBase !== '') ? ($streamSceneAssetsBase 
                         bgOverlay.style.display = 'block';
                         bgOverlay.style.zIndex = typeof getVideoOverlayDefaultZIndex === 'function' ? getVideoOverlayDefaultZIndex() : '1';
                     }
-                    if (videoIframe) videoIframe.src = '2026/video_player.php?v=' + encodeURIComponent(VIDEO_OVERLAY_FILES['all-vdo']) + '&_t=' + Date.now();
+                    if (videoIframe) videoIframe.src = '2026/video_player.php?v=' + encodeURIComponent(videoPlayerMediaPath(VIDEO_OVERLAY_FILES['all-vdo'])) + '&_t=' + Date.now();
                     if (bgBtn) bgBtn.classList.add('active');
                     fullSharedVideo.srcObject = sharedVideo.srcObject;
                     fullSharedVideo.play();

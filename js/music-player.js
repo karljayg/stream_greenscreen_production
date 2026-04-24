@@ -164,9 +164,17 @@
         }
     })();
 
-    volInput.addEventListener('input', function () {
-        if (mxGain) mxGain.gain.value = Number(volInput.value) / 100;
-    });
+    function mxApplyMusicVolFromUi() {
+        if (!volInput) return;
+        var v = Number(volInput.value);
+        if (!isFinite(v)) v = 22;
+        v = Math.max(0, Math.min(1, v / 100));
+        if (mxGain) mxGain.gain.value = v;
+    }
+    /* 'input' = knob drag; 'change' = import/settings (fireChange) — both must update mxGain */
+    volInput.addEventListener('input', mxApplyMusicVolFromUi);
+    volInput.addEventListener('change', mxApplyMusicVolFromUi);
+    window.mxApplyMusicVolFromUi = mxApplyMusicVolFromUi;
 
     document.getElementById('lpMusicRandom').addEventListener('click', function (e) {
         e.stopPropagation();
@@ -782,6 +790,122 @@
     window.mxOnSceneChange = mxOnSceneChange;
     window.mxBuildGrid    = mxBuildGrid;
 
+    // SC2 (animated): logo transition + player-intro video/WAV run over the stream.
+    // Duck the mood deck on the master gain until transition ends and intro video
+    // has finished, plus a tail so trailing WAV (e.g. FSL voiceover) does not clash.
+    var MX_SC2_INTRO_FADE_OUT_S   = 0.75;
+    var MX_SC2_INTRO_FADE_IN_S    = 1.0;
+    var MX_SC2_INTRO_POST_VIDEO_MS = 1000;
+    var MX_SC2_INTRO_FALLBACK_MS = 60000;
+    var mxSc2IntroSeq = 0;
+    var mxSc2IntroGates = null; // { gen, tr, vp } or null when idle / done
+    var mxSc2IntroFallbackTimer = null;
+    var mxSc2IntroVideoHandler = null;
+
+    function mxClearSc2IntroFallback() {
+        if (mxSc2IntroFallbackTimer) {
+            clearTimeout(mxSc2IntroFallbackTimer);
+            mxSc2IntroFallbackTimer = null;
+        }
+    }
+
+    function mxSc2AnimatedIntroDetachVideoListener() {
+        var vp = document.getElementById('video-player');
+        if (vp && mxSc2IntroVideoHandler) {
+            vp.removeEventListener('ended', mxSc2IntroVideoHandler);
+            mxSc2IntroVideoHandler = null;
+        }
+    }
+
+    function mxTrySc2IntroComplete() {
+        if (!mxSc2IntroGates || !mxSc2IntroGates.tr || !mxSc2IntroGates.vp) return;
+        mxClearSc2IntroFallback();
+        mxSc2IntroGates = null;
+        mxSc2AnimatedIntroDetachVideoListener();
+        mxOnSceneChange('sc2');
+        mxEnsure().then(function () {
+            if (!mxGain) return;
+            var targetVol = Number(volInput.value) / 100;
+            var now = mx.currentTime;
+            mxGain.gain.cancelScheduledValues(now);
+            mxGain.gain.setValueAtTime(0, now);
+            mxGain.gain.linearRampToValueAtTime(targetVol, now + MX_SC2_INTRO_FADE_IN_S);
+        });
+    }
+
+    window.mxSc2IntroPeekSession = function () {
+        return mxSc2IntroGates ? mxSc2IntroGates.gen : null;
+    };
+
+    window.mxSc2AnimatedIntroBegin = function () {
+        mxClearSc2IntroFallback();
+        mxSc2AnimatedIntroDetachVideoListener();
+        mxSc2IntroSeq++;
+        var session = mxSc2IntroSeq;
+        mxSc2IntroGates = { gen: session, tr: false, vp: false };
+        mxEnsure().then(function () {
+            if (!mxGain) return;
+            var now = mx.currentTime;
+            var cur = mxGain.gain.value;
+            mxGain.gain.cancelScheduledValues(now);
+            mxGain.gain.setValueAtTime(cur, now);
+            mxGain.gain.linearRampToValueAtTime(0, now + MX_SC2_INTRO_FADE_OUT_S);
+        });
+        mxSc2IntroFallbackTimer = setTimeout(function () {
+            mxSc2IntroFallbackTimer = null;
+            if (mxSc2IntroGates && mxSc2IntroGates.gen === session) {
+                mxSc2IntroGates.tr = true;
+                mxSc2IntroGates.vp = true;
+                mxTrySc2IntroComplete();
+            }
+        }, MX_SC2_INTRO_FALLBACK_MS);
+    };
+
+    window.mxSc2AnimatedIntroArmIntroVideoListener = function () {
+        var vp = document.getElementById('video-player');
+        if (!vp || !mxSc2IntroGates) return;
+        var session = mxSc2IntroGates.gen;
+        mxSc2AnimatedIntroDetachVideoListener();
+        mxSc2IntroVideoHandler = function () {
+            vp.removeEventListener('ended', mxSc2IntroVideoHandler);
+            mxSc2IntroVideoHandler = null;
+            setTimeout(function () {
+                if (typeof window.mxSc2AnimatedIntroMarkIntroVideoDone === 'function') {
+                    window.mxSc2AnimatedIntroMarkIntroVideoDone(session);
+                }
+            }, MX_SC2_INTRO_POST_VIDEO_MS);
+        };
+        vp.addEventListener('ended', mxSc2IntroVideoHandler);
+    };
+
+    window.mxSc2AnimatedIntroMarkTransitionDone = function (expectedGen) {
+        if (!mxSc2IntroGates) return;
+        if (expectedGen != null && mxSc2IntroGates.gen !== expectedGen) return;
+        mxSc2IntroGates.tr = true;
+        mxTrySc2IntroComplete();
+    };
+
+    window.mxSc2AnimatedIntroMarkIntroVideoDone = function (expectedGen) {
+        if (!mxSc2IntroGates) return;
+        if (expectedGen != null && mxSc2IntroGates.gen !== expectedGen) return;
+        mxSc2IntroGates.vp = true;
+        mxTrySc2IntroComplete();
+    };
+
+    window.mxSc2AnimatedIntroCancel = function () {
+        mxClearSc2IntroFallback();
+        mxSc2AnimatedIntroDetachVideoListener();
+        if (!mxSc2IntroGates) return;
+        mxSc2IntroGates = null;
+        mxEnsure().then(function () {
+            if (!mxGain) return;
+            var targetVol = Number(volInput.value) / 100;
+            var now = mx.currentTime;
+            mxGain.gain.cancelScheduledValues(now);
+            mxGain.gain.linearRampToValueAtTime(targetVol, now + 0.5);
+        });
+    };
+
     var mxWasPausedByYt = false;
     window.mxPauseForYt = function() {
         if (mxCur && !mxPaused) {
@@ -792,14 +916,19 @@
             ppBtn.innerHTML = '&#9654;';
             ppBtn.classList.add('lp-mx-paused');
             mxSetStatus('\u23f8 ' + mxTrack);
+        } else if (mxCur && mxPaused && mxWasPausedByYt) {
+            /* Already paused for YT (e.g. closeYtIframeScene(true) then opening another YT clip). */
         } else {
             mxWasPausedByYt = false;
         }
     };
     window.mxResumeForYt = function() {
         if (!mxWasPausedByYt) return;
+        if (!mxCur || !mxPaused) {
+            mxWasPausedByYt = false;
+            return;
+        }
         mxWasPausedByYt = false;
-        if (!mxCur || !mxPaused) return;
         mxEnsure().then(function() {
             var targetVol = Number(volInput.value) / 100;
             var now = mx.currentTime;
@@ -847,6 +976,10 @@
             if (key === 'sc2' || key === 'sc2-quick') {
                 var sc2ActiveBtnPre = document.getElementById('scene-btn-sc2');
                 sc2WasOn = !!(sc2ActiveBtnPre && sc2ActiveBtnPre.classList.contains('active'));
+                /* Fade deck down before intro SFX / transition (must run before orig). */
+                if (key === 'sc2' && !sc2WasOn && typeof window.mxSc2AnimatedIntroBegin === 'function') {
+                    window.mxSc2AnimatedIntroBegin();
+                }
             }
 
             orig.apply(this, arguments);
@@ -855,9 +988,14 @@
 
             if (key === 'sc2' || key === 'sc2-quick') {
                 if (!sc2WasOn) {
-                    /* SC2 turning ON → battle moods for the specific button pressed */
-                    window.mxOnSceneChange(key);
+                    /* SC2 animated: mood switch runs when mxSc2AnimatedIntro* signals done. */
+                    if (key === 'sc2-quick') {
+                        window.mxOnSceneChange(key);
+                    }
                 } else {
+                    if (typeof window.mxSc2AnimatedIntroCancel === 'function') {
+                        window.mxSc2AnimatedIntroCancel();
+                    }
                     /* SC2 turning OFF → relaxed moods (sc2-quick-off not in map = no change) */
                     window.mxOnSceneChange(key === 'sc2' ? 'sc2-off' : 'sc2-quick-off');
                 }
