@@ -1363,10 +1363,17 @@ $streamLogoSmallSrc = ($streamSceneAssetsBase !== '') ? ($streamSceneAssetsBase 
                     rankingsRefreshStatus.textContent = "…";
                     rankingsRefreshBtn.disabled = true;
                 }
-                fetch("rankings.php", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ refresh: true }) }).then(function(r) { return r.json(); }).then(function(result) {
+                fetch("rankings.php", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ refresh: true }), cache: "no-store" }).then(function(r) { return r.json(); }).then(function(result) {
                     if (result && result.ok) {
-                        if (typeof window.reloadRankingsCache === "function") window.reloadRankingsCache();
-                        if (rankingsRefreshStatus) rankingsRefreshStatus.textContent = "Updated.";
+                        var refreshTasks = [];
+                        if (typeof window.reloadRankingsCache === "function") refreshTasks.push(window.reloadRankingsCache());
+                        var overlay = document.getElementById('scoreboard-overlay');
+                        if (overlay && overlay.style.display === 'block' && typeof window.loadAndRenderScoreboard === 'function') {
+                            refreshTasks.push(window.loadAndRenderScoreboard());
+                        }
+                        return Promise.all(refreshTasks).then(function() {
+                            if (rankingsRefreshStatus) rankingsRefreshStatus.textContent = "Updated.";
+                        });
                     } else {
                         if (rankingsRefreshStatus) rankingsRefreshStatus.textContent = result && result.error ? result.error : "Save failed.";
                     }
@@ -1382,7 +1389,14 @@ $streamLogoSmallSrc = ($streamSceneAssetsBase !== '') ? ($streamSceneAssetsBase 
             if (rankingsRefreshBtn && rankingsRefreshStatus) {
                 rankingsRefreshBtn.addEventListener("click", doRefreshRankings);
             }
-            doRefreshRankings();
+            // After DOMContentLoaded, deferred module stream_production.js has run so reloadRankingsCache exists when refresh finishes.
+            if (document.readyState === "loading") {
+                document.addEventListener("DOMContentLoaded", function rankingsAutoRefreshOnLoad() {
+                    doRefreshRankings();
+                });
+            } else {
+                doRefreshRankings();
+            }
 
             applyOrder(getStoredOrder());
             buildLayerList();
@@ -2956,8 +2970,8 @@ $streamLogoSmallSrc = ($streamSceneAssetsBase !== '') ? ($streamSceneAssetsBase 
                 var base = window.location.pathname.replace(/\/[^/]*$/, '') || '';
                 var baseUrl = (base ? base + '/' : '');
                 var csvUrl = baseUrl + '2026/scoreboard.csv?_t=' + Date.now();
-                var rankingsUrl = (baseUrl || './') + 'rankings.php';
-                fetch(rankingsUrl).then(function(r) { return r.json(); }).then(function(rankings) {
+                var rankingsUrl = (baseUrl || './') + 'rankings.php?_t=' + Date.now();
+                fetch(rankingsUrl, { cache: 'no-store' }).then(function(r) { return r.json(); }).then(function(rankings) {
                     if (!Array.isArray(rankings)) rankings = [];
                     return fetch(csvUrl).then(function(r) {
                         if (!r.ok) throw new Error(r.status + ' ' + r.statusText);

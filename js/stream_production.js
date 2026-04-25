@@ -30,7 +30,7 @@ const { gifFiles, randomAudioFiles } = await import(`./other_lists.js?v=${_v}`);
 let rankingsCache = [];
 async function loadRankings() {
 	try {
-		const r = await fetch('rankings.php');
+		const r = await fetch('rankings.php?_t=' + Date.now(), { cache: 'no-store' });
 		const data = await r.json();
 		rankingsCache = Array.isArray(data) ? data : [];
 	} catch (e) {

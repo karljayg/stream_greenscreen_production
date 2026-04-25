@@ -5,6 +5,9 @@
  * POST: saves JSON body to data/rankings.json (overwrites).
  */
 header('Content-Type: application/json; charset=utf-8');
+header('Cache-Control: no-cache, no-store, must-revalidate');
+header('Pragma: no-cache');
+header('Expires: 0');
 
 $dir = __DIR__ . '/data';
 $file = $dir . '/rankings.json';
