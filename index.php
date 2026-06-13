@@ -105,8 +105,9 @@ $streamLogoSmallSrc = ($streamSceneAssetsBase !== '') ? ($streamSceneAssetsBase 
                             <span id="sb-team-b-name" style="flex:1; text-align:center; font-weight:bold; font-size:13px; color:#88f; overflow:hidden; text-overflow:ellipsis;" title=""></span>
                         </div>
                         <div id="scoreboard-matchup-rows"></div>
-                        <div style="margin-top:8px; display:flex; gap:6px; align-items:center;">
+                        <div style="margin-top:8px; display:flex; gap:6px; align-items:center; flex-wrap:wrap;">
                             <button type="button" id="scoreboard-score-save-btn" onclick="scoreboardEditorSave()">Save Scores</button>
+                            <button type="button" id="scoreboard-detail-btn" onclick="sbEditorOpenWindow()">Edit Details…</button>
                             <span id="scoreboard-save-status" style="font-size:12px; color:#aaa;"></span>
                         </div>
                     </div>
@@ -182,6 +183,17 @@ $streamLogoSmallSrc = ($streamSceneAssetsBase !== '') ? ($streamSceneAssetsBase 
                     <div style="margin-top:10px;">
                         <button type="button" onclick="mxAdminOpen()" style="font-size:0.82rem;padding:5px 13px;">&#9836; Open Music Admin</button>
                         <p class="layer-order-hint" style="margin-top:5px;">Visual editor for Scene&nbsp;&rarr;&nbsp;Mood mappings and Mood&nbsp;&rarr;&nbsp;Song assignments. Upload new audio files, add/remove moods, reorder songs.</p>
+                    </div>
+                </div>
+                <button class="collapsible-btn" id="btn-sc2-button-effects" onclick="toggleSection('sc2-button-effects-section', this)">SC2 button effects</button>
+                <div class="collapsible-content" id="sc2-button-effects-section" style="display: none;">
+                    <h2 class="layer-order-heading">SC2 (animated) button effects</h2>
+                    <p class="layer-order-hint">When SC2 (animated) turns on, these player intros run automatically (in order). Use exact names from the player list. Leave blank to skip an effect.</p>
+                    <div style="display: grid; grid-template-columns: auto 1fr; gap: 0.35rem 0.5rem; align-items: center; margin-top: 6px;">
+                        <label style="font-size: 0.85rem; white-space: nowrap;" for="sc2-effect-1">Effect 1:</label>
+                        <input type="text" id="sc2-effect-1" value="Random Music" placeholder="e.g. Random Music">
+                        <label style="font-size: 0.85rem; white-space: nowrap;" for="sc2-effect-2">Effect 2:</label>
+                        <input type="text" id="sc2-effect-2" value="FSL intro" placeholder="e.g. FSL intro">
                     </div>
                 </div>
                 <button class="collapsible-btn" id="btn-layer-order" onclick="toggleSection('layer-order-section', this)">Layer Order</button>
@@ -362,7 +374,7 @@ $streamLogoSmallSrc = ($streamSceneAssetsBase !== '') ? ($streamSceneAssetsBase 
                 <button class="collapsible-btn" id="btn-save-load" onclick="toggleSection('save-load-section', this)">Save / Load</button>
                 <div class="collapsible-content" id="save-load-section" style="display: none;">
                     <h2 class="layer-order-heading">Import / Export all settings</h2>
-                    <p class="layer-order-hint">Export saves: layer order, volume, Status, Player Ratings, Logos (checkboxes + positions), VDO full and SC2 panel positions, Scenes visibility, Player Intros names, Chroma key, YT crop, Video button labels/URLs, and Break timer/message. <strong>Save to server</strong> stores the current setup so anyone opening this link gets the same settings. You can still <strong>Export all</strong> / <strong>Import all</strong> to share via file.</p>
+                    <p class="layer-order-hint">Export saves: layer order, volume, Status, Player Ratings, Logos (checkboxes + positions), VDO full and SC2 panel positions, Scenes visibility, Player Intros names, SC2 button effects, Chroma key, YT crop, Video button labels/URLs, and Break timer/message. <strong>Save to server</strong> stores the current setup so anyone opening this link gets the same settings. You can still <strong>Export all</strong> / <strong>Import all</strong> to share via file.</p>
                     <div class="layer-order-actions">
                         <button type="button" id="layer-export-btn">Export all</button>
                         <button type="button" id="layer-save-server-btn">Save to server</button>
@@ -584,7 +596,7 @@ $streamLogoSmallSrc = ($streamSceneAssetsBase !== '') ? ($streamSceneAssetsBase 
             <!-- SC2: smaller VDO panel; when SC2 scene is on, BG is hidden and this overlay is shown. Panel is draggable/resizable like logos. -->
             <div id="sc2-overlay" data-layer-id="sc2-overlay" class="sc2-overlay" style="display: none; position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none;">
                 <div id="sc2-panel-wrap" class="sc2-panel-wrap logo-wrap" style="display: none; position: absolute; overflow: hidden; background: #000;">
-                    <iframe data-src="https://vdo.ninja/?scene=0&room=KJNinjaRoom123&password=FSL&sl&cover&916" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; border: none;" allow="autoplay; fullscreen"></iframe>
+                    <iframe data-src="https://vdo.ninja/?scene=1&room=KJNinjaRoom123&password=FSL&sl&cover" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; border: none;" allow="autoplay; fullscreen"></iframe>
                 </div>
             </div>
             <!-- Shared Window: shows getDisplayMedia() stream (browser tab/window). Works like other non-SC2 scenes. -->
@@ -872,6 +884,7 @@ $streamLogoSmallSrc = ($streamSceneAssetsBase !== '') ? ($streamSceneAssetsBase 
                     teams: { ash: "2026/ASH.mp4", pog: "2026/POG.mp4", ptb: "2026/PTB.mp4", st: "2026/ST.mp4" }
                 },
                 breakSettings: { min: 5, sec: 0, msg: "be right back..." },
+                sc2ButtonEffects: { effect1: "Random Music", effect2: "FSL intro" },
                 musicMode: 'sequence',
                 musicVol: 22,
                 musicFade: 4,
@@ -950,6 +963,7 @@ $streamLogoSmallSrc = ($streamSceneAssetsBase !== '') ? ($streamSceneAssetsBase 
                     ytIframeVideos: typeof getYtIframeVideos === "function" ? getYtIframeVideos() : DEFAULT_SETTINGS.ytIframeVideos,
                     sceneVideos: typeof getSceneVideoSettings === "function" ? getSceneVideoSettings() : DEFAULT_SETTINGS.sceneVideos,
                     breakSettings: typeof getBreakSettings === "function" ? getBreakSettings() : DEFAULT_SETTINGS.breakSettings,
+                    sc2ButtonEffects: typeof getSc2ButtonEffects === "function" ? getSc2ButtonEffects() : DEFAULT_SETTINGS.sc2ButtonEffects,
                     musicMode: (function() { var el = document.querySelector('input[name="music-mode"]:checked'); return el ? el.value : 'sequence'; })(),
                 musicVol: (function() { var el = document.getElementById('lpMusicVol'); return el ? parseFloat(el.value) : 22; })(),
                 musicFade: (function() { var el = document.getElementById('lpMusicFade'); return el ? parseFloat(el.value) : 1.5; })(),
@@ -1080,6 +1094,12 @@ $streamLogoSmallSrc = ($streamSceneAssetsBase !== '') ? ($streamSceneAssetsBase 
                         setBreakSettings(bks);
                         if (typeof saveBreakSettings === "function") saveBreakSettings();
                     }
+                }
+                var sc2Fx = parsed.sc2ButtonEffects;
+                if (sc2Fx && typeof sc2Fx === "object") {
+                    if (typeof setSc2ButtonEffects === "function") setSc2ButtonEffects(sc2Fx);
+                } else if (def.sc2ButtonEffects) {
+                    if (typeof setSc2ButtonEffects === "function") setSc2ButtonEffects(def.sc2ButtonEffects);
                 }
                 var intros = parsed.playerIntros;
                 if (intros && Array.isArray(intros)) {
@@ -1214,6 +1234,13 @@ $streamLogoSmallSrc = ($streamSceneAssetsBase !== '') ? ($streamSceneAssetsBase 
 
             // --- Scoreboard Score Editor ---
             var _sbEditorRows = null;
+            var _sbEditorWindow = null;
+
+            window.addEventListener('message', function(e) {
+                if (e.origin !== window.location.origin) return;
+                if (!e.data || e.data.type !== 'scoreboard-editor-saved') return;
+                scoreboardEditorLoad();
+            });
 
             window.scoreboardEditorLoad = function scoreboardEditorLoad() {
                 var statusEl = document.getElementById('scoreboard-load-status');
@@ -1245,57 +1272,12 @@ $streamLogoSmallSrc = ($streamSceneAssetsBase !== '') ? ($streamSceneAssetsBase 
 
             window.sbRecalcTotals = function sbRecalcTotals() {
                 var totalA = 0, totalB = 0;
-                document.querySelectorAll('.sb-score-a-input').forEach(function(el) { totalA += parseInt(el.value, 10) || 0; });
-                document.querySelectorAll('.sb-score-b-input').forEach(function(el) { totalB += parseInt(el.value, 10) || 0; });
+                document.querySelectorAll('#scoreboard-editor-content .sb-score-a-input').forEach(function(el) { totalA += parseInt(el.value, 10) || 0; });
+                document.querySelectorAll('#scoreboard-editor-content .sb-score-b-input').forEach(function(el) { totalB += parseInt(el.value, 10) || 0; });
                 var elA = document.getElementById('sb-score-a');
                 var elB = document.getElementById('sb-score-b');
                 if (elA) elA.textContent = totalA;
                 if (elB) elB.textContent = totalB;
-            }
-
-            function scoreboardEditorRender(rows) {
-                if (!rows || rows.length === 0) return;
-                var r0 = rows[0] || [];
-                var teamA = (r0[2] || '').trim();
-                var teamB = (r0[6] || '').trim();
-                var nameAEl = document.getElementById('sb-team-a-name');
-                var nameBEl = document.getElementById('sb-team-b-name');
-                if (nameAEl) { nameAEl.textContent = teamA; nameAEl.title = teamA; }
-                if (nameBEl) { nameBEl.textContent = teamB; nameBEl.title = teamB; }
-                var container = document.getElementById('scoreboard-matchup-rows');
-                if (!container) return;
-                container.innerHTML = '';
-                for (var i = 2; i < rows.length; i++) {
-                    var row = rows[i];
-                    var isEmpty = !row[1] && !row[2] && !row[3] && !row[4] && !row[6] && !row[7] && !row[8] && !row[10] && !row[11];
-                    if (isEmpty) continue;
-                    var matchType = (row[1] || '').trim();
-                    var pA1 = (row[2] || '').trim();
-                    var pA2 = (row[3] || '').trim();
-                    var sA = row[4] || '';
-                    var pB1 = (row[6] || '').trim();
-                    var pB2 = (row[7] || '').trim();
-                    var sB = row[8] || '';
-                    var map1 = (row[10] || '').trim();
-                    var map2 = (row[11] || '').trim();
-                    var playersA = pA2 ? pA1 + ' / ' + pA2 : pA1;
-                    var playersB = pB2 ? pB1 + ' / ' + pB2 : pB1;
-                    var mapsText = [map1, map2].filter(Boolean).join(' | ');
-                    var div = document.createElement('div');
-                    div.className = 'sb-matchup-row';
-                    div.dataset.rowIdx = i;
-                    div.style.cssText = 'display:flex; align-items:center; gap:6px; padding:5px 8px; background:#111; border-radius:3px; font-size:12px; margin-bottom:3px;';
-                    div.innerHTML =
-                        '<span style="color:#666; min-width:28px; font-size:11px; flex-shrink:0;">' + sbEsc(matchType) + '</span>' +
-                        '<span style="flex:1; text-align:right; color:#bbb; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; padding-right:4px;" title="' + sbEsc(playersA) + '">' + sbEsc(playersA) + '</span>' +
-                        '<input type="number" class="sb-score-a-input" data-row="' + i + '" min="0" max="99" value="' + sbEsc(String(sA)) + '" oninput="sbRecalcTotals()" style="width:44px; text-align:center; background:#1a2a1a; color:#8f8; border:1px solid #484; border-radius:3px; padding:2px 4px; flex-shrink:0;">' +
-                        '<span style="color:#555; flex-shrink:0;">–</span>' +
-                        '<input type="number" class="sb-score-b-input" data-row="' + i + '" min="0" max="99" value="' + sbEsc(String(sB)) + '" oninput="sbRecalcTotals()" style="width:44px; text-align:center; background:#1a1a2a; color:#88f; border:1px solid #448; border-radius:3px; padding:2px 4px; flex-shrink:0;">' +
-                        '<span style="flex:1; text-align:left; color:#bbb; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; padding-left:4px;" title="' + sbEsc(playersB) + '">' + sbEsc(playersB) + '</span>' +
-                        '<span style="color:#555; font-size:11px; min-width:56px; text-align:right; flex-shrink:0;">' + sbEsc(mapsText) + '</span>';
-                    container.appendChild(div);
-                }
-                sbRecalcTotals();
             }
 
             function sbEsc(s) {
@@ -1305,27 +1287,36 @@ $streamLogoSmallSrc = ($streamSceneAssetsBase !== '') ? ($streamSceneAssetsBase 
                 return d.innerHTML;
             }
 
-            window.scoreboardEditorSave = function scoreboardEditorSave() {
-                if (!_sbEditorRows) { alert('Load the CSV first.'); return; }
-                var statusEl = document.getElementById('scoreboard-save-status');
-                var btn = document.getElementById('scoreboard-score-save-btn');
-                if (btn) btn.disabled = true;
-                if (statusEl) statusEl.textContent = 'Saving…';
-                var rows = _sbEditorRows;
-                var elA = document.getElementById('sb-score-a');
-                var elB = document.getElementById('sb-score-b');
-                if (elA && rows[0]) rows[0][4] = elA.textContent.trim();
-                if (elB && rows[0]) rows[0][8] = elB.textContent.trim();
-                document.querySelectorAll('.sb-matchup-row').forEach(function(el) {
-                    var rowIdx = parseInt(el.dataset.rowIdx, 10);
-                    var inpSA = el.querySelector('.sb-score-a-input');
-                    var inpSB = el.querySelector('.sb-score-b-input');
-                    if (rows[rowIdx]) {
-                        if (inpSA) rows[rowIdx][4] = inpSA.value;
-                        if (inpSB) rows[rowIdx][8] = inpSB.value;
-                    }
-                });
-                var csv = rows.map(function(row) {
+            function sbAttr(s) {
+                return sbEsc(s).replace(/"/g, '&quot;');
+            }
+
+            function sbEditorEmptyRow() {
+                return ['', '', '', '', '', '', '', '', '', '', '', ''];
+            }
+
+            function sbEditorIsDataRowEmpty(row) {
+                if (!row) return true;
+                return !row[1] && !row[2] && !row[3] && !row[4] && !row[6] && !row[7] && !row[8] && !row[10] && !row[11];
+            }
+
+            function sbEditorGetDataRows(rows) {
+                var data = [];
+                for (var i = 2; i < rows.length; i++) {
+                    if (!sbEditorIsDataRowEmpty(rows[i])) data.push(rows[i].slice());
+                }
+                return data;
+            }
+
+            function sbEditorRebuildRows(headerRow, mapRow, dataRows) {
+                var rows = [headerRow.slice(), mapRow.slice()];
+                dataRows.forEach(function(row) { rows.push(row.slice()); });
+                rows.push(sbEditorEmptyRow());
+                return rows;
+            }
+
+            function sbEditorRowsToCsv(rows) {
+                return rows.map(function(row) {
                     return row.map(function(cell) {
                         var s = String(cell == null ? '' : cell);
                         if (s === '') return '""';
@@ -1333,6 +1324,10 @@ $streamLogoSmallSrc = ($streamSceneAssetsBase !== '') ? ($streamSceneAssetsBase 
                         return '"' + s.replace(/"/g, '""') + '"';
                     }).join(',');
                 }).join('\n');
+            }
+
+            function sbEditorSaveCsv(rows, statusEl, btn, onSuccess) {
+                var csv = sbEditorRowsToCsv(rows);
                 var ta = document.getElementById('scoreboard-csv-input');
                 if (ta) ta.value = csv;
                 fetch('save_scoreboard.php', {
@@ -1346,6 +1341,7 @@ $streamLogoSmallSrc = ($streamSceneAssetsBase !== '') ? ($streamSceneAssetsBase 
                             var overlay = document.getElementById('scoreboard-overlay');
                             if (overlay && overlay.style.display === 'block') loadAndRenderScoreboard();
                         }
+                        if (onSuccess) onSuccess();
                     } else {
                         if (statusEl) statusEl.textContent = 'Error saving.';
                     }
@@ -1354,6 +1350,97 @@ $streamLogoSmallSrc = ($streamSceneAssetsBase !== '') ? ($streamSceneAssetsBase 
                     if (statusEl) statusEl.textContent = 'Network error.';
                     setTimeout(function() { if (statusEl) statusEl.textContent = ''; if (btn) btn.disabled = false; }, 2500);
                 });
+            }
+
+            function sbEditorApplySimpleScores() {
+                if (!_sbEditorRows || _sbEditorRows.length === 0) return;
+                var headerRow = (_sbEditorRows[0] || sbEditorEmptyRow()).slice();
+                var mapRow = (_sbEditorRows[1] || sbEditorEmptyRow()).slice();
+                var dataRows = sbEditorGetDataRows(_sbEditorRows);
+                document.querySelectorAll('#scoreboard-matchup-rows .sb-matchup-row').forEach(function(el, idx) {
+                    if (!dataRows[idx]) return;
+                    var inpA = el.querySelector('.sb-score-a-input');
+                    var inpB = el.querySelector('.sb-score-b-input');
+                    if (inpA) dataRows[idx][4] = inpA.value;
+                    if (inpB) dataRows[idx][8] = inpB.value;
+                });
+                sbRecalcTotals();
+                headerRow[4] = (document.getElementById('sb-score-a') || {}).textContent || headerRow[4] || '';
+                headerRow[8] = (document.getElementById('sb-score-b') || {}).textContent || headerRow[8] || '';
+                _sbEditorRows = sbEditorRebuildRows(headerRow, mapRow, dataRows);
+            }
+
+            function scoreboardEditorRenderSimple(rows) {
+                if (!rows || rows.length === 0) return;
+                var r0 = rows[0] || [];
+                var teamA = (r0[2] || '').trim();
+                var teamB = (r0[6] || '').trim();
+                var nameAEl = document.getElementById('sb-team-a-name');
+                var nameBEl = document.getElementById('sb-team-b-name');
+                if (nameAEl) { nameAEl.textContent = teamA; nameAEl.title = teamA; }
+                if (nameBEl) { nameBEl.textContent = teamB; nameBEl.title = teamB; }
+                var container = document.getElementById('scoreboard-matchup-rows');
+                if (!container) return;
+                container.innerHTML = '';
+                var dataRows = sbEditorGetDataRows(rows);
+                dataRows.forEach(function(row, idx) {
+                    var matchType = (row[1] || '').trim();
+                    var pA1 = (row[2] || '').trim();
+                    var pA2 = (row[3] || '').trim();
+                    var sA = row[4] != null ? row[4] : '';
+                    var pB1 = (row[6] || '').trim();
+                    var pB2 = (row[7] || '').trim();
+                    var sB = row[8] != null ? row[8] : '';
+                    var map1 = (row[10] || '').trim();
+                    var map2 = (row[11] || '').trim();
+                    var playersA = pA2 ? pA1 + ' / ' + pA2 : pA1;
+                    var playersB = pB2 ? pB1 + ' / ' + pB2 : pB1;
+                    var mapsText = [map1, map2].filter(Boolean).join(' | ');
+                    var div = document.createElement('div');
+                    div.className = 'sb-matchup-row';
+                    div.dataset.rowIdx = idx;
+                    div.style.cssText = 'display:flex; align-items:center; gap:6px; padding:5px 8px; background:#111; border-radius:3px; font-size:12px; margin-bottom:3px;';
+                    div.innerHTML =
+                        '<span style="color:#666; min-width:28px; font-size:11px; flex-shrink:0;">' + sbEsc(matchType) + '</span>' +
+                        '<span style="flex:1; text-align:right; color:#bbb; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; padding-right:4px;" title="' + sbAttr(playersA) + '">' + sbEsc(playersA) + '</span>' +
+                        '<input type="number" class="sb-score-a-input" min="0" max="99" value="' + sbAttr(String(sA)) + '" oninput="sbRecalcTotals()" style="width:44px; text-align:center; background:#1a2a1a; color:#8f8; border:1px solid #484; border-radius:3px; padding:2px 4px; flex-shrink:0;">' +
+                        '<span style="color:#555; flex-shrink:0;">–</span>' +
+                        '<input type="number" class="sb-score-b-input" min="0" max="99" value="' + sbAttr(String(sB)) + '" oninput="sbRecalcTotals()" style="width:44px; text-align:center; background:#1a1a2a; color:#88f; border:1px solid #448; border-radius:3px; padding:2px 4px; flex-shrink:0;">' +
+                        '<span style="flex:1; text-align:left; color:#bbb; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; padding-left:4px;" title="' + sbAttr(playersB) + '">' + sbEsc(playersB) + '</span>' +
+                        '<span style="color:#555; font-size:11px; min-width:56px; text-align:right; flex-shrink:0;">' + sbEsc(mapsText) + '</span>';
+                    container.appendChild(div);
+                });
+                sbRecalcTotals();
+            }
+
+            function scoreboardEditorRender(rows) {
+                scoreboardEditorRenderSimple(rows);
+            }
+
+            window.sbEditorOpenWindow = function sbEditorOpenWindow() {
+                if (!_sbEditorRows) { alert('Load the CSV first.'); return; }
+                sbEditorApplySimpleScores();
+                try {
+                    sessionStorage.setItem('sb_editor_bootstrap', JSON.stringify(_sbEditorRows));
+                } catch (e) {}
+                if (_sbEditorWindow && !_sbEditorWindow.closed) {
+                    _sbEditorWindow.focus();
+                    return;
+                }
+                var base = window.location.pathname.replace(/\/[^/]*$/, '') || '';
+                var url = (base ? base + '/' : './') + 'scoreboard_editor.php';
+                _sbEditorWindow = window.open(url, 'scoreboardEditor', 'width=980,height=760,resizable=yes,scrollbars=yes');
+            };
+
+            window.scoreboardEditorSave = function scoreboardEditorSave() {
+                if (!_sbEditorRows) { alert('Load the CSV first.'); return; }
+                var statusEl = document.getElementById('scoreboard-save-status');
+                var btn = document.getElementById('scoreboard-score-save-btn');
+                if (btn) btn.disabled = true;
+                if (statusEl) statusEl.textContent = 'Saving…';
+                sbEditorApplySimpleScores();
+                var rows = _sbEditorRows;
+                sbEditorSaveCsv(rows, statusEl, btn, null);
             }
 
             function doRefreshRankings() {
@@ -1678,6 +1765,25 @@ $streamLogoSmallSrc = ($streamSceneAssetsBase !== '') ? ($streamSceneAssetsBase 
                 if (el) el.addEventListener('input', function() { saveYtIframeVideos(); });
             });
         })();
+
+        /* ── SC2 (animated) button effects ───────────────────────── */
+        var SC2_BUTTON_EFFECTS_DEFAULTS = { effect1: 'Random Music', effect2: 'FSL intro' };
+
+        function getSc2ButtonEffects() {
+            var e1 = document.getElementById('sc2-effect-1');
+            var e2 = document.getElementById('sc2-effect-2');
+            return {
+                effect1: e1 ? e1.value.trim() : SC2_BUTTON_EFFECTS_DEFAULTS.effect1,
+                effect2: e2 ? e2.value.trim() : SC2_BUTTON_EFFECTS_DEFAULTS.effect2
+            };
+        }
+
+        function setSc2ButtonEffects(obj) {
+            var e1 = document.getElementById('sc2-effect-1');
+            var e2 = document.getElementById('sc2-effect-2');
+            if (e1) e1.value = (obj && obj.effect1 != null) ? String(obj.effect1) : SC2_BUTTON_EFFECTS_DEFAULTS.effect1;
+            if (e2) e2.value = (obj && obj.effect2 != null) ? String(obj.effect2) : SC2_BUTTON_EFFECTS_DEFAULTS.effect2;
+        }
 
         /* ── Break countdown ─────────────────────────────────────── */
         var BREAK_SETTINGS_KEY = 'stream_production_break_settings';
@@ -3779,11 +3885,16 @@ $streamLogoSmallSrc = ($streamSceneAssetsBase !== '') ? ($streamSceneAssetsBase 
                 var sc2ActiveBtn = document.getElementById('scene-btn-sc2');
                 if (!sc2ActiveBtn || !sc2ActiveBtn.classList.contains('active')) {
                     if (sceneId === 'sc2') {
-                        /* SC2 on: 1) Random Music, 2) stinger + FSL Intro simultaneously, 3) activate */
-                        var randomMusicForm = document.getElementById('media-form-7');
-                        if (randomMusicForm) randomMusicForm.requestSubmit();
-                        var fslIntroForm = document.getElementById('media-form-8');
-                        if (fslIntroForm) fslIntroForm.requestSubmit();
+                        /* SC2 on: 1) effect 1, 2) stinger + effect 2 simultaneously, 3) activate */
+                        var sc2Fx = typeof getSc2ButtonEffects === 'function'
+                            ? getSc2ButtonEffects()
+                            : { effect1: 'Random Music', effect2: 'FSL intro' };
+                        if (sc2Fx.effect1 && typeof window.playPlayerIntroByName === 'function') {
+                            window.playPlayerIntroByName(sc2Fx.effect1);
+                        }
+                        if (sc2Fx.effect2 && typeof window.playPlayerIntroByName === 'function') {
+                            window.playPlayerIntroByName(sc2Fx.effect2);
+                        }
                         if (typeof window.mxSc2AnimatedIntroArmIntroVideoListener === 'function') {
                             window.mxSc2AnimatedIntroArmIntroVideoListener();
                         }

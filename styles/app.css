@@ -62,8 +62,14 @@
 .settings-group-heading:first-child { margin-top: 0; }
 
 .scoreboard-overlay-wrap { background: transparent; }
-/* Centered horizontally; top edge 300px; bottom leaves room for small VDO */
-#scoreboard-content.scoreboard-content-wrap,
+/* Centered horizontally; top edge; bottom leaves room for small VDO */
+#scoreboard-content.scoreboard-content-wrap {
+    position: absolute; left: 50%; top: 70px; bottom: 40px;
+    width: calc(100% - 60px); max-width: calc(100vw - 60px);
+    transform: translateX(-50%);
+    display: flex; flex-direction: column; align-items: center; justify-content: flex-start;
+    overflow: auto; box-sizing: border-box;
+}
 #custom-scoreboard-content.scoreboard-content-wrap {
     position: absolute; left: 50%; top: 120px; bottom: 40px;
     width: calc(100% - 60px); max-width: calc(100vw - 60px);

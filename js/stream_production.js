@@ -324,115 +324,141 @@ function playRandomAudio() {
     audio.play();
 }
 
+const playerNameBox = document.querySelector('.player-name-box');
+const videoPlayer = document.querySelector('#video-player');
+const errorMessage = document.querySelector('#error-message');
+const videoContainer = document.querySelector('#video-container');
+
+function hidePlayerIntroTitle() {
+	if (playerNameBox) playerNameBox.style.display = 'none';
+}
+
+function gifPlayer(gifIndex = 0) {
+	const gifFileName = gifFiles.find(file => file[0] === gifIndex)[1];
+	let gifPath = productionImageBase() + gifFileName;
+	if (typeof window.ASSET_VERSION !== 'undefined') gifPath += '?v=' + window.ASSET_VERSION;
+	gifPath += (gifPath.includes('?') ? '&' : '?') + 't=' + Date.now();
+
+	const gifContainer = document.querySelector('#gif-container');
+	const gifImage = document.querySelector('#gif-image');
+	const gifTimeout = 8000;
+
+	applyMediaCORSIfNeeded(gifImage, gifPath.split('?')[0]);
+	gifImage.src = gifPath;
+	gifContainer.style.display = 'flex';
+	setTimeout(() => {
+		gifContainer.style.display = 'none';
+	}, gifTimeout);
+}
+
+function onIntroVideoEnded() {
+	stopVideoChromaLoop();
+	if (videoContainer) videoContainer.style.display = 'none';
+	hidePlayerIntroTitle();
+}
+
+function playPlayerIntroByName(playerName) {
+	const matchingPlayer = playerList.find(p => p[0] === playerName);
+
+	if (!matchingPlayer) {
+		if (errorMessage) errorMessage.textContent = `Error: Player "${playerName}" not found.`;
+		return false;
+	}
+	const videoPath = productionVideoBase() + matchingPlayer[1];
+
+	introWavQueue.length = 0;
+	if (matchingPlayer[2]) {
+		introWavQueue.push(productionAudioBase() + matchingPlayer[2]);
+	}
+
+	videoPlayer.removeEventListener('ended', onIntroVideoEnded);
+
+	const playNextAudio = (index) => {
+		if (index < introWavQueue.length) {
+			const audio = new Audio(resolveMediaUrl(introWavQueue[index]));
+			audio.load();
+			audio.volume = document.getElementById('volume-slider').value / 100;
+			audio.play();
+			audio.addEventListener('ended', () => {
+				playNextAudio(index + 1);
+			});
+		} else {
+			introWavQueue.length = 0;
+		}
+	};
+
+	if (introWavQueue.length === 1) {
+		playNextAudio(0);
+	}
+
+	applyMediaCORSIfNeeded(videoPlayer, videoPath);
+	videoPlayer.setAttribute('src', videoPath);
+	videoPlayer.load();
+
+	setPlayerIntroContent(playerName);
+	if (playerNameBox) playerNameBox.style.display = 'inline-block';
+
+	if (matchingPlayer.length > 3) {
+		switch (matchingPlayer[3]) {
+		  case 'noTitle':
+			hidePlayerIntroTitle();
+			break;
+		  case 'randomAudio':
+			playRandomAudio();
+			hidePlayerIntroTitle();
+			break;
+		  case 'gifPlayer':
+			gifPlayer();
+			hidePlayerIntroTitle();
+			break;
+		  default:
+			try {
+			  if (matchingPlayer[3].match(/-\d+$/)) {
+				const gifIndex = parseInt(matchingPlayer[3].split('-')[1]);
+				gifPlayer(gifIndex);
+				hidePlayerIntroTitle();
+			  } else {
+				setPlayerIntroContent(playerName);
+				if (playerNameBox) playerNameBox.style.display = 'inline-block';
+			  }
+			} catch (error) {
+			  console.error('Error parsing GIF index:', error);
+			  setPlayerIntroContent(playerName);
+			  if (playerNameBox) playerNameBox.style.display = 'inline-block';
+			}
+			break;
+		}
+	}
+
+	audioPlayer.pause();
+	audioPlayer.removeAttribute('src');
+	audioPlayer.load();
+
+	videoPlayer.play().catch((error) => {
+		if (errorMessage) errorMessage.textContent = `Error: ${error.message}`;
+		console.error('Error playing video ' + videoPath + ': ', error);
+	});
+	if (videoContainer) videoContainer.style.display = 'flex';
+	const videoChromaCanvas = document.getElementById('video-chroma-canvas');
+	videoPlayer.addEventListener('ended', onIntroVideoEnded, { once: true });
+	videoPlayer.addEventListener('playing', function onPlaying() {
+		videoPlayer.removeEventListener('playing', onPlaying);
+		if (isChromaKeyEnabled() && videoChromaCanvas) {
+			startVideoChromaLoop(videoPlayer, videoChromaCanvas);
+		}
+	}, { once: true });
+	return true;
+}
+
+window.playPlayerIntroByName = playPlayerIntroByName;
+
 forms.forEach((form) => {
 
-	// get the player name input and the player name box elements
-	const playerNameBox = document.querySelector('.player-name-box');
 	const playerNameInput = form.querySelector('.player-name-input');
-	const videoPlayer = document.querySelector('#video-player');
-	const audioPlayer = document.querySelector('#audio-player');
-	const errorMessage = document.querySelector('#error-message');
-	const videoContainer = document.querySelector('#video-container');
-
-	const onVideoEnded = () => {
-		stopVideoChromaLoop();
-		videoContainer.style.display = 'none';
-		playerNameBox.style.display = 'none';
-	};
 
 	form.addEventListener('submit', (event) => {
 		event.preventDefault();
-		const playerName = playerNameInput.value.trim();
-		const matchingPlayer = playerList.find(p => p[0] === playerName);
-
-		if (!matchingPlayer) {
-			errorMessage.textContent = `Error: Player "${playerName}" not found.`;
-			return;
-		}
-		const videoPath = productionVideoBase() + matchingPlayer[1];
-
-		introWavQueue.length = 0;
-		if (matchingPlayer[2]) {
-			introWavQueue.push(productionAudioBase() + matchingPlayer[2]);
-		}
-
-		videoPlayer.removeEventListener('ended', onVideoEnded);
-
-		const playNextAudio = (index) => {
-			if (index < introWavQueue.length) {
-				const audio = new Audio(resolveMediaUrl(introWavQueue[index]));
-				audio.load();
-				audio.volume = document.getElementById('volume-slider').value / 100;
-				audio.play();
-				audio.addEventListener('ended', () => {
-					playNextAudio(index + 1);
-				});
-			} else {
-				introWavQueue.length = 0;
-			}
-		};
-
-		if (introWavQueue.length === 1) {
-			playNextAudio(0);
-		}
-
-		applyMediaCORSIfNeeded(videoPlayer, videoPath);
-		videoPlayer.setAttribute('src', videoPath);
-		videoPlayer.load();
-
-		setPlayerIntroContent(playerName);
-		playerNameBox.style.display = 'inline-block';
-
-		if (matchingPlayer.length > 3) {
-			switch (matchingPlayer[3]) {
-			  case 'noTitle':
-				noTitle();
-				break;
-			  case 'randomAudio':
-				playRandomAudio();
-				noTitle();
-				break;
-			  case 'gifPlayer':
-				gifPlayer();
-				noTitle();
-				break;
-			  default:
-				try {
-				  if (matchingPlayer[3].match(/-\d+$/)) {
-					const gifIndex = parseInt(matchingPlayer[3].split('-')[1]);
-					gifPlayer(gifIndex);
-					noTitle();
-				  } else {
-					setPlayerIntroContent(playerName);
-					playerNameBox.style.display = 'inline-block';
-				  }
-				} catch (error) {
-				  console.error('Error parsing GIF index:', error);
-				  setPlayerIntroContent(playerName);
-				  playerNameBox.style.display = 'inline-block';
-				}
-				break;
-			}
-		}
-
-		// Stop any residual audio from team buttons (POG/ASH/etc.) before playing the intro video.
-		audioPlayer.pause();
-		audioPlayer.removeAttribute('src');
-		audioPlayer.load();
-
-		videoPlayer.play().catch((error) => {
-			errorMessage.textContent = `Error: ${error.message}`;
-			console.error('Error playing video ' + videoPath + ': ', error);
-		});
-		videoContainer.style.display = 'flex';
-		const videoChromaCanvas = document.getElementById('video-chroma-canvas');
-		videoPlayer.addEventListener('ended', onVideoEnded, { once: true });
-		videoPlayer.addEventListener('playing', function onPlaying() {
-			videoPlayer.removeEventListener('playing', onPlaying);
-			if (isChromaKeyEnabled() && videoChromaCanvas) {
-				startVideoChromaLoop(videoPlayer, videoChromaCanvas);
-			}
-		}, { once: true });
+		playPlayerIntroByName(playerNameInput.value.trim());
 	});
 
 	playerNameInput.addEventListener('input', (event) => {
@@ -463,32 +489,6 @@ forms.forEach((form) => {
 	playerNameInput.addEventListener('blur', () => {
 		setTimeout(clearSuggestions, 100);
 	});
-
-	function noTitle() {
-		playerNameBox.style.display = 'none';
-	}
-
-
-	function gifPlayer(gifIndex = 0) {
-	  const gifFileName = gifFiles.find(file => file[0] === gifIndex)[1];
-	  let gifPath = productionImageBase() + gifFileName;
-	  if (typeof window.ASSET_VERSION !== 'undefined') gifPath += '?v=' + window.ASSET_VERSION;
-	  // Force reload each time so GIF always restarts from frame 0
-	  gifPath += (gifPath.includes('?') ? '&' : '?') + 't=' + Date.now();
-
-	  const gifContainer = document.querySelector('#gif-container');
-	  const gifImage = document.querySelector('#gif-image');
-	  const gifTimeout = 8000;
-
-	  // Hiding the <img> freezes GIF animation on frame 1, so skip canvas chroma key.
-	  // OBS applies chroma key directly from the browser source.
-	  applyMediaCORSIfNeeded(gifImage, gifPath.split('?')[0]);
-	  gifImage.src = gifPath;
-	  gifContainer.style.display = 'flex';
-	  setTimeout(() => {
-		gifContainer.style.display = 'none';
-	  }, gifTimeout);
-	}
 
 	function showSuggestions(players) {
 		const suggestionList = document.createElement('ul');
