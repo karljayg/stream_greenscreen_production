@@ -118,6 +118,7 @@ tr:nth-child(odd) td { background: rgba(255,255,255,.03); }
 <h3>&#x23EE; Prev &nbsp;/&nbsp; &#x23ED; Next</h3>
 <p>Step backward or forward one song within the current mood. Wraps around at the ends. Scene context is preserved — the player remembers which scene and mood list you're in.
 In <strong>Random</strong> mode, both buttons pick a completely random song from any mood instead of stepping through the current mood.</p>
+<p>In a <strong>detailed (staged) scene</strong> (see below), Next/Prev instead step forward/back one <em>stage</em> — each step plays the next unplayed song from that stage's pool, wrapping 6→1 / 1→6.</p>
 
 <h3>&#x1F500; Random</h3>
 <p>Toggles shuffle mode. When active (highlighted), every song advance — natural endings, Next, Prev — picks a random song from a random mood across the entire library. Activating it jumps to a random song immediately.
@@ -138,6 +139,18 @@ Clicking any mood button turns Random off. Changing scenes also turns it off and
 <p>Activating a scene sets a mood list for that scene. The player picks a <em>random starting mood</em> from that list. Each time a mood's songs finish, it advances to the next mood in the list and cycles back to the start when it reaches the end.</p>
 <p>If the same mood that's already playing is picked at scene activation, playback continues uninterrupted — no restart, no crossfade. The scene context is updated silently.</p>
 <p>Clicking a mood button while a scene is active clears the scene context. The mood then loops itself without cycling.</p>
+
+<h2>&#127918; Detailed Scenes — Stages</h2>
+<p>Some scenes (e.g. <strong>SC2</strong>) are <em>detailed</em>: instead of a flat mood list, their music is organized <strong>stage-first, variation-second</strong> into numbered gameplay stages (1–6). Each stage owns its own pool of songs. When a detailed scene is active, a <strong>Stage bar</strong> appears with one button per stage.</p>
+
+<h3>One song per stage, auto-advancing</h3>
+<p>Entering the scene starts at <strong>Stage 1</strong> and plays one song. When that song ends, playback advances <strong>forward to the next stage</strong> (1 → 2 → 3 → …) and plays one song there — one song per stage. After the last stage it <strong>wraps back to Stage 1</strong>, so the scene keeps looping through every stage (and every song over time) while it stays active.</p>
+
+<h3>Which song plays in a stage</h3>
+<p>Each time a stage plays, it picks a song from that stage's pool that <strong>hasn't been played yet this session</strong> (random by default, or in pool order if the scene is set to <em>sequential</em>). When the whole pool has been used, only that stage's history resets and it cycles again, avoiding the most-recently-played track. Played history is kept across stage changes and across re-activating the scene, so you keep hearing fresh songs.</p>
+
+<h3>Manual control</h3>
+<p>Click any <strong>Stage button</strong> to jump straight to that stage (e.g. when the match reaches midgame) — it plays one unplayed song from that stage, then auto-advance continues forward. <strong>Next/Prev</strong> step forward/back one stage. Picking a mood button or turning on Random exits staged mode; switching to a non-detailed scene returns to that scene's normal mood playlist.</p>
 
 <h3>&#x1F504; Variety mode — anti-repetition (automatic)</h3>
 <p>A scene with only 1–2 moods would loop the same tracks indefinitely if the stream is left unattended. Variety mode prevents this. Two triggers run simultaneously — <strong>whichever fires first</strong> wins:</p>

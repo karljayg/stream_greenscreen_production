@@ -12,7 +12,7 @@
 if (session_status() === PHP_SESSION_NONE) session_start();
 
 require_once __DIR__ . '/../asset_version.php';         // defines $v
-require_once __DIR__ . '/../partials/music-config.php'; // defines $moodSongs, $sceneMoodMap, $musicFiles
+require_once __DIR__ . '/../partials/music-config.php'; // defines $moodSongs, $sceneMoodMap, $sceneStages, $musicFiles
 
 $currentUser = !empty($_SESSION['username'])
     ? htmlspecialchars($_SESSION['username'], ENT_QUOTES, 'UTF-8')
@@ -90,6 +90,35 @@ if (!defined('MX_PLAYER_INCLUDED')) {
         /* Override: player starts expanded in standalone mode */
         .lp-music-grid, .lp-mx-song-row { display: block !important; }
         .lp-mx-toggle-icon { display: none; }
+        /* Detailed (staged) scene picker */
+        .sp-scenes {
+            width: 340px;
+            max-width: 100%;
+            margin-top: 10px;
+            display: flex;
+            flex-wrap: wrap;
+            align-items: center;
+            gap: 6px;
+        }
+        .sp-scenes-lbl {
+            font-size: 0.62rem;
+            font-weight: 800;
+            letter-spacing: .08em;
+            text-transform: uppercase;
+            color: #7dd3fc;
+            width: 100%;
+        }
+        .sp-scene-btn {
+            font-size: 0.68rem;
+            font-weight: 700;
+            padding: 5px 10px;
+            background: #1d4ed8;
+            color: #fff;
+            border: 1px solid #1e40af;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+        .sp-scene-btn:hover { background: #2563eb; }
     </style>
 </head>
 <body>
@@ -105,18 +134,49 @@ if (!defined('MX_PLAYER_INCLUDED')) {
         <?php include __DIR__ . '/../partials/music-player-widget.php'; ?>
     </div>
 
+    <?php if (!empty($sceneStages)): ?>
+    <div class="sp-scenes">
+        <span class="sp-scenes-lbl">&#127918; Detailed (staged) scenes</span>
+        <?php foreach ($sceneStages as $sceneKey => $sceneDef):
+            $sceneLabel = (is_array($sceneDef) && !empty($sceneDef['label'])) ? $sceneDef['label'] : $sceneKey; ?>
+        <button type="button" class="sp-scene-btn" data-scene="<?= htmlspecialchars($sceneKey, ENT_QUOTES, 'UTF-8') ?>"><?= htmlspecialchars($sceneLabel, ENT_QUOTES, 'UTF-8') ?></button>
+        <?php endforeach; ?>
+    </div>
+    <?php endif; ?>
+
     <script>
         window.MX_MUSIC_PATH  = '<?= $mxBase ?>music/';
         window.MX_STATS_URL   = '<?= $mxBase ?>save_music_stats.php';
         window.MX_HELP_URL    = '<?= $mxBase ?>docs/music-help.php';
-        window.MX_TRACKS      = <?= json_encode($moodSongs,    JSON_UNESCAPED_SLASHES) ?>;
-        window.MX_SCENE_MAP   = <?= json_encode($sceneMoodMap, JSON_UNESCAPED_SLASHES) ?>;
-        window.MX_MUSIC_FILES = <?= json_encode($musicFiles,   JSON_UNESCAPED_SLASHES) ?>;
+        window.MX_TRACKS       = <?= json_encode($moodSongs,    JSON_UNESCAPED_SLASHES) ?>;
+        window.MX_SCENE_MAP    = <?= json_encode($sceneMoodMap, JSON_UNESCAPED_SLASHES) ?>;
+        window.MX_SCENE_STAGES = <?= json_encode($sceneStages,  JSON_UNESCAPED_SLASHES) ?>;
+        window.MX_MUSIC_FILES  = <?= json_encode($musicFiles,   JSON_UNESCAPED_SLASHES) ?>;
     </script>
 
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
     <script src="https://code.jquery.com/ui/1.13.1/jquery-ui.min.js"></script>
     <script src="<?= $mxBase ?>js/music-player.js?v=<?= $v ?>"></script>
+
+    <script>
+        // Standalone player shows everything expanded. The stage bar's visibility
+        // is gated on the widget being "open", so flip it open once on load.
+        (function () {
+            var bar = document.getElementById('lpMusicBar');
+            if (bar) bar.click();
+
+            // Engage a detailed/staged scene when its button is clicked. In this
+            // standalone page there's no SC2 transition/intro, so playback switches
+            // to the stage pool immediately and the Stage bar appears.
+            document.querySelectorAll('.sp-scene-btn').forEach(function (b) {
+                b.addEventListener('click', function () {
+                    if (typeof window.mxOnSceneChange === 'function') {
+                        window.mxOnSceneChange(b.dataset.scene);
+                    }
+                });
+            });
+        })();
+    </script>
 
     <?php if ($currentUser): ?>
     <script>
