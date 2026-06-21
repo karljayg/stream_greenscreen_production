@@ -408,6 +408,77 @@ body.layer-outline-debug [data-layer-id].layer-outline-active {
         0 0 24px rgba(150, 50, 255, 0.28);
 }
 
+/* Team League total score banner: matches SEASON 11 / FSL brand styling, sized to sit between them on the top right */
+.team-league-score-banner {
+    position: absolute;
+    top: 18px;
+    left: 52%;
+    right: 11%;
+    z-index: 100001;
+    pointer-events: none;
+    text-align: center;
+    white-space: nowrap;
+    font-family: "Rajdhani", "Teko", "Orbitron", "Montserrat", sans-serif;
+    font-weight: 900;
+    font-size: 20px;
+    line-height: 1;
+    text-transform: uppercase;
+    letter-spacing: 0.03em;
+    transform: skewX(-12deg);
+    color: #fff;
+    text-shadow:
+        2px 0 0 #22002e,
+        -2px 0 0 #22002e,
+        0 2px 0 #22002e,
+        0 -2px 0 #22002e,
+        1px 1px 0 #22002e,
+        -1px 1px 0 #22002e,
+        1px -1px 0 #22002e,
+        -1px -1px 0 #22002e,
+        1px 0 0 rgba(255, 255, 255, 0.85),
+        -1px 0 0 rgba(255, 255, 255, 0.85),
+        0 1px 0 rgba(255, 255, 255, 0.85),
+        0 -1px 0 rgba(255, 255, 255, 0.85),
+        0 0 10px rgba(255, 70, 245, 0.55),
+        0 0 18px rgba(150, 50, 255, 0.4);
+}
+
+.team-league-score-banner .tls-score {
+    color: #ff4fff;
+    margin: 0 0.4em;
+}
+
+/* Show/hide toggle for the team league score banner (next to the Scoreboard scene button) */
+.tls-score-toggle {
+    flex: 0 0 auto;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    white-space: nowrap;
+    font-weight: 700;
+    width: 26px;
+    padding: 0;
+    line-height: 1;
+    font-size: 12px;
+    text-align: center;
+}
+.tls-score-toggle.on {
+    background: #1faa4b;
+    border-color: #18923f;
+    color: #fff;
+}
+.tls-score-toggle.on:hover {
+    background: #24c457;
+}
+.tls-score-toggle.off {
+    background: #6b6b6b;
+    border-color: #595959;
+    color: #d6d6d6;
+}
+.tls-score-toggle.off:hover {
+    background: #777;
+}
+
 #suggestion-list {
     position: relative;
     top: 10px;

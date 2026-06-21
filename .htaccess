@@ -1,0 +1,6 @@
+# Pretty URLs for the status API. The .php endpoints also work directly.
+<IfModule mod_rewrite.c>
+    RewriteEngine On
+    RewriteRule ^status/log/?$ status_log.php [L,QSA]
+    RewriteRule ^status/?$ status.php [L,QSA]
+</IfModule>

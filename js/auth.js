@@ -70,3 +70,13 @@ document.getElementById('chpw-save').addEventListener('click', function() {
         })
         .catch(function(){ err.textContent = 'Network error.'; btn.disabled = false; });
 });
+
+// Session keep-alive: ping the read-only `check` action so the server session's
+// last-access time stays fresh while the tab is open, preventing idle GC from
+// expiring it (which caused silent 401s on save). Only runs when logged in,
+// since this file is only loaded by the authenticated page.
+setInterval(function() {
+    var fd = new FormData();
+    fd.append('action', 'check');
+    fetch('auth.php', { method: 'POST', body: fd }).catch(function(){});
+}, 5 * 60 * 1000);

@@ -358,6 +358,12 @@ function onIntroVideoEnded() {
 }
 
 function playPlayerIntroByName(playerName) {
+	// Notify the status reporter of every intro/GG press, regardless of caller
+	// (form submit, suggestion click, SC2 scene, custom buttons).
+	try {
+		document.dispatchEvent(new CustomEvent('status:intro', { detail: { name: playerName } }));
+	} catch (e) {}
+
 	const matchingPlayer = playerList.find(p => p[0] === playerName);
 
 	if (!matchingPlayer) {

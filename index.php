@@ -433,6 +433,7 @@ $streamLogoSmallSrc = ($streamSceneAssetsBase !== '') ? ($streamSceneAssetsBase 
                     <button type="button" id="scene-btn-bracket" onclick="toggleSceneOverlay('bracket')">Bracket</button>
                 </div>
                 <div style="display:flex; gap:8px;">
+                    <button type="button" id="tls-score-toggle-btn" class="tls-score-toggle on" onclick="toggleTeamLeagueScoreBanner()" title="Show/hide the team league score on the top-right">&#9650;</button>
                     <button type="button" id="scene-btn-scoreboard" onclick="toggleSceneOverlay('scoreboard')">FSL TeamLeague Scoreboard</button>
                     <button type="button" id="scene-btn-custom-scoreboard" onclick="toggleSceneOverlay('custom-scoreboard')">Custom Scoreboard</button>
                 </div>
@@ -526,6 +527,8 @@ $streamLogoSmallSrc = ($streamSceneAssetsBase !== '') ? ($streamSceneAssetsBase 
                     border: none;
                 "></iframe>
             </div>
+            <!-- Team League total score banner: top-right, between SEASON 11 and FSL branding. Hidden while the full Scoreboard scene is shown. -->
+            <div id="team-league-score-banner" class="team-league-score-banner" style="display: none;"></div>
             <div class="video-wrapper">
                 <div id="video-container" data-layer-id="video-container">
                     <video id="video-player" width="640" height="480">
@@ -660,6 +663,7 @@ $streamLogoSmallSrc = ($streamSceneAssetsBase !== '') ? ($streamSceneAssetsBase 
         window.MX_SCENE_MAP   = <?php echo json_encode($sceneMoodMap, JSON_UNESCAPED_SLASHES); ?>;
         window.MX_MUSIC_FILES = <?php echo json_encode($musicFiles,   JSON_UNESCAPED_SLASHES); ?>;
         window.MX_STATS_URL   = '<?php echo rtrim(dirname($_SERVER["SCRIPT_NAME"]), "/"); ?>/save_music_stats.php';
+        window.STATUS_URL     = '<?php echo rtrim(dirname($_SERVER["SCRIPT_NAME"]), "/"); ?>/save_status.php';
         window.MX_HELP_URL    = '<?php echo rtrim(dirname($_SERVER["SCRIPT_NAME"]), "/"); ?>/docs/music-help.php';
         window.MX_MUSIC_PATH  = <?php echo json_encode($streamMxMusicPath, JSON_UNESCAPED_SLASHES); ?>;
         window.MX_MUSIC_PATH_LOCKED = <?php echo $streamMxMusicPathLocked ? 'true' : 'false'; ?>;
@@ -1221,6 +1225,7 @@ $streamLogoSmallSrc = ($streamSceneAssetsBase !== '') ? ($streamSceneAssetsBase 
                                 var overlay = document.getElementById("scoreboard-overlay");
                                 if (overlay && overlay.style.display === "block") loadAndRenderScoreboard();
                             }
+                            try { document.dispatchEvent(new CustomEvent('status:score-saved')); } catch (err) {}
                         } else {
                             btn.textContent = "Error";
                         }
@@ -1240,6 +1245,7 @@ $streamLogoSmallSrc = ($streamSceneAssetsBase !== '') ? ($streamSceneAssetsBase 
                 if (e.origin !== window.location.origin) return;
                 if (!e.data || e.data.type !== 'scoreboard-editor-saved') return;
                 scoreboardEditorLoad();
+                try { document.dispatchEvent(new CustomEvent('status:score-saved')); } catch (err) {}
             });
 
             window.scoreboardEditorLoad = function scoreboardEditorLoad() {
@@ -1341,6 +1347,7 @@ $streamLogoSmallSrc = ($streamSceneAssetsBase !== '') ? ($streamSceneAssetsBase 
                             var overlay = document.getElementById('scoreboard-overlay');
                             if (overlay && overlay.style.display === 'block') loadAndRenderScoreboard();
                         }
+                        try { document.dispatchEvent(new CustomEvent('status:score-saved')); } catch (err) {}
                         if (onSuccess) onSuccess();
                     } else {
                         if (statusEl) statusEl.textContent = 'Error saving.';
@@ -2897,6 +2904,7 @@ $streamLogoSmallSrc = ($streamSceneAssetsBase !== '') ? ($streamSceneAssetsBase 
                 var sbBtn = document.getElementById('scene-btn-scoreboard');
                 if (sbEl) { sbEl.style.display = 'none'; sbEl.style.zIndex = ''; }
                 if (sbBtn) sbBtn.classList.remove('active');
+                if (typeof window.tlsShowTeamLeagueScoreBannerIfReady === 'function') window.tlsShowTeamLeagueScoreBannerIfReady();
                 var csbEl = document.getElementById('custom-scoreboard-overlay');
                 var csbBtn = document.getElementById('scene-btn-custom-scoreboard');
                 if (csbEl) { csbEl.style.display = 'none'; csbEl.style.zIndex = ''; }
@@ -3092,6 +3100,75 @@ $streamLogoSmallSrc = ($streamSceneAssetsBase !== '') ? ($streamSceneAssetsBase 
                     container.innerHTML = '<div class="scoreboard-panel-inner"><p class="scoreboard-empty">Could not load scoreboard. ' + (err && err.message ? err.message : '') + '</p></div>';
                 });
             };
+
+            /* ---- Team League total score banner (top-right brand area) ---- */
+            var TLS_ENABLED_KEY = 'stream_production_tls_score_enabled';
+            window.tlsScoreEnabled = (function() {
+                try { return localStorage.getItem(TLS_ENABLED_KEY) !== 'false'; } catch (e) { return true; }
+            })();
+            function tlsCleanTeamName(s) {
+                return String(s == null ? '' : s).replace(/\[\d+\]/g, '').replace(/^\s*\([A-Za-z]\)\s*/, '').trim();
+            }
+            window.tlsHideTeamLeagueScoreBanner = function() {
+                var b = document.getElementById('team-league-score-banner');
+                if (b) b.style.display = 'none';
+            };
+            window.tlsShowTeamLeagueScoreBannerIfReady = function() {
+                if (!window.tlsScoreEnabled) return;
+                var sbOverlay = document.getElementById('scoreboard-overlay');
+                if (sbOverlay && sbOverlay.style.display === 'block') return;
+                var b = document.getElementById('team-league-score-banner');
+                if (b && b.innerHTML && b.innerHTML.trim()) b.style.display = 'block';
+            };
+            window.toggleTeamLeagueScoreBanner = function() {
+                window.tlsScoreEnabled = !window.tlsScoreEnabled;
+                try { localStorage.setItem(TLS_ENABLED_KEY, window.tlsScoreEnabled ? 'true' : 'false'); } catch (e) {}
+                tlsSyncScoreToggleBtn();
+                if (window.tlsScoreEnabled) {
+                    window.tlsShowTeamLeagueScoreBannerIfReady();
+                } else {
+                    window.tlsHideTeamLeagueScoreBanner();
+                }
+            };
+            function tlsSyncScoreToggleBtn() {
+                var btn = document.getElementById('tls-score-toggle-btn');
+                if (!btn) return;
+                var on = !!window.tlsScoreEnabled;
+                btn.classList.toggle('on', on);
+                btn.classList.toggle('off', !on);
+                btn.innerHTML = on ? '&#9650;' : '&#9660;';
+            }
+            tlsSyncScoreToggleBtn();
+            window.updateTeamLeagueScoreBanner = function() {
+                var banner = document.getElementById('team-league-score-banner');
+                if (!banner) return;
+                var base = window.location.pathname.replace(/\/[^/]*$/, '') || '';
+                var baseUrl = (base ? base + '/' : '');
+                fetch(baseUrl + '2026/scoreboard.csv?_t=' + Date.now(), { cache: 'no-store' })
+                    .then(function(r) { return r.ok ? r.text() : ''; })
+                    .then(function(text) {
+                        var raw = (text || '').trim();
+                        var rows = raw ? parseCSV(raw) : [];
+                        if (!rows.length) { banner.innerHTML = ''; banner.style.display = 'none'; return; }
+                        var r0 = rows[0];
+                        var teamA = tlsCleanTeamName(cellStr(r0[2]));
+                        var teamB = tlsCleanTeamName(cellStr(r0[6]));
+                        var scoreA = cellStr(r0[4]).trim();
+                        var scoreB = cellStr(r0[8]).trim();
+                        if (!teamA || !teamB) { banner.innerHTML = ''; banner.style.display = 'none'; return; }
+                        if (scoreA === '') scoreA = '0';
+                        if (scoreB === '') scoreB = '0';
+                        banner.innerHTML = '<span class="tls-team">' + escapeHtml(teamA) + '</span>' +
+                            '<span class="tls-score">' + escapeHtml(scoreA) + '&ndash;' + escapeHtml(scoreB) + '</span>' +
+                            '<span class="tls-team">' + escapeHtml(teamB) + '</span>';
+                        var sbOverlay = document.getElementById('scoreboard-overlay');
+                        var scoreboardActive = sbOverlay && sbOverlay.style.display === 'block';
+                        banner.style.display = (!window.tlsScoreEnabled || scoreboardActive) ? 'none' : 'block';
+                    })
+                    .catch(function() {});
+            };
+            document.addEventListener('status:score-saved', function() { window.updateTeamLeagueScoreBanner(); });
+            window.updateTeamLeagueScoreBanner();
 
             /* ---- Custom Scoreboard ---- */
 
@@ -3749,6 +3826,7 @@ $streamLogoSmallSrc = ($streamSceneAssetsBase !== '') ? ($streamSceneAssetsBase 
                     scoreboardOverlay.style.zIndex = '';
                     scoreboardBtn.classList.remove('active');
                     applyLayoutFromSc2Button();
+                    if (typeof window.tlsShowTeamLeagueScoreBannerIfReady === 'function') window.tlsShowTeamLeagueScoreBannerIfReady();
                 } else {
                     clearExclusiveScenes();
                     var bgOverlay = document.getElementById('scene-overlay-all-vdo');
@@ -3792,6 +3870,7 @@ $streamLogoSmallSrc = ($streamSceneAssetsBase !== '') ? ($streamSceneAssetsBase 
                     scoreboardOverlay.style.zIndex = '99998';
                     scoreboardBtn.classList.add('active');
                     if (typeof loadAndRenderScoreboard === 'function') loadAndRenderScoreboard();
+                    if (typeof window.tlsHideTeamLeagueScoreBanner === 'function') window.tlsHideTeamLeagueScoreBanner();
                 }
                 return;
             }
@@ -3950,6 +4029,7 @@ $streamLogoSmallSrc = ($streamSceneAssetsBase !== '') ? ($streamSceneAssetsBase 
                     var scoreboardBtnShared = document.getElementById('scene-btn-scoreboard');
                     if (scoreboardOverlayShared) { scoreboardOverlayShared.style.display = 'none'; scoreboardOverlayShared.style.zIndex = ''; }
                     if (scoreboardBtnShared) scoreboardBtnShared.classList.remove('active');
+                    if (typeof window.tlsShowTeamLeagueScoreBannerIfReady === 'function') window.tlsShowTeamLeagueScoreBannerIfReady();
                     sharedOverlay.style.display = 'block';
                     sharedBtn.classList.add('active');
                 } else {
@@ -4077,6 +4157,7 @@ $streamLogoSmallSrc = ($streamSceneAssetsBase !== '') ? ($streamSceneAssetsBase 
                     var scoreboardBtnFullShared = document.getElementById('scene-btn-scoreboard');
                     if (scoreboardOverlayFullShared) { scoreboardOverlayFullShared.style.display = 'none'; scoreboardOverlayFullShared.style.zIndex = ''; }
                     if (scoreboardBtnFullShared) scoreboardBtnFullShared.classList.remove('active');
+                    if (typeof window.tlsShowTeamLeagueScoreBannerIfReady === 'function') window.tlsShowTeamLeagueScoreBannerIfReady();
                     if (sc2Overlay) { sc2Overlay.style.display = 'block'; sc2Overlay.style.zIndex = '60000'; }
                     if (sc2Panel) {
                         sc2Panel.style.display = 'block';
@@ -4113,6 +4194,7 @@ $streamLogoSmallSrc = ($streamSceneAssetsBase !== '') ? ($streamSceneAssetsBase 
                     var scoreboardBtnYt = document.getElementById('scene-btn-scoreboard');
                     if (scoreboardOverlayYt) { scoreboardOverlayYt.style.display = 'none'; scoreboardOverlayYt.style.zIndex = ''; }
                     if (scoreboardBtnYt) scoreboardBtnYt.classList.remove('active');
+                    if (typeof window.tlsShowTeamLeagueScoreBannerIfReady === 'function') window.tlsShowTeamLeagueScoreBannerIfReady();
                     ytVideo.srcObject = sharedVideo.srcObject;
                     ytVideo.play();
                     applyYtCropToVideo();
@@ -4404,6 +4486,9 @@ $streamLogoSmallSrc = ($streamSceneAssetsBase !== '') ? ($streamSceneAssetsBase 
 
     <script src="js/music-player.js?v=<?php echo $v; ?>"></script>
     <script src="js/music-admin.js?v=<?php echo $v; ?>"></script>
+
+    <!-- Status reporter: pushes live UI state to save_status.php for /status -->
+    <script src="js/status-reporter.js?v=<?php echo $v; ?>"></script>
 
 </body>
 

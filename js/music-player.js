@@ -790,6 +790,18 @@
     window.mxOnSceneChange = mxOnSceneChange;
     window.mxBuildGrid    = mxBuildGrid;
 
+    // Read-only snapshot of the deck state for the status reporter (status-reporter.js).
+    window.mxGetStatusState = function () {
+        return {
+            playing:         !!mxCur && !mxPaused,
+            mood:            mxMood || null,
+            mood_label:      mxMood ? (MX_LABELS[mxMood] || mxMood) : null,
+            track:           mxTrack || null,
+            random:          !!mxRandom,
+            driven_by_scene: mxCurScene || null
+        };
+    };
+
     // SC2 (animated): logo transition + player-intro video/WAV run over the stream.
     // Duck the mood deck on the master gain until transition ends and intro video
     // has finished, plus a tail so trailing WAV (e.g. FSL voiceover) does not clash.

@@ -51,7 +51,9 @@
     ],
     "analysis": [
         "sc2_analysis_light_clean_01_A.mp3",
-        "sc2_analysis_light_clean_01_B.mp3"
+        "sc2_analysis_light_clean_01_B.mp3",
+        "SC2 FSL excitement and anticipation.mp3",
+        "SC2 FSL excitement and anticipation movement 2.mp3"
     ],
     "analysis_low": [
         "sc2_analysis_low_thoughtful_01_A.mp3",
@@ -91,6 +93,9 @@
     ],
     "scoreboard": [
         "Neon Score Screen.mp3",
-        "Neon Score Screen B.mp3"
+        "Neon Score Screen B.mp3",
+        "SC2 FSL scoreboard A.mp3",
+        "SC2 FSL scoreboard B.mp3",
+        "Valorant_intro remix.mp3"
     ]
 }
