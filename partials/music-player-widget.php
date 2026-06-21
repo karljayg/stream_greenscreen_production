@@ -33,5 +33,13 @@
                         <span id="lpMusicTimeDur" class="lp-mx-time">-:--</span>
                     </div>
                 </div>
+                <!-- Stage bar — shown only for detailed/staged scenes (e.g. SC2). -->
+                <div class="lp-mx-stage" id="lpMusicStage" style="display:none" onclick="event.stopPropagation()">
+                    <div class="lp-mx-stage-hdr">
+                        <span class="lp-mx-stage-title" id="lpMusicStageTitle">STAGES</span>
+                        <span class="lp-mx-stage-now" id="lpMusicStageNow"></span>
+                    </div>
+                    <div class="lp-mx-stage-grid" id="lpMusicStageGrid"></div>
+                </div>
                 <div class="lp-music-grid" id="lpMusicGrid"></div>
             </div>

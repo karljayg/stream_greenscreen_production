@@ -22,9 +22,10 @@
     }
 
     // ─── Working-copy state ────────────────────────────────────────────────────
-    var workTracks   = {};
-    var workSceneMap = {};
-    var musicFiles   = [];   // filenames present in music/ (from window.MX_MUSIC_FILES)
+    var workTracks      = {};
+    var workSceneMap    = {};
+    var workSceneStages = {};  // detailed/staged scenes (window.MX_SCENE_STAGES)
+    var musicFiles      = [];   // filenames present in music/ (from window.MX_MUSIC_FILES)
 
     // ─── Inject CSS (once) ─────────────────────────────────────────────────────
     function injectStyles() {
@@ -89,6 +90,18 @@
             '.mx-song-act{display:flex;align-items:center;gap:6px;flex-wrap:wrap}',
             '.mx-song-act select{font-size:0.72rem;padding:2px 5px;border:1px solid #b8c4d4;border-radius:3px;background:#fff;min-width:0;flex:1}',
             '.mx-upload-inp{display:none}',
+            /* Stages tab */
+            '.mx-staged-scene{background:#fff;border:1px solid #b8c4d4;border-radius:6px;margin-bottom:10px;padding:8px 10px}',
+            '.mx-staged-top{display:flex;align-items:center;gap:6px;flex-wrap:wrap;margin-bottom:8px}',
+            '.mx-staged-key,.mx-staged-label{font-size:0.78rem;border:1px solid #b8c4d4;border-radius:3px;padding:2px 6px;background:#f8fafc}',
+            '.mx-staged-key{font-family:Consolas,monospace}',
+            '.mx-staged-select{font-size:0.72rem;padding:2px 5px;border:1px solid #b8c4d4;border-radius:3px;background:#fff}',
+            '.mx-stages-wrap{display:flex;flex-direction:column;gap:6px}',
+            '.mx-stage-card{border:1px solid #cdd7e5;border-radius:6px;background:#f8fafc}',
+            '.mx-stage-hdr{gap:6px}',
+            '.mx-stage-badge{display:inline-flex;align-items:center;justify-content:center;width:20px;height:20px;border-radius:50%;background:#1d4ed8;color:#fff;font-size:0.72rem;font-weight:800;flex-shrink:0}',
+            '.mx-stage-label,.mx-stage-time{font-size:0.76rem;border:1px solid #b8c4d4;border-radius:3px;padding:2px 6px;background:#fff}',
+            '.mx-stage-desc{width:100%;box-sizing:border-box;font-size:0.72rem;border:1px solid #d7dee8;border-radius:4px;padding:4px 6px;background:#fff;resize:vertical;min-height:34px;margin-bottom:6px;font-family:inherit;color:#334155}',
         ].join('');
         document.head.appendChild(s);
     }
@@ -108,10 +121,12 @@
             '  <div class="mx-tabs">',
             '    <button class="mx-tab active" data-tab="scenes">Scene &#8594; Moods</button>',
             '    <button class="mx-tab" data-tab="moods">Mood &#8594; Songs</button>',
+            '    <button class="mx-tab" data-tab="stages">Detailed (Stages)</button>',
             '  </div>',
             '  <div class="mx-body">',
             '    <div id="mx-tab-scenes"></div>',
             '    <div id="mx-tab-moods" style="display:none"></div>',
+            '    <div id="mx-tab-stages" style="display:none"></div>',
             '  </div>',
             '  <div class="mx-foot">',
             '    <button id="mx-admin-apply">Apply</button>',
@@ -136,6 +151,7 @@
                 var which = tab.dataset.tab;
                 document.getElementById('mx-tab-scenes').style.display = (which === 'scenes') ? '' : 'none';
                 document.getElementById('mx-tab-moods').style.display  = (which === 'moods')  ? '' : 'none';
+                document.getElementById('mx-tab-stages').style.display = (which === 'stages') ? '' : 'none';
                 // When returning to Scenes tab, refresh mood dropdowns in case moods were added
                 if (which === 'scenes') refreshSceneMoodDropdowns();
             });
@@ -153,7 +169,10 @@
             saveConfig('mood_songs', window.MX_TRACKS, false, function (ok, err) {
                 if (!ok) { setStatus('Mood save error: ' + err, true); return; }
                 saveConfig('scene_mood_map', window.MX_SCENE_MAP, false, function (ok2, err2) {
-                    setStatus(ok2 ? 'Saved to server!' : 'Scene save error: ' + err2, !ok2, 3000);
+                    if (!ok2) { setStatus('Scene save error: ' + err2, true); return; }
+                    saveConfig('scene_stages', window.MX_SCENE_STAGES, false, function (ok3, err3) {
+                        setStatus(ok3 ? 'Saved to server!' : 'Stages save error: ' + err3, !ok3, 3000);
+                    });
                 });
             });
         });
@@ -165,7 +184,10 @@
             saveConfig('mood_songs', window.MX_TRACKS, true, function (ok, err) {
                 if (!ok) { setStatus('Mood promote error: ' + err, true); return; }
                 saveConfig('scene_mood_map', window.MX_SCENE_MAP, true, function (ok2, err2) {
-                    setStatus(ok2 ? 'Promoted to global!' : 'Scene promote error: ' + err2, !ok2, 3000);
+                    if (!ok2) { setStatus('Scene promote error: ' + err2, true); return; }
+                    saveConfig('scene_stages', window.MX_SCENE_STAGES, true, function (ok3, err3) {
+                        setStatus(ok3 ? 'Promoted to global!' : 'Stages promote error: ' + err3, !ok3, 3000);
+                    });
                 });
             });
         });
@@ -175,17 +197,20 @@
     function openModal() {
         injectStyles();
         buildDOM();
-        workTracks   = deepClone(window.MX_TRACKS   || {});
-        workSceneMap = deepClone(window.MX_SCENE_MAP || {});
-        musicFiles   = (window.MX_MUSIC_FILES || []).slice();
+        workTracks      = deepClone(window.MX_TRACKS      || {});
+        workSceneMap    = deepClone(window.MX_SCENE_MAP    || {});
+        workSceneStages = deepClone(window.MX_SCENE_STAGES || {});
+        musicFiles      = (window.MX_MUSIC_FILES || []).slice();
         renderScenes();
         renderMoods();
+        renderStages();
         document.getElementById('mx-admin-overlay').style.display = 'flex';
         // Default to Scenes tab active
         document.querySelectorAll('.mx-tab').forEach(function (t) { t.classList.remove('active'); });
         document.querySelector('.mx-tab[data-tab="scenes"]').classList.add('active');
         document.getElementById('mx-tab-scenes').style.display = '';
         document.getElementById('mx-tab-moods').style.display  = 'none';
+        document.getElementById('mx-tab-stages').style.display = 'none';
     }
 
     function closeModal() {
@@ -214,13 +239,40 @@
             newTracks[key] = songs;
         });
         workTracks = newTracks;
+
+        var newStages = {};
+        document.querySelectorAll('#mx-tab-stages .mx-staged-scene').forEach(function (sc) {
+            var key = sc.querySelector('.mx-staged-key').value.trim();
+            if (!key) return;
+            var sel = sc.querySelector('.mx-staged-select');
+            var stages = [];
+            sc.querySelectorAll('.mx-stage-card').forEach(function (card, i) {
+                var songs = [];
+                card.querySelectorAll('.mx-song-item').forEach(function (item) { songs.push(item.dataset.file); });
+                stages.push({
+                    n:     Number(card.dataset.stageN) || (i + 1),
+                    label: card.querySelector('.mx-stage-label').value.trim(),
+                    time:  card.querySelector('.mx-stage-time').value.trim(),
+                    desc:  card.querySelector('.mx-stage-desc').value.trim(),
+                    songs: songs
+                });
+            });
+            newStages[key] = {
+                label:  sc.querySelector('.mx-staged-label').value.trim(),
+                select: sel ? sel.value : 'random',
+                stages: stages
+            };
+        });
+        workSceneStages = newStages;
     }
 
     function applyChanges() {
         collectState();
-        window.MX_TRACKS   = deepClone(workTracks);
-        window.MX_SCENE_MAP = deepClone(workSceneMap);
+        window.MX_TRACKS       = deepClone(workTracks);
+        window.MX_SCENE_MAP    = deepClone(workSceneMap);
+        window.MX_SCENE_STAGES = deepClone(workSceneStages);
         if (typeof window.mxBuildGrid === 'function') window.mxBuildGrid();
+        if (typeof window.mxBuildStageBar === 'function') window.mxBuildStageBar();
     }
 
     // ─── Status line ───────────────────────────────────────────────────────────
@@ -391,22 +443,8 @@
         songs.forEach(function (f) { addSongItem(songList, hdr, f); });
         body.appendChild(songList);
 
-        // Song actions row
-        var actRow = document.createElement('div');
-        actRow.className = 'mx-song-act';
-        var fileOptions = musicFiles.map(function (f) {
-            return '<option value="' + escH(f) + '">' + escH(f) + '</option>';
-        }).join('');
-        actRow.innerHTML = [
-            '<select class="mx-song-sel">',
-            '  <option value="">— add existing —</option>',
-            fileOptions,
-            '</select>',
-            '<button class="mx-btn mx-btn-add mx-add-song-btn">+</button>',
-            '<button class="mx-btn mx-upload-btn" title="Upload new audio file">&#x2191; Upload</button>',
-            '<input type="file" class="mx-upload-inp" accept=".mp3,.wav,.ogg,.flac,.m4a">',
-        ].join('');
-        body.appendChild(actRow);
+        // Song actions row (add-existing + upload) — shared with the stage editor
+        body.appendChild(buildSongActions(songList, hdr));
 
         card.appendChild(hdr);
         card.appendChild(body);
@@ -421,55 +459,6 @@
 
         // Delete mood
         hdr.querySelector('.mx-btn-del').addEventListener('click', function () { card.remove(); });
-
-        // Add existing song from dropdown
-        actRow.querySelector('.mx-add-song-btn').addEventListener('click', function () {
-            var sel = actRow.querySelector('.mx-song-sel');
-            if (!sel.value) return;
-            addSongItem(songList, hdr, sel.value);
-            sel.value = '';
-        });
-
-        // Upload
-        var uploadBtn = actRow.querySelector('.mx-upload-btn');
-        var uploadInp = actRow.querySelector('.mx-upload-inp');
-        uploadBtn.addEventListener('click', function () { uploadInp.click(); });
-        uploadInp.addEventListener('change', function () {
-            if (!uploadInp.files.length) return;
-            var fd = new FormData();
-            fd.append('audio_file', uploadInp.files[0]);
-            uploadBtn.textContent = 'Uploading\u2026';
-            uploadBtn.disabled = true;
-            fetch('upload_music.php', { method: 'POST', body: fd })
-                .then(function (r) { return r.json(); })
-                .then(function (res) {
-                    uploadBtn.textContent = '\u2191 Upload';
-                    uploadBtn.disabled = false;
-                    if (res.ok) {
-                        var fname = res.filename;
-                        // Register in the in-memory file list and all dropdowns
-                        if (musicFiles.indexOf(fname) === -1) {
-                            musicFiles.push(fname);
-                            document.querySelectorAll('.mx-song-sel').forEach(function (sel) {
-                                var opt = document.createElement('option');
-                                opt.value = fname;
-                                opt.textContent = fname;
-                                sel.appendChild(opt);
-                            });
-                        }
-                        addSongItem(songList, hdr, fname);
-                        setStatus('Uploaded: ' + fname, false, 3000);
-                    } else {
-                        setStatus('Upload failed: ' + (res.error || 'unknown'), true, 4000);
-                    }
-                })
-                .catch(function (e) {
-                    uploadBtn.textContent = '\u2191 Upload';
-                    uploadBtn.disabled = false;
-                    setStatus('Upload error: ' + e.message, true, 4000);
-                });
-            uploadInp.value = '';
-        });
 
         $(songList).sortable({ items: '.mx-song-item', handle: '.mx-grip', tolerance: 'pointer' });
 
@@ -512,6 +501,225 @@
         var n = songList ? songList.querySelectorAll('.mx-song-item').length : 0;
         var span = hdr.querySelector('.mx-song-count');
         if (span) span.textContent = n + ' song' + (n !== 1 ? 's' : '');
+    }
+
+    // Build the "add existing / upload" actions row for a song list. Shared by
+    // the Mood tab and the Detailed/Stages tab so both behave identically.
+    function buildSongActions(songList, hdr) {
+        var actRow = document.createElement('div');
+        actRow.className = 'mx-song-act';
+        var fileOptions = musicFiles.map(function (f) {
+            return '<option value="' + escH(f) + '">' + escH(f) + '</option>';
+        }).join('');
+        actRow.innerHTML = [
+            '<select class="mx-song-sel">',
+            '  <option value="">— add existing —</option>',
+            fileOptions,
+            '</select>',
+            '<button class="mx-btn mx-btn-add mx-add-song-btn">+</button>',
+            '<button class="mx-btn mx-upload-btn" title="Upload new audio file">&#x2191; Upload</button>',
+            '<input type="file" class="mx-upload-inp" accept=".mp3,.wav,.ogg,.flac,.m4a">',
+        ].join('');
+
+        actRow.querySelector('.mx-add-song-btn').addEventListener('click', function () {
+            var sel = actRow.querySelector('.mx-song-sel');
+            if (!sel.value) return;
+            addSongItem(songList, hdr, sel.value);
+            sel.value = '';
+        });
+
+        var uploadBtn = actRow.querySelector('.mx-upload-btn');
+        var uploadInp = actRow.querySelector('.mx-upload-inp');
+        uploadBtn.addEventListener('click', function () { uploadInp.click(); });
+        uploadInp.addEventListener('change', function () {
+            if (!uploadInp.files.length) return;
+            var fd = new FormData();
+            fd.append('audio_file', uploadInp.files[0]);
+            uploadBtn.textContent = 'Uploading\u2026';
+            uploadBtn.disabled = true;
+            fetch('upload_music.php', { method: 'POST', body: fd })
+                .then(function (r) { return r.json(); })
+                .then(function (res) {
+                    uploadBtn.textContent = '\u2191 Upload';
+                    uploadBtn.disabled = false;
+                    if (res.ok) {
+                        var fname = res.filename;
+                        if (musicFiles.indexOf(fname) === -1) {
+                            musicFiles.push(fname);
+                            document.querySelectorAll('.mx-song-sel').forEach(function (sel) {
+                                var opt = document.createElement('option');
+                                opt.value = fname;
+                                opt.textContent = fname;
+                                sel.appendChild(opt);
+                            });
+                        }
+                        addSongItem(songList, hdr, fname);
+                        setStatus('Uploaded: ' + fname, false, 3000);
+                    } else {
+                        setStatus('Upload failed: ' + (res.error || 'unknown'), true, 4000);
+                    }
+                })
+                .catch(function (e) {
+                    uploadBtn.textContent = '\u2191 Upload';
+                    uploadBtn.disabled = false;
+                    setStatus('Upload error: ' + e.message, true, 4000);
+                });
+            uploadInp.value = '';
+        });
+
+        return actRow;
+    }
+
+    // ─── DETAILED / STAGES TAB ───────────────────────────────────────────────
+    // Detailed scenes (e.g. "sc2") organize music into numbered gameplay stages
+    // instead of a flat mood list. Stage-first, variation-second selection lives
+    // in js/music-player.js; this tab just edits the definitions.
+    function renderStages() {
+        var container = document.getElementById('mx-tab-stages');
+        container.innerHTML = '';
+
+        var intro = document.createElement('div');
+        intro.style.cssText = 'font-size:0.72rem;color:#475569;margin-bottom:8px;line-height:1.35';
+        intro.innerHTML = 'Detailed scenes play <b>stage-first, variation-second</b>: each stage owns a song pool; ' +
+            'entering a stage plays an unplayed song from that pool, rotating through variations before repeating. ' +
+            'Any scene key listed here is treated as detailed.';
+        container.appendChild(intro);
+
+        var addRow = document.createElement('div');
+        addRow.className = 'mx-add-row';
+        var addBtn = document.createElement('button');
+        addBtn.className = 'mx-btn mx-btn-add';
+        addBtn.textContent = '+ Add Detailed Scene';
+        addBtn.addEventListener('click', function () {
+            addStagedSceneCard('new_scene', { label: '', select: 'random', stages: [] }, true);
+        });
+        addRow.appendChild(addBtn);
+        container.appendChild(addRow);
+
+        Object.keys(workSceneStages).forEach(function (k) {
+            addStagedSceneCard(k, workSceneStages[k]);
+        });
+    }
+
+    function addStagedSceneCard(sceneKey, def, prepend) {
+        var container = document.getElementById('mx-tab-stages');
+        def = def || {};
+        var stages = Array.isArray(def.stages) ? def.stages : [];
+
+        var sc = document.createElement('div');
+        sc.className = 'mx-staged-scene';
+
+        var top = document.createElement('div');
+        top.className = 'mx-staged-top';
+        top.innerHTML = [
+            '<span style="font-size:0.7rem;color:#94a3b8;flex-shrink:0">Scene key:</span>',
+            '<input class="mx-staged-key" type="text" value="' + escH(sceneKey) + '" placeholder="scene_key" style="width:120px">',
+            '<input class="mx-staged-label" type="text" value="' + escH(def.label || '') + '" placeholder="Display label" style="flex:1;min-width:90px">',
+            '<select class="mx-staged-select" title="Selection within a stage pool">',
+            '  <option value="random">random</option>',
+            '  <option value="sequential">sequential</option>',
+            '</select>',
+            '<button class="mx-btn mx-btn-del mx-staged-del" style="flex-shrink:0">&#x2715; Delete</button>',
+        ].join('');
+        sc.appendChild(top);
+        top.querySelector('.mx-staged-select').value = (def.select === 'sequential') ? 'sequential' : 'random';
+        top.querySelector('.mx-staged-del').addEventListener('click', function () { sc.remove(); });
+
+        var stagesWrap = document.createElement('div');
+        stagesWrap.className = 'mx-stages-wrap';
+        sc.appendChild(stagesWrap);
+
+        stages.forEach(function (st) { addStageCard(stagesWrap, st); });
+
+        var stageAdd = document.createElement('button');
+        stageAdd.className = 'mx-btn mx-btn-add';
+        stageAdd.style.marginTop = '4px';
+        stageAdd.textContent = '+ Add Stage';
+        stageAdd.addEventListener('click', function () {
+            var nextN = stagesWrap.querySelectorAll('.mx-stage-card').length + 1;
+            addStageCard(stagesWrap, { n: nextN, label: '', time: '', desc: '', songs: [] }, true);
+        });
+        sc.appendChild(stageAdd);
+
+        if (prepend) {
+            var addRow = container.querySelector('.mx-add-row');
+            container.insertBefore(sc, addRow ? addRow.nextSibling : null);
+            sc.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+            var keyInput = sc.querySelector('.mx-staged-key');
+            keyInput.select();
+            keyInput.focus();
+        } else {
+            container.appendChild(sc);
+        }
+    }
+
+    function addStageCard(stagesWrap, st, expand) {
+        st = st || {};
+        var songs = Array.isArray(st.songs) ? st.songs : [];
+
+        var card = document.createElement('div');
+        card.className = 'mx-stage-card';
+        card.dataset.stageN = st.n != null ? st.n : (stagesWrap.querySelectorAll('.mx-stage-card').length + 1);
+
+        var hdr = document.createElement('div');
+        hdr.className = 'mx-mood-hdr mx-stage-hdr';
+        hdr.innerHTML = [
+            '<span class="mx-caret">&#9658;</span>',
+            '<span class="mx-stage-badge">' + escH(String(card.dataset.stageN)) + '</span>',
+            '<input class="mx-stage-label" type="text" value="' + escH(st.label || '') + '" placeholder="Stage label" style="flex:1;min-width:80px">',
+            '<input class="mx-stage-time" type="text" value="' + escH(st.time || '') + '" placeholder="time" title="e.g. 0–3 min" style="width:74px">',
+            '<span class="mx-song-count" style="font-size:0.7rem;color:#94a3b8;margin-left:2px">' + songs.length + ' song' + (songs.length !== 1 ? 's' : '') + '</span>',
+            '<button class="mx-btn mx-btn-del mx-stage-del" style="margin-left:auto;flex-shrink:0">&#x2715;</button>',
+        ].join('');
+
+        var body = document.createElement('div');
+        body.className = 'mx-mood-body mx-stage-body';
+
+        var descInp = document.createElement('textarea');
+        descInp.className = 'mx-stage-desc';
+        descInp.placeholder = 'Mood / gameplay purpose for this stage';
+        descInp.value = st.desc || '';
+        body.appendChild(descInp);
+
+        var songList = document.createElement('ul');
+        songList.className = 'mx-song-list';
+        songs.forEach(function (f) { addSongItem(songList, hdr, f); });
+        body.appendChild(songList);
+
+        body.appendChild(buildSongActions(songList, hdr));
+
+        card.appendChild(hdr);
+        card.appendChild(body);
+
+        hdr.addEventListener('click', function (e) {
+            if (e.target.tagName === 'INPUT' || e.target.tagName === 'BUTTON' || e.target.tagName === 'TEXTAREA') return;
+            var open = body.classList.toggle('open');
+            hdr.classList.toggle('open', open);
+            hdr.querySelector('.mx-caret').classList.toggle('open', open);
+        });
+        hdr.querySelector('.mx-stage-del').addEventListener('click', function () {
+            card.remove();
+            renumberStages(stagesWrap);
+        });
+
+        $(songList).sortable({ items: '.mx-song-item', handle: '.mx-grip', tolerance: 'pointer' });
+
+        stagesWrap.appendChild(card);
+        if (expand) {
+            body.classList.add('open');
+            hdr.classList.add('open');
+            hdr.querySelector('.mx-caret').classList.add('open');
+            card.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+        }
+    }
+
+    // Keep stage numbers / badges contiguous after a delete.
+    function renumberStages(stagesWrap) {
+        stagesWrap.querySelectorAll('.mx-stage-card').forEach(function (card, i) {
+            card.dataset.stageN = i + 1;
+            var badge = card.querySelector('.mx-stage-badge');
+            if (badge) badge.textContent = String(i + 1);
+        });
     }
 
     // ─── Public ────────────────────────────────────────────────────────────────

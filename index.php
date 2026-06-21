@@ -181,8 +181,8 @@ $streamLogoSmallSrc = ($streamSceneAssetsBase !== '') ? ($streamSceneAssetsBase 
                         <label><input type="radio" name="music-mode" value="random"> Random</label>
                     </div>
                     <div style="margin-top:10px;">
-                        <button type="button" onclick="mxAdminOpen()" style="font-size:0.82rem;padding:5px 13px;">&#9836; Open Music Admin</button>
-                        <p class="layer-order-hint" style="margin-top:5px;">Visual editor for Scene&nbsp;&rarr;&nbsp;Mood mappings and Mood&nbsp;&rarr;&nbsp;Song assignments. Upload new audio files, add/remove moods, reorder songs.</p>
+                        <button type="button" onclick="window.open('music_admin.php', 'mxMusicAdmin', 'width=900,height=920,resizable=yes,scrollbars=yes')" style="font-size:0.82rem;padding:5px 13px;">&#9836; Open Music Admin</button>
+                        <p class="layer-order-hint" style="margin-top:5px;">Opens in a separate window so it won't overlay the stream. Visual editor for Scene&nbsp;&rarr;&nbsp;Mood mappings, Mood&nbsp;&rarr;&nbsp;Song assignments, and detailed stage scenes. Upload new audio files, add/remove moods, reorder songs. Use Save to Server to apply.</p>
                     </div>
                 </div>
                 <button class="collapsible-btn" id="btn-sc2-button-effects" onclick="toggleSection('sc2-button-effects-section', this)">SC2 button effects</button>
@@ -659,9 +659,10 @@ $streamLogoSmallSrc = ($streamSceneAssetsBase !== '') ? ($streamSceneAssetsBase 
         window.ASSET_VERSION = "<?php echo $v; ?>";
         window.CURRENT_USER  = <?php echo json_encode($_SESSION['username']); ?>;
         window.SE_TOKEN      = "<?php echo addslashes(SE_JWT); ?>";
-        window.MX_TRACKS      = <?php echo json_encode($moodSongs,    JSON_UNESCAPED_SLASHES); ?>;
-        window.MX_SCENE_MAP   = <?php echo json_encode($sceneMoodMap, JSON_UNESCAPED_SLASHES); ?>;
-        window.MX_MUSIC_FILES = <?php echo json_encode($musicFiles,   JSON_UNESCAPED_SLASHES); ?>;
+        window.MX_TRACKS       = <?php echo json_encode($moodSongs,    JSON_UNESCAPED_SLASHES); ?>;
+        window.MX_SCENE_MAP    = <?php echo json_encode($sceneMoodMap, JSON_UNESCAPED_SLASHES); ?>;
+        window.MX_SCENE_STAGES = <?php echo json_encode($sceneStages,  JSON_UNESCAPED_SLASHES); ?>;
+        window.MX_MUSIC_FILES  = <?php echo json_encode($musicFiles,   JSON_UNESCAPED_SLASHES); ?>;
         window.MX_STATS_URL   = '<?php echo rtrim(dirname($_SERVER["SCRIPT_NAME"]), "/"); ?>/save_music_stats.php';
         window.STATUS_URL     = '<?php echo rtrim(dirname($_SERVER["SCRIPT_NAME"]), "/"); ?>/save_status.php';
         window.MX_HELP_URL    = '<?php echo rtrim(dirname($_SERVER["SCRIPT_NAME"]), "/"); ?>/docs/music-help.php';
@@ -971,8 +972,9 @@ $streamLogoSmallSrc = ($streamSceneAssetsBase !== '') ? ($streamSceneAssetsBase 
                     musicMode: (function() { var el = document.querySelector('input[name="music-mode"]:checked'); return el ? el.value : 'sequence'; })(),
                 musicVol: (function() { var el = document.getElementById('lpMusicVol'); return el ? parseFloat(el.value) : 22; })(),
                 musicFade: (function() { var el = document.getElementById('lpMusicFade'); return el ? parseFloat(el.value) : 1.5; })(),
-                sceneMoodMap: (typeof MX_SCENE_MAP !== 'undefined' ? MX_SCENE_MAP : {}),
-                moodSongs:    (typeof MX_TRACKS    !== 'undefined' ? MX_TRACKS    : {}),
+                sceneMoodMap: (typeof MX_SCENE_MAP    !== 'undefined' ? MX_SCENE_MAP    : {}),
+                moodSongs:    (typeof MX_TRACKS       !== 'undefined' ? MX_TRACKS       : {}),
+                sceneStages:  (typeof MX_SCENE_STAGES !== 'undefined' ? MX_SCENE_STAGES : {}),
                 productionFiles: {
                     mode: (function() { var el = document.querySelector('input[name="production-files-mode"]:checked'); return el && el.value === "remote" ? "remote" : "local"; })(),
                     remoteBaseUrl: (function() { var el = document.getElementById("production-files-remote-url"); return el ? el.value.trim() : ""; })()
@@ -1140,6 +1142,9 @@ $streamLogoSmallSrc = ($streamSceneAssetsBase !== '') ? ($streamSceneAssetsBase 
                     var mseEd = document.getElementById('mx-mood-songs-editor');
                     if (mseEd) mseEd.value = JSON.stringify(MX_TRACKS, null, 2);
                     if (typeof mxBuildGrid === 'function') mxBuildGrid();
+                }
+                if (parsed.sceneStages && typeof parsed.sceneStages === 'object') {
+                    MX_SCENE_STAGES = parsed.sceneStages;
                 }
                 if (window.updateLogosOverlay) window.updateLogosOverlay();
                 if (window.updateSc2Panel) window.updateSc2Panel();
@@ -4485,7 +4490,7 @@ $streamLogoSmallSrc = ($streamSceneAssetsBase !== '') ? ($streamSceneAssetsBase 
     <script src="js/stream-elements.js?v=<?php echo $v; ?>"></script>
 
     <script src="js/music-player.js?v=<?php echo $v; ?>"></script>
-    <script src="js/music-admin.js?v=<?php echo $v; ?>"></script>
+    <!-- Music Admin runs in its own window (music_admin.php), not as an overlay here. -->
 
     <!-- Status reporter: pushes live UI state to save_status.php for /status -->
     <script src="js/status-reporter.js?v=<?php echo $v; ?>"></script>

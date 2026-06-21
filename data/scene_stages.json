@@ -1,0 +1,123 @@
+{
+    "sc2": {
+        "label": "StarCraft II Match",
+        "select": "sequential",
+        "stages": [
+            {
+                "n": 1,
+                "label": "Opening Build Order",
+                "time": "0–3 min",
+                "desc": "economy setup, worker production, expansion planning, calm confidence, growth, and strategic preparation",
+                "songs": [
+                    "sc2_opening_high_heroic_01_A.mp3",
+                    "sc2_opening_high_heroic_01_B.mp3",
+                    "01. Wings of Liberty.mp3",
+                    "01. The Stars Our Home.mp3",
+                    "Chasing the Horizon - Scud in the Snow.mp3",
+                    "Stage 1 - 1 - First Expansion Alpha.mp3",
+                    "Stage 1 - 1a - First Expansion Beta.mp3",
+                    "Stage 1 - 2 - Orbital Infrastructure.mp3",
+                    "Stage 1 - 3 - Economic Supremacy Alpha.mp3",
+                    "Stage 1 - 3a - Economic Supremacy Beta.mp3"
+                ]
+            },
+            {
+                "n": 2,
+                "label": "Scouting & Tech Reveal",
+                "time": "3–4.5 min",
+                "desc": "reconnaissance, information gathering, hidden technology, uncertainty, suspicion, and anticipation",
+                "songs": [
+                    "sc2_opening_alert_suspense_01_A.mp3",
+                    "sc2_opening_alert_suspense_01_B.mp3",
+                    "The Deal excerpt - StarCraft 2 soundtrack.mp3",
+                    "sc2_suspense_mid_dark_01_A.mp3",
+                    "SC2 FSL excitement and anticipation.mp3",
+                    "Stage 2 - 1 - Hidden Technology Alpha.mp3",
+                    "Stage 2 - 1a - Hidden Technology Beta.mp3",
+                    "Stage 2 - 2 - Scouting Report Alpha.mp3",
+                    "Stage 2 - 2a - Scouting Report Beta.mp3",
+                    "Stage 2 - 3 - The Unseen Build.mp3"
+                ]
+            },
+            {
+                "n": 3,
+                "label": "Early Pressure & Rushes",
+                "time": "4.5–6.5 min",
+                "desc": "harassment, rush attacks, defensive reactions, danger, urgency, and survival",
+                "songs": [
+                    "sc2_combat_mid_driving_01_A.mp3",
+                    "sc2_suspense_mid_dark_01_B.mp3",
+                    "Chasing the Horizon - Edmund runs.mp3",
+                    "03. Valor My Shield.mp3",
+                    "SC2 FSL excitement and anticipation movement 2.mp3",
+                    "Stage 3 - 1 - Six Pool Warning Alpha.mp3",
+                    "Stage 3 - 1a - Six Pool Warning Beta.mp3",
+                    "Stage 3 - 2 - Proxy Detected Alpha.mp3",
+                    "Stage 3 - 2a - Proxy Detected Beta.mp3",
+                    "Stage 3 - 3 - Defend the Natural Alpha.mp3",
+                    "Stage 3 - 3a - Defend the Natural Beta.mp3"
+                ]
+            },
+            {
+                "n": 4,
+                "label": "Midgame Maneuvers",
+                "time": "6.5–10 min",
+                "desc": "army positioning, map control, tactical movement, strategic escalation, and preparation for major conflict",
+                "songs": [
+                    "sc2_combat_mid_driving_01_B.mp3",
+                    "sc2_combat_high_aggressive_01_A.mp3",
+                    "Wings of Liberty excerpt - StarCraft 2 soundtrack.mp3",
+                    "12. My Path Is Set.mp3",
+                    "Card To Play excerpt - StarCraft 2 soundtrack .mp3",
+                    "Stage 4 - 1 - Armies on the March Alpha.mp3",
+                    "Stage 4 - 1a - Armies on the March Beta.mp3",
+                    "Stage 4 - 2 - Map Control Alpha.mp3",
+                    "Stage 4 - 2a - Map Control Beta.mp3",
+                    "Stage 4 - 3 - The Engagement Alpha.mp3",
+                    "Stage 4 - 3a - The Engagement Beta.mp3"
+                ]
+            },
+            {
+                "n": 5,
+                "label": "Major Battles",
+                "time": "10–15 min",
+                "desc": "large-scale engagements, decisive clashes, intense warfare, commitment, and peak combat energy",
+                "songs": [
+                    "sc2_combat_high_aggressive_01_B.mp3",
+                    "sc2_combat_extreme_clutch_01_A.mp3",
+                    "sc2_combat_extreme_clutch_01_B.mp3",
+                    "The Chase of Cirrus.mp3",
+                    "13. The Golden Armada.mp3",
+                    "FSL theme - Masters of Stars - 2026 part 2.1.mp3",
+                    "Stage 5 - 1 - Storming the Mech Forces Alpha.mp3",
+                    "Stage 5 - 1a - Storming the Mech Forces Beta.mp3",
+                    "Stage 5 - 2 - The Base Falls Alpha.mp3",
+                    "Stage 5 - 2a - The Base Falls Beta.mp3",
+                    "Stage 5 - 3 - No Retreat Alpha.mp3",
+                    "Stage 5 - 3a - No Retreat Beta.mp3"
+                ]
+            },
+            {
+                "n": 6,
+                "label": "Endgame",
+                "time": "15+ min",
+                "desc": "final pushes, base trades, last stands, victory or defeat, destiny, triumph, and emotional resolution",
+                "songs": [
+                    "sc2_climax_finalpush_01_A.mp3",
+                    "sc2_climax_finalpush_01_B.mp3",
+                    "10. Last Stand.mp3",
+                    "sc2_victory_high_triumphant_01_A.mp3",
+                    "sc2_defeat_low_somber_01_A.mp3",
+                    "FSL theme - Masters of Stars - Epic Classical Orchestra .mp3",
+                    "FSL theme - Masters of Stars - Viking Horn - Epic Classical Orchestra.mp3",
+                    "Stage 6 - 1 - Final Push Alpha.mp3",
+                    "Stage 6 - 1a - Final Push Beta.mp3",
+                    "Stage 6 - 2 - Base Trade Alpha.mp3",
+                    "Stage 6 - 2a - Base Trade Beta.mp3",
+                    "Stage 6 - 3 - Ascension Alpha.mp3",
+                    "Stage 6 - 3a - Ascension Beta.mp3"
+                ]
+            }
+        ]
+    }
+}

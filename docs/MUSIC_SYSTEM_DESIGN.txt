@@ -194,3 +194,75 @@ PHP globals injected before the script:
 PHP save endpoint (save_music_config.php):
   POST ?which=mood_songs       → writes data/mood_songs.json
   POST ?which=scene_mood_map   → writes data/scene_mood_map.json
+  POST ?which=scene_stages     → writes data/scene_stages.json
+
+
+DETAILED / STAGED SCENES  (data/scene_stages.json)
+==================================================
+Added: 2026-06-21
+
+Some scenes (e.g. "sc2") are "detailed": instead of a flat Scene→Moods list,
+their music is organized STAGE-FIRST, VARIATION-SECOND. A scene is treated as
+detailed simply by being present as a key in data/scene_stages.json. The flat
+Scene→Moods entry for that key (if any) is ignored while the stage engine runs.
+
+DATA SHAPE:
+  {
+    "sc2": {
+      "label":  "StarCraft II Match",
+      "select": "random",          // "random" | "sequential" (within a pool)
+      "stages": [
+        { "n": 1, "label": "Opening Build Order", "time": "0–3 min",
+          "desc": "...", "songs": ["a.mp3","b.mp3", ...] },
+        ... (stages 2–6)
+      ]
+    }
+  }
+
+Each game phase is a numbered stage (1–6). Each stage owns a pool of songs.
+
+PLAYBACK FLOW (one song per stage, auto-advance forward):
+  - Activating the detailed scene starts at the FIRST stage and plays ONE song.
+  - When that song ends, playback advances FORWARD to the next stage and plays
+    one song there (1 → 2 → 3 → ...). One song per stage.
+  - After the last stage it WRAPS back to the first stage, so the scene keeps
+    looping through every stage (and thus every song over time) while it stays
+    active.
+  - The producer can still jump to any stage with the Stage bar buttons; from
+    there auto-advance continues forward.
+
+SELECTION WITHIN A STAGE (mxStageSelect):
+  - Choose ONLY from that stage's pool.
+  - Prefer songs in the pool not yet played THIS SESSION.
+  - Pick randomly (default) or sequentially (pool order) among the unplayed.
+  - When the whole pool has been used, reset ONLY that stage's played history
+    and start cycling again, avoiding the most-recently-played song.
+  - Played history PERSISTS across stage changes AND across scene
+    re-activations, so re-entering the scene hands out songs not yet played.
+    It is only reset per-stage when that stage's pool is exhausted (or on page
+    reload). The stage pointer resets to the first stage on each activation.
+
+CONTROL:
+  - The music widget shows a Stage bar (one button per stage) whenever a
+    detailed scene is active; the producer can jump to a stage at any time.
+  - Next/Prev step forward/back one stage (clamped at the ends).
+  - Picking a mood button or enabling Random exits staged mode.
+  - Activating any non-detailed scene (e.g. sc2-off) exits staged mode.
+
+KEY JS STATE (music-player.js):
+  mxStagedScene  — active detailed scene key, or null
+  mxCurStage     — current stage number
+  mxStagePlayed  — { stageN: { file: true } } played-this-session per stage
+  mxStageLast    — { stageN: file } most recent track per stage (repeat-avoid)
+
+KEY JS FUNCTIONS:
+  mxStartStaged(key)   — begin staged mode at the first stage (history kept)
+  mxSetStage(n)        — producer jumped to stage n; switch immediately
+  mxAdvanceStage(s,a)  — step forward(+1)/back(-1) a stage, wrapping at the ends
+  mxPlayStage(n, auto) — select + play one song for stage n
+  mxStageSelect(k, n)  — the per-stage unplayed-song priority algorithm above
+  window.mxSetStage / window.mxBuildStageBar — exposed for UI + admin refresh
+
+ADMIN UI:  Music Admin → "Detailed (Stages)" tab edits scene_stages.json
+  (per-scene label + select mode, per-stage label/time/desc + song pool with
+  add-existing/upload/reorder). Save and Promote also persist scene_stages.

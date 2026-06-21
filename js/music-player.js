@@ -25,6 +25,17 @@
     var mxSceneMoods = null;   // mood list for current scene
     var mxSceneMoodIdx = 0;    // current index into mxSceneMoods
 
+    // ── Staged playback state (detailed scenes, e.g. SC2) ──
+    // A "detailed" scene is any key present in window.MX_SCENE_STAGES. Instead of
+    // a flat mood list, its music is organized into numbered gameplay stages
+    // (1–6). Each stage owns a pool of songs; selection is stage-first,
+    // variation-second. See mxStageSelect for the algorithm.
+    var mxStagedScene = null;  // active staged scene key, or null when not in staged mode
+    var mxCurStage    = 0;     // current stage number (1-based) within mxStagedScene
+    var mxStagePlayed = {};    // { stageN: { filename: true } } — songs played this session per stage
+    var mxStageLast   = {};    // { stageN: filename } — most recently played song per stage
+    var mxCollapsed   = true;  // widget grid collapsed state (mirrors the toggle below)
+
     // ── Variety mode: prevents endless repetition on short scene mood lists ──
     // Problem: a scene with only 1-2 moods will loop those same tracks forever
     // if the stream is left unattended (e.g. producer steps away mid-session).
@@ -52,6 +63,10 @@
     var mxVarietyTimer = null; // handle for the wall-clock variety fallback
 
     var statusEl  = document.getElementById('lpMusicStatus');
+    var stageWrap  = document.getElementById('lpMusicStage');
+    var stageGrid  = document.getElementById('lpMusicStageGrid');
+    var stageNow   = document.getElementById('lpMusicStageNow');
+    var stageTitle = document.getElementById('lpMusicStageTitle');
     var volInput  = document.getElementById('lpMusicVol');
     var fadeInput = document.getElementById('lpMusicFade');
     var ppBtn     = document.getElementById('lpMusicPlayPause');
@@ -149,7 +164,8 @@
         var dur = mxCur.audio.duration;
         if (!isFinite(dur) || dur <= 0) return;
         mxCur.audio.currentTime = (Number(seekEl.value) / 1000) * dur;
-        mxSchedule(mxMood, mxTrack, mxSongIdx);
+        if (mxStagedScene) mxScheduleStaged(mxTrack);
+        else mxSchedule(mxMood, mxTrack, mxSongIdx);
     });
 
     (function mxRafLoop() {
@@ -180,6 +196,7 @@
         e.stopPropagation();
         if (!mxRandom) {
             mxSetRandom(true);
+            mxExitStaged(); // random across all moods overrides staged mode
             // Switch immediately whether or not something is already playing.
             // Also clear the variety timer — we're already in random mode, so
             // the timer has nothing left to do and shouldn't fire redundantly.
@@ -198,6 +215,7 @@
 
     document.getElementById('lpMusicNext').addEventListener('click', function () {
         if (mxCur) mxStats.onSkip();
+        if (mxStagedScene) { mxAdvanceStage(1, false); return; } // forward one stage
         if (mxRandom) { mxSwitchRandom(false); return; }
         if (!mxMood) return;
         var songs = MX_TRACKS[mxMood] || [];
@@ -207,6 +225,7 @@
 
     document.getElementById('lpMusicPrev').addEventListener('click', function () {
         if (mxCur) mxStats.onSkip();
+        if (mxStagedScene) { mxAdvanceStage(-1, false); return; } // back one stage
         if (mxRandom) { mxSwitchRandom(false); return; }
         if (!mxMood) return;
         var songs = MX_TRACKS[mxMood] || [];
@@ -452,21 +471,13 @@
         }, wait * 1000);
     }
 
-    // Switch to mood at songIdx.
-    // keepScene=true:   preserve scene tracking (internal auto-advance calls).
-    // autoAdvance=true: song ended naturally — start next song from 0, short fixed crossfade.
-    function mxSwitch(mood, songIdx, keepScene, autoAdvance) {
-        if (songIdx === undefined || songIdx === null) songIdx = 0;
-        if (!keepScene) {
-            mxCurScene = null; mxSceneMoods = null; mxSceneMoodIdx = 0;
-        }
-        var songs = MX_TRACKS[mood] || [];
-        var file = songs[songIdx] || null;
-        if (!file) { mxSetStatus('No tracks: ' + mood, 'err'); return; }
-
+    // Core deck loader + crossfade. Shared by both the mood engine (mxSwitch)
+    // and the staged engine (mxPlayStagedFile). Loads `file`, crossfades it in,
+    // and invokes onStarted(deck) once it is actually playing, or onBlocked(deck)
+    // when the browser blocks autoplay (NotAllowedError).
+    function mxStartDeck(file, fp, onStarted, onBlocked) {
         mxEnsure().then(function () {
             mxClearTimer();
-            var fp = autoAdvance ? { startOffset: 0, crossfadeDuration: 0.5 } : mxGetFadeParams();
             var startOffset = fp.startOffset;
             var fade = fp.crossfadeDuration;
             mxSetStatus('Loading\u2026');
@@ -492,34 +503,259 @@
                         mxCur = deck;
                     }
                     mxNxt = null;
-                    mxMood = mood; mxTrack = file; mxSongIdx = songIdx;
-                    mxStats.onSongStart(mood, file);
-                    mxUpdateActive();
-                    mxPaused = false;
-                    ppBtn.innerHTML = '&#x23F8;';
-                    ppBtn.classList.remove('lp-mx-dim', 'lp-mx-paused');
-                    mxSchedule(mood, file, songIdx);
-                    mxSetStatus(file, 'playing');
+                    onStarted(deck);
                 }).catch(function (err) {
-                    if (err.name === 'NotAllowedError') {
-                        // Chrome blocked play — preserve mood state so the
-                        // pre-registered unlock listener can resume transparently.
-                        mxMood = mood; mxTrack = file; mxSongIdx = songIdx;
-                        mxUpdateActive();
-                        mxPaused = true;
-                        ppBtn.innerHTML = '&#9654;';
-                        ppBtn.classList.add('lp-mx-dim', 'lp-mx-paused');
-                        mxSetStatus('\u25b6 click play to start');
-                    } else {
-                        mxSetStatus(err.message, 'err');
-                    }
+                    if (err.name === 'NotAllowedError') { onBlocked(deck); }
+                    else { mxSetStatus(err.message, 'err'); }
                 });
             }).catch(function (err) { mxSetStatus(err.message, 'err'); });
         });
     }
 
+    // Switch to mood at songIdx.
+    // keepScene=true:   preserve scene tracking (internal auto-advance calls).
+    // autoAdvance=true: song ended naturally — start next song from 0, short fixed crossfade.
+    function mxSwitch(mood, songIdx, keepScene, autoAdvance) {
+        if (songIdx === undefined || songIdx === null) songIdx = 0;
+        if (!keepScene) {
+            mxCurScene = null; mxSceneMoods = null; mxSceneMoodIdx = 0;
+            mxExitStaged(); // manual mood choice leaves staged mode
+        }
+        var songs = MX_TRACKS[mood] || [];
+        var file = songs[songIdx] || null;
+        if (!file) { mxSetStatus('No tracks: ' + mood, 'err'); return; }
+
+        var fp = autoAdvance ? { startOffset: 0, crossfadeDuration: 0.5 } : mxGetFadeParams();
+        mxStartDeck(file, fp, function () {
+            mxMood = mood; mxTrack = file; mxSongIdx = songIdx;
+            mxStats.onSongStart(mood, file);
+            mxUpdateActive();
+            mxPaused = false;
+            ppBtn.innerHTML = '&#x23F8;';
+            ppBtn.classList.remove('lp-mx-dim', 'lp-mx-paused');
+            mxSchedule(mood, file, songIdx);
+            mxSetStatus(file, 'playing');
+        }, function () {
+            // Chrome blocked play — preserve mood state so the
+            // pre-registered unlock listener can resume transparently.
+            mxMood = mood; mxTrack = file; mxSongIdx = songIdx;
+            mxUpdateActive();
+            mxPaused = true;
+            ppBtn.innerHTML = '&#9654;';
+            ppBtn.classList.add('lp-mx-dim', 'lp-mx-paused');
+            mxSetStatus('\u25b6 click play to start');
+        });
+    }
+
+    // ── Staged engine (stage-first, variation-second) ─────────────────
+    function mxStageScenes()       { return window.MX_SCENE_STAGES || {}; }
+    function mxIsStaged(key)        { return !!mxStageScenes()[key]; }
+    function mxStageDefFor(key)     { return mxStageScenes()[key] || null; }
+    function mxStagesOf(key) {
+        var def = mxStageDefFor(key);
+        return (def && Array.isArray(def.stages)) ? def.stages : [];
+    }
+    function mxStageEntry(key, n) {
+        var stages = mxStagesOf(key);
+        for (var i = 0; i < stages.length; i++) {
+            if (Number(stages[i].n) === Number(n)) return stages[i];
+        }
+        return null;
+    }
+    function mxStagePool(key, n) {
+        var e = mxStageEntry(key, n);
+        return (e && Array.isArray(e.songs)) ? e.songs.filter(Boolean) : [];
+    }
+
+    // Pick one song from stage `n`'s pool following the priority rules:
+    //   1. prefer songs not yet played this session;
+    //   2. when the pool is exhausted, reset only this stage's history and
+    //      restart, avoiding the most-recently-played song when possible;
+    //   3. pick randomly or sequentially based on the scene's `select` mode.
+    function mxStageSelect(key, n) {
+        var pool = mxStagePool(key, n);
+        if (!pool.length) return null;
+        var played = mxStagePlayed[n] || (mxStagePlayed[n] = {});
+
+        var unplayed = pool.filter(function (f) { return !played[f]; });
+        if (unplayed.length === 0) {
+            // Whole pool used — reset just this stage and avoid repeating the last track.
+            mxStagePlayed[n] = played = {};
+            var last = mxStageLast[n];
+            unplayed = pool.filter(function (f) { return f !== last; });
+            if (unplayed.length === 0) unplayed = pool.slice(); // pool of 1
+        }
+
+        var mode = (mxStageDefFor(key) || {}).select || 'random';
+        if (mode === 'sequential') return unplayed[0]; // earliest unused in pool order
+        return unplayed[Math.floor(Math.random() * unplayed.length)];
+    }
+
+    // Schedule auto-advance for staged playback: when the current staged track
+    // ends, move FORWARD to the next stage and play one (unplayed) song there —
+    // one song per stage. Wraps from the last stage back to the first so the
+    // scene keeps looping through every stage while it stays active.
+    function mxScheduleStaged(file) {
+        mxClearTimer();
+        if (!mxCur || mxPaused) return;
+        var fade = mxGetFadeParams().crossfadeDuration;
+        var dur  = mxCur.audio.duration;
+        if (!isFinite(dur) || dur <= 0) return;
+        var wait = Math.max(0, dur - mxCur.audio.currentTime - fade - 0.15);
+        mxTimer = setTimeout(function () {
+            if (!mxStagedScene || !mxCur || mxCur.file !== file || mxPaused) return;
+            mxAdvanceStage(1, true);
+        }, wait * 1000);
+    }
+
+    // Step between stages in their listed order, wrapping around: advancing past
+    // the last stage loops back to the first, and stepping before the first
+    // wraps to the last. Used by song-end auto-advance and the Fwd/Rwd buttons.
+    function mxAdvanceStage(step, autoAdvance) {
+        var stages = mxStagesOf(mxStagedScene);
+        if (!stages.length) return;
+        var idx = 0;
+        for (var i = 0; i < stages.length; i++) {
+            if (Number(stages[i].n) === Number(mxCurStage)) { idx = i; break; }
+        }
+        var len = stages.length;
+        var nextIdx = ((idx + step) % len + len) % len;
+        mxPlayStage(Number(stages[nextIdx].n), autoAdvance);
+    }
+
+    // Load and play a single staged file (not tied to a mood/MX_TRACKS index).
+    function mxPlayStagedFile(file, autoAdvance) {
+        var fp = autoAdvance ? { startOffset: 0, crossfadeDuration: 0.5 } : mxGetFadeParams();
+        var statMood = (mxStagedScene || 'staged') + ':stage' + mxCurStage;
+        mxStartDeck(file, fp, function () {
+            mxMood = null; mxTrack = file; mxSongIdx = 0;
+            mxStats.onSongStart(statMood, file);
+            mxUpdateActive();
+            mxPaused = false;
+            ppBtn.innerHTML = '&#x23F8;';
+            ppBtn.classList.remove('lp-mx-dim', 'lp-mx-paused');
+            mxScheduleStaged(file);
+            mxSetStatus(file, 'playing');
+        }, function () {
+            mxTrack = file; mxSongIdx = 0;
+            mxPaused = true;
+            ppBtn.innerHTML = '&#9654;';
+            ppBtn.classList.add('lp-mx-dim', 'lp-mx-paused');
+            mxSetStatus('\u25b6 click play to start');
+        });
+    }
+
+    // Enter / switch to stage `n`. autoAdvance=true → short crossfade (song ended).
+    function mxPlayStage(n, autoAdvance) {
+        if (!mxStagedScene) return;
+        var file = mxStageSelect(mxStagedScene, n);
+        if (!file) { mxSetStatus('No songs: stage ' + n, 'err'); return; }
+        mxCurStage = Number(n);
+        var played = mxStagePlayed[n] || (mxStagePlayed[n] = {});
+        played[file] = true;
+        mxStageLast[n] = file;
+        mxUpdateStageActive();
+        mxPlayStagedFile(file, autoAdvance);
+    }
+
+    // User picked a stage button — switch immediately to the new stage pool.
+    function mxSetStage(n) {
+        if (!mxStagedScene) return;
+        if (mxCur) mxStats.onSkip();
+        mxSetRandom(false);
+        mxClearVarietyTimer();
+        mxPlayStage(n, false);
+    }
+    window.mxSetStage = mxSetStage;
+
+    // Show the stage bar UI as soon as a detailed scene is entered, WITHOUT
+    // starting staged playback. For SC2 the actual song switch is deliberately
+    // held until the animated intro/transition finishes (mxStartStaged runs
+    // then), but the producer should see the stage controls immediately.
+    window.mxPrepareStageBar = function (key) {
+        if (!mxIsStaged(key)) return;
+        mxStagedScene = key;
+        if (!mxCurStage) {
+            var stages = mxStagesOf(key);
+            mxCurStage = stages.length ? Number(stages[0].n) : 1;
+        }
+        mxBuildStageBar();
+        mxRefreshStageBarVisibility();
+    };
+
+    // Start staged playback for a detailed scene. Begins at the FIRST stage and
+    // auto-advances one song per stage from there. Played-history is preserved
+    // across activations (so re-entering the scene hands out songs not yet
+    // played); it is only reset per-stage when that stage's pool is exhausted.
+    function mxStartStaged(key) {
+        mxStagedScene = key;
+        mxCurScene = null; mxSceneMoods = null; mxSceneMoodIdx = 0;
+        mxSetRandom(false);
+        mxClearVarietyTimer();
+        var stages = mxStagesOf(key);
+        mxCurStage = stages.length ? Number(stages[0].n) : 1;
+        mxBuildStageBar();
+        mxRefreshStageBarVisibility();
+        if (mxCur && !mxPaused) {
+            mxPlayStage(mxCurStage, false);
+        } else {
+            // Deck idle/paused — selection happens when play is pressed
+            // (mxTogglePlay → mxPlayStage). Just reflect the armed stage.
+            mxMood = null;
+            mxUpdateStageActive();
+            mxUpdateActive();
+            mxSetStatus(mxPaused ? ('\u23f8 stage ' + mxCurStage) : ('ready \u2014 stage ' + mxCurStage));
+        }
+    }
+
+    // Leave staged mode (manual mood pick, random, or non-detailed scene).
+    function mxExitStaged() {
+        if (!mxStagedScene) return;
+        mxStagedScene = null; mxCurStage = 0;
+        mxRefreshStageBarVisibility();
+    }
+
+    // ── Stage bar UI ──────────────────────────────────────────────────
+    function mxRefreshStageBarVisibility() {
+        if (!stageWrap) return;
+        stageWrap.style.display = (!mxCollapsed && mxStagedScene) ? '' : 'none';
+    }
+
+    function mxBuildStageBar() {
+        if (!stageGrid) return;
+        stageGrid.innerHTML = '';
+        if (!mxStagedScene) return;
+        if (stageTitle) {
+            var def = mxStageDefFor(mxStagedScene);
+            stageTitle.textContent = (def && def.label ? def.label : mxStagedScene).toUpperCase() + ' \u2014 STAGES';
+        }
+        mxStagesOf(mxStagedScene).forEach(function (st) {
+            var btn = document.createElement('button');
+            btn.dataset.stage = st.n;
+            var t = (st.label || ('Stage ' + st.n)) + (st.time ? ' (' + st.time + ')' : '');
+            btn.title = t + (st.desc ? '\n' + st.desc : '');
+            btn.innerHTML = '<span class="lp-mx-stage-n">' + st.n + '</span>' +
+                            '<span class="lp-mx-stage-lbl">' + String(st.label || '').replace(/&/g,'&amp;').replace(/</g,'&lt;') + '</span>';
+            btn.addEventListener('click', function () { mxSetStage(st.n); });
+            stageGrid.appendChild(btn);
+        });
+        mxUpdateStageActive();
+    }
+
+    function mxUpdateStageActive() {
+        if (!stageGrid) return;
+        stageGrid.querySelectorAll('button').forEach(function (b) {
+            b.classList.toggle('active', Number(b.dataset.stage) === Number(mxCurStage));
+        });
+        if (stageNow) {
+            var e = mxStagedScene ? mxStageEntry(mxStagedScene, mxCurStage) : null;
+            stageNow.textContent = e ? (e.label || ('Stage ' + e.n)) : '';
+        }
+    }
+
     function mxTogglePlay() {
         if (!mxCur) {
+            if (mxStagedScene) { mxPlayStage(mxCurStage, false); return; }
             var mood = mxMood || Object.keys(MX_TRACKS)[0];
             if (mood) mxSwitch(mood, mxSongIdx, mxSceneMoods !== null);
             return;
@@ -530,7 +766,8 @@
                     mxPaused = false;
                     ppBtn.innerHTML = '&#x23F8;';
                     ppBtn.classList.remove('lp-mx-paused');
-                    mxSchedule(mxMood, mxTrack, mxSongIdx);
+                    if (mxStagedScene) mxScheduleStaged(mxTrack);
+                    else mxSchedule(mxMood, mxTrack, mxSongIdx);
                     mxSetStatus(mxTrack, 'playing');
                 });
             } else {
@@ -550,15 +787,17 @@
         var icon    = document.getElementById('lpMusicToggleIcon');
         var grid    = document.getElementById('lpMusicGrid');
         var songRow = document.querySelector('.lp-mx-song-row');
-        var collapsed = true; // default closed
+        mxCollapsed = true; // default closed
         grid.style.display    = 'none';
         songRow.style.display = 'none';
         icon.innerHTML        = '+';
+        mxRefreshStageBarVisibility();
         bar.addEventListener('click', function () {
-            collapsed = !collapsed;
-            grid.style.display    = collapsed ? 'none' : '';
-            songRow.style.display = collapsed ? 'none' : '';
-            icon.innerHTML        = collapsed ? '+' : '&#8722;';
+            mxCollapsed = !mxCollapsed;
+            grid.style.display    = mxCollapsed ? 'none' : '';
+            songRow.style.display = mxCollapsed ? 'none' : '';
+            icon.innerHTML        = mxCollapsed ? '+' : '&#8722;';
+            mxRefreshStageBarVisibility();
         });
     })();
 
@@ -757,6 +996,12 @@
 
     // ── Scene → Mood handler ─────────────────────────────────────
     function mxOnSceneChange(key) {
+        // Detailed/staged scenes route to the stage engine instead of moods.
+        if (mxIsStaged(key)) { mxStartStaged(key); return; }
+
+        // Any non-staged scene leaves staged mode (e.g. SC2 → sc2-off).
+        mxExitStaged();
+
         var moods = MX_SCENE_MAP[key];
         if (!moods || !moods.length) return;
 
@@ -789,16 +1034,26 @@
     }
     window.mxOnSceneChange = mxOnSceneChange;
     window.mxBuildGrid    = mxBuildGrid;
+    // Rebuild the stage bar (e.g. after the admin edits stage definitions).
+    window.mxBuildStageBar = function () {
+        if (mxStagedScene && !mxIsStaged(mxStagedScene)) mxExitStaged();
+        mxBuildStageBar();
+        mxRefreshStageBarVisibility();
+    };
 
     // Read-only snapshot of the deck state for the status reporter (status-reporter.js).
     window.mxGetStatusState = function () {
+        var stageEntry = mxStagedScene ? mxStageEntry(mxStagedScene, mxCurStage) : null;
         return {
             playing:         !!mxCur && !mxPaused,
             mood:            mxMood || null,
             mood_label:      mxMood ? (MX_LABELS[mxMood] || mxMood) : null,
             track:           mxTrack || null,
             random:          !!mxRandom,
-            driven_by_scene: mxCurScene || null
+            driven_by_scene: mxCurScene || mxStagedScene || null,
+            staged_scene:    mxStagedScene || null,
+            stage:           mxStagedScene ? mxCurStage : null,
+            stage_label:     stageEntry ? (stageEntry.label || ('Stage ' + stageEntry.n)) : null
         };
     };
 
@@ -951,7 +1206,8 @@
                 mxPaused = false;
                 ppBtn.innerHTML = '&#x23F8;';
                 ppBtn.classList.remove('lp-mx-paused');
-                mxSchedule(mxMood, mxTrack, mxSongIdx);
+                if (mxStagedScene) mxScheduleStaged(mxTrack);
+                else mxSchedule(mxMood, mxTrack, mxSongIdx);
             });
         });
     };
@@ -1003,6 +1259,9 @@
                     /* SC2 animated: mood switch runs when mxSc2AnimatedIntro* signals done. */
                     if (key === 'sc2-quick') {
                         window.mxOnSceneChange(key);
+                    } else if (key === 'sc2' && typeof window.mxPrepareStageBar === 'function') {
+                        /* Show stage controls right away; staged playback starts at intro-complete. */
+                        window.mxPrepareStageBar('sc2');
                     }
                 } else {
                     if (typeof window.mxSc2AnimatedIntroCancel === 'function') {

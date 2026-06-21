@@ -17,7 +17,7 @@ if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
 }
 
 $which   = $_GET['which'] ?? '';
-$allowed = ['mood_songs', 'scene_mood_map'];
+$allowed = ['mood_songs', 'scene_mood_map', 'scene_stages'];
 if (!in_array($which, $allowed, true)) {
     http_response_code(400);
     echo json_encode(['error' => 'Unknown config']);
