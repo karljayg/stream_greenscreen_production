@@ -204,9 +204,9 @@ $streamLogoSmallSrc = ($streamSceneAssetsBase !== '') ? ($streamSceneAssetsBase 
                         <div id="psb-teams-rows" style="margin-top:6px; display:flex; flex-direction:column; gap:4px;"></div>
                         <button type="button" id="psb-team-add-btn" style="margin-top:6px; font-size:11px;">+ Add team</button>
                     </details>
-                    <div class="psb-edit-actions" style="display:flex; gap:6px; align-items:center; flex-wrap:wrap; margin-bottom:8px;">
-                        <button type="button" id="psb-editmove-btn" onclick="psbToggleEditMode()">Edit and Move</button>
-                        <button type="button" id="psb-reset-btn" onclick="psbResetPosition()">Reset position</button>
+                    <div style="display:flex; gap:6px; align-items:center; flex-wrap:wrap; margin-bottom:8px;">
+                        <button type="button" id="psb-open-window-btn" onclick="psbOpenEditorWindow()" title="Open this editor in a separate window (or right-click the panel on the overlay)">&#8599; Open in window</button>
+                        <span class="layer-order-hint" style="margin:0;">Position &amp; size: Settings &rarr; Positioning.</span>
                     </div>
                     <div style="display:flex; gap:6px; align-items:center;">
                         <button type="button" id="psb-save-btn" onclick="psbSave()">Save Player Scoreboard</button>
@@ -426,6 +426,12 @@ $streamLogoSmallSrc = ($streamSceneAssetsBase !== '') ? ($streamSceneAssetsBase 
                         <p class="layer-order-hint">Edit and Move: drag/resize logos and VDO panels. SC2 scene shows small VDO; non-SC2 shows large VDO. Save stores all positions.</p>
                         <button type="button" id="logos-edit-save-btn" onclick="toggleLogosEditMode()">Edit and Move</button>
                         <button type="button" id="logos-reset-btn" onclick="resetLogosPositions()">Reset</button>
+                    </div>
+                    <hr style="border-color:#2a2a2a; margin:12px 0;">
+                    <div class="psb-edit-actions" style="margin-top: 10px;">
+                        <p class="layer-order-hint"><strong>Player Scoreboard</strong> &mdash; drag/resize the player scoreboard panel. Position is saved for everyone. (Content like names &amp; scores is in the Player Scoreboard section.)</p>
+                        <button type="button" id="psb-editmove-btn" onclick="psbToggleEditMode()">Edit and Move</button>
+                        <button type="button" id="psb-reset-btn" onclick="psbResetPosition()">Reset position</button>
                     </div>
                 </div>
                 <button class="collapsible-btn" id="btn-overlays" onclick="toggleSection('overlays-section', this)">Overlays</button>
@@ -4022,6 +4028,7 @@ $streamLogoSmallSrc = ($streamSceneAssetsBase !== '') ? ($streamSceneAssetsBase 
                     if (btn) { btn.textContent = 'Edit and Move'; btn.classList.remove('active'); }
                     psbRenderPanel();
                     if (window.reapplyLayerOrder) window.reapplyLayerOrder();
+                    if (typeof psbSaveQuiet === 'function') psbSaveQuiet(); /* persist position for everyone */
                     return;
                 }
                 psbEditMode = true;
@@ -4054,6 +4061,7 @@ $streamLogoSmallSrc = ($streamSceneAssetsBase !== '') ? ($streamSceneAssetsBase 
                 } else {
                     psbApplyPosition(psbData.pos);
                 }
+                if (typeof psbSaveQuiet === 'function') psbSaveQuiet(); /* persist reset for everyone */
             };
 
             /* ---- Persistence ---- */
@@ -4127,6 +4135,34 @@ $streamLogoSmallSrc = ($streamSceneAssetsBase !== '') ? ($streamSceneAssetsBase 
                     setTimeout(function() { if (psbData) psbRenderPanel(); }, 1500);
                 });
             })();
+
+            /* ---- Popup editor: edit the player scoreboard data from a separate window ---- */
+            var _psbEditorWin = null;
+            window.psbOpenEditorWindow = function() {
+                if (_psbEditorWin && !_psbEditorWin.closed) { _psbEditorWin.focus(); return; }
+                var base = window.location.pathname.replace(/\/[^/]*$/, '') || '';
+                var url = (base ? base + '/' : './') + 'player_scoreboard_editor.php';
+                _psbEditorWin = window.open(url, 'playerScoreboardEditor', 'width=470,height=600,resizable=yes,scrollbars=yes');
+            };
+            /* Right-click the panel on the overlay to open the editor (coordinate hit-test,
+               since the overlay uses pointer-events:none and won't be the event target). */
+            document.addEventListener('contextmenu', function(e) {
+                var overlay = document.getElementById('player-scoreboard-overlay');
+                var panel = document.getElementById('player-scoreboard-panel');
+                if (!overlay || !panel) return;
+                if (overlay.style.display === 'none' || panel.style.display === 'none') return;
+                var r = panel.getBoundingClientRect();
+                if (e.clientX >= r.left && e.clientX <= r.right && e.clientY >= r.top && e.clientY <= r.bottom) {
+                    e.preventDefault();
+                    window.psbOpenEditorWindow();
+                }
+            });
+            /* Live-update the overlay when the popup editor saves. */
+            window.addEventListener('message', function(e) {
+                if (e.origin !== window.location.origin) return;
+                if (!e.data || e.data.type !== 'psb-editor-saved') return;
+                if (typeof window.psbLoad === 'function') window.psbLoad();
+            });
             /* ===== End Player Scoreboard ===== */
 
             /** Set VDO iframe src from data-src only if not already loaded (vdo.ninja), to avoid reload and preserve camera state. */
