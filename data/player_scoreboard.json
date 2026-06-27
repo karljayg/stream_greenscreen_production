@@ -1,0 +1,44 @@
+{
+    "show": true,
+    "bestOf": 2,
+    "pos": {
+        "left": 189,
+        "top": 626,
+        "width": 249,
+        "height": 79
+    },
+    "players": [
+        {
+            "name": "MedicJr",
+            "score": 1,
+            "color": "red",
+            "team": "",
+            "race": ""
+        },
+        {
+            "name": "DarkMenace",
+            "score": 0,
+            "color": "yellow",
+            "team": "Special Tactics",
+            "race": ""
+        }
+    ],
+    "teams": [
+        {
+            "name": "PulledTheBoys",
+            "acr": "PTB"
+        },
+        {
+            "name": "Angry Space Hares",
+            "acr": "ASH"
+        },
+        {
+            "name": "Special Tactics",
+            "acr": "ST"
+        },
+        {
+            "name": "PSIOP Gaming",
+            "acr": "POG"
+        }
+    ]
+}

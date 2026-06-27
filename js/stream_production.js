@@ -115,6 +115,7 @@ if (typeof window !== 'undefined') {
 	window.reloadRankingsCache = loadRankings;
 	window.getRankingForPlayer = getRankingForPlayer;
 	window.setPlayerLabelContent = setPlayerLabelContent;
+	window.STREAM_PLAYER_LIST = playerList;
 }
 
 // Chroma key: makes green transparent on video/GIF player intros

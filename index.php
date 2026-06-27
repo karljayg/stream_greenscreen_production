@@ -144,6 +144,75 @@ $streamLogoSmallSrc = ($streamSceneAssetsBase !== '') ? ($streamSceneAssetsBase 
                         <span id="csb-save-status" style="font-size:12px; color:#aaa;"></span>
                     </div>
                 </div>
+                <button class="collapsible-btn" id="btn-player-scoreboard-settings" onclick="togglePlayerScoreboardSettings(this)">Player Scoreboard</button>
+                <div class="collapsible-content" id="player-scoreboard-settings-section" style="display: none;">
+                    <h2>Player Scoreboard</h2>
+                    <div style="display:flex; align-items:center; gap:10px; flex-wrap:wrap; margin-bottom:10px;">
+                        <label style="display:flex; align-items:center; gap:6px; font-size:12px; color:#ccc;">
+                            <input type="checkbox" id="psb-show"> Show on overlay
+                        </label>
+                        <label style="display:flex; align-items:center; gap:6px; font-size:12px; color:#ccc;">
+                            Best of
+                            <input type="number" id="psb-best-of" min="1" max="99" value="1" style="width:52px; text-align:center; padding:3px 4px;">
+                        </label>
+                        <button type="button" id="psb-swap-btn" onclick="psbSwapPlayers()" title="Swap top and bottom players">&#8645; Swap A/B</button>
+                    </div>
+                    <div class="psb-player-edit" data-idx="0" style="border:1px solid #333; border-radius:5px; padding:8px; margin-bottom:8px;">
+                        <div style="font-size:11px; text-transform:uppercase; letter-spacing:0.5px; color:#8f8; margin-bottom:6px;">Player A (top)</div>
+                        <div style="display:grid; grid-template-columns:auto 1fr; gap:5px 8px; align-items:center;">
+                            <label style="font-size:12px; color:#aaa;">Name:</label>
+                            <input type="text" class="psb-name" placeholder="Player name" style="background:#1a1a1a; color:#eee; border:1px solid #444; border-radius:3px; padding:3px 6px; font-size:12px;">
+                            <label style="font-size:12px; color:#aaa;">Score:</label>
+                            <input type="number" class="psb-score" min="0" max="99" value="0" style="width:60px; text-align:center; padding:3px 4px;">
+                            <label style="font-size:12px; color:#aaa;">Color:</label>
+                            <select class="psb-color" style="background:#fff; color:#111; border:1px solid #888; padding:3px;"></select>
+                            <label style="font-size:12px; color:#aaa;">Team:</label>
+                            <select class="psb-team" style="background:#fff; color:#111; border:1px solid #888; padding:3px;"></select>
+                            <label style="font-size:12px; color:#aaa;">Race:</label>
+                            <select class="psb-race" style="background:#fff; color:#111; border:1px solid #888; padding:3px;">
+                                <option value="">Auto (from rankings)</option>
+                                <option value="Z">Zerg</option>
+                                <option value="T">Terran</option>
+                                <option value="P">Protoss</option>
+                                <option value="R">Random</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="psb-player-edit" data-idx="1" style="border:1px solid #333; border-radius:5px; padding:8px; margin-bottom:8px;">
+                        <div style="font-size:11px; text-transform:uppercase; letter-spacing:0.5px; color:#88f; margin-bottom:6px;">Player B (bottom)</div>
+                        <div style="display:grid; grid-template-columns:auto 1fr; gap:5px 8px; align-items:center;">
+                            <label style="font-size:12px; color:#aaa;">Name:</label>
+                            <input type="text" class="psb-name" placeholder="Player name" style="background:#1a1a1a; color:#eee; border:1px solid #444; border-radius:3px; padding:3px 6px; font-size:12px;">
+                            <label style="font-size:12px; color:#aaa;">Score:</label>
+                            <input type="number" class="psb-score" min="0" max="99" value="0" style="width:60px; text-align:center; padding:3px 4px;">
+                            <label style="font-size:12px; color:#aaa;">Color:</label>
+                            <select class="psb-color" style="background:#fff; color:#111; border:1px solid #888; padding:3px;"></select>
+                            <label style="font-size:12px; color:#aaa;">Team:</label>
+                            <select class="psb-team" style="background:#fff; color:#111; border:1px solid #888; padding:3px;"></select>
+                            <label style="font-size:12px; color:#aaa;">Race:</label>
+                            <select class="psb-race" style="background:#fff; color:#111; border:1px solid #888; padding:3px;">
+                                <option value="">Auto (from rankings)</option>
+                                <option value="Z">Zerg</option>
+                                <option value="T">Terran</option>
+                                <option value="P">Protoss</option>
+                                <option value="R">Random</option>
+                            </select>
+                        </div>
+                    </div>
+                    <details style="margin-bottom:8px;">
+                        <summary style="cursor:pointer; font-size:11px; color:#888; user-select:none;">Team list (name &rarr; acronym)</summary>
+                        <div id="psb-teams-rows" style="margin-top:6px; display:flex; flex-direction:column; gap:4px;"></div>
+                        <button type="button" id="psb-team-add-btn" style="margin-top:6px; font-size:11px;">+ Add team</button>
+                    </details>
+                    <div class="psb-edit-actions" style="display:flex; gap:6px; align-items:center; flex-wrap:wrap; margin-bottom:8px;">
+                        <button type="button" id="psb-editmove-btn" onclick="psbToggleEditMode()">Edit and Move</button>
+                        <button type="button" id="psb-reset-btn" onclick="psbResetPosition()">Reset position</button>
+                    </div>
+                    <div style="display:flex; gap:6px; align-items:center;">
+                        <button type="button" id="psb-save-btn" onclick="psbSave()">Save Player Scoreboard</button>
+                        <span id="psb-save-status" style="font-size:12px; color:#aaa;"></span>
+                    </div>
+                </div>
                 <button class="collapsible-btn" id="btn-player-intros" onclick="toggleSection('player-intros-settings-section', this)">Player Chroma</button>
                 <div class="collapsible-content" id="player-intros-settings-section" style="display: none;">
                     <h2>Player Intros</h2>
@@ -433,7 +502,8 @@ $streamLogoSmallSrc = ($streamSceneAssetsBase !== '') ? ($streamSceneAssetsBase 
                     <button type="button" id="scene-btn-bracket" onclick="toggleSceneOverlay('bracket')">Bracket</button>
                 </div>
                 <div style="display:flex; gap:8px;">
-                    <button type="button" id="tls-score-toggle-btn" class="tls-score-toggle on" onclick="toggleTeamLeagueScoreBanner()" title="Show/hide the team league score on the top-right">&#9650;</button>
+                    <button type="button" id="tls-score-toggle-btn" class="tls-score-toggle on" onclick="toggleTeamLeagueScoreBanner()" title="Show/hide the team league score banner (top-right)">T<br>&#9650;</button>
+                    <button type="button" id="psb-quick-toggle-btn" class="tls-score-toggle off" onclick="psbToggleShow()" title="Show/hide the player scoreboard (SC2 scene only)">P<br>&#9660;</button>
                     <button type="button" id="scene-btn-scoreboard" onclick="toggleSceneOverlay('scoreboard')">FSL TeamLeague Scoreboard</button>
                     <button type="button" id="scene-btn-custom-scoreboard" onclick="toggleSceneOverlay('custom-scoreboard')">Custom Scoreboard</button>
                 </div>
@@ -544,6 +614,10 @@ $streamLogoSmallSrc = ($streamSceneAssetsBase !== '') ? ($streamSceneAssetsBase 
                 </div>
                 <div id="custom-scoreboard-overlay" class="scoreboard-overlay-wrap" style="display: none; position: absolute; top: 0; left: 0; width: 100%; height: 100%; overflow: auto; pointer-events: none;">
                     <div id="custom-scoreboard-content" class="scoreboard-panel scoreboard-content-wrap"></div>
+                </div>
+                <!-- Player scoreboard: movable/resizable graphic (players, score, Bo, color, race, team). Draggable like VDO panels. -->
+                <div id="player-scoreboard-overlay" data-layer-id="player-scoreboard-overlay" class="psb-overlay" style="display: none; position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none;">
+                    <div id="player-scoreboard-panel" class="psb-panel" style="display: none; position: absolute;"></div>
                 </div>
                 <div id="gif-container" data-layer-id="gif-container">
                     <img id="gif-image" src="<?php echo htmlspecialchars($streamPfGifHref, ENT_QUOTES, 'UTF-8'); ?>?v=<?php echo $v; ?>" alt="GIF">
@@ -732,6 +806,7 @@ $streamLogoSmallSrc = ($streamSceneAssetsBase !== '') ? ($streamSceneAssetsBase 
                 "container",
                 "right-column-result",
                 "scoreboard-overlay",
+                "player-scoreboard-overlay",
                 "external-chart-overlay",
                 "chart-container",
                 "gif-container",           /* Player intros – top by default so they show over YT/Schedule */
@@ -750,6 +825,7 @@ $streamLogoSmallSrc = ($streamSceneAssetsBase !== '') ? ($streamSceneAssetsBase 
                 "video-container": "Player intros – video",
                 "right-column-result": "Status text",
                 "scoreboard-overlay": "Scoreboard",
+                "player-scoreboard-overlay": "Player scoreboard",
                 "external-chart-overlay": "Player ratings – external chart",
                 "player-name-box": "Player name"
             };
@@ -1471,6 +1547,7 @@ $streamLogoSmallSrc = ($streamSceneAssetsBase !== '') ? ($streamSceneAssetsBase 
                             refreshTasks.push(window.loadAndRenderScoreboard());
                         }
                         return Promise.all(refreshTasks).then(function() {
+                            if (typeof window.psbRenderPanel === 'function') window.psbRenderPanel();
                             if (rankingsRefreshStatus) rankingsRefreshStatus.textContent = "Updated.";
                         });
                     } else {
@@ -3141,7 +3218,7 @@ $streamLogoSmallSrc = ($streamSceneAssetsBase !== '') ? ($streamSceneAssetsBase 
                 var on = !!window.tlsScoreEnabled;
                 btn.classList.toggle('on', on);
                 btn.classList.toggle('off', !on);
-                btn.innerHTML = on ? '&#9650;' : '&#9660;';
+                btn.innerHTML = 'T<br>' + (on ? '&#9650;' : '&#9660;');
             }
             tlsSyncScoreToggleBtn();
             window.updateTeamLeagueScoreBanner = function() {
@@ -3414,6 +3491,644 @@ $streamLogoSmallSrc = ($streamSceneAssetsBase !== '') ? ($streamSceneAssetsBase 
 
             /* ---- End Custom Scoreboard ---- */
 
+            /* ===== Player Scoreboard (movable graphic: players, score, Bo, color, race, team) ===== */
+            var PSB_COLORS = [
+                { id: 'default',    label: 'Default',     hex: '#3f8f3f' },
+                { id: 'white',      label: 'White',       hex: '#f0f0f0' },
+                { id: 'red',        label: 'Red',         hex: '#c0282d' },
+                { id: 'blue',       label: 'Blue',        hex: '#2a4fd6' },
+                { id: 'teal',       label: 'Teal',        hex: '#1f8a8a' },
+                { id: 'purple',     label: 'Purple',      hex: '#7d3fb5' },
+                { id: 'yellow',     label: 'Yellow',      hex: '#e8d33a' },
+                { id: 'orange',     label: 'Orange',      hex: '#e8852a' },
+                { id: 'green',      label: 'Green',       hex: '#3fae3f' },
+                { id: 'lightpink',  label: 'Light Pink',  hex: '#e0a8e0' },
+                { id: 'violet',     label: 'Violet',      hex: '#8a7fb5' },
+                { id: 'lightgrey',  label: 'Light Grey',  hex: '#aab2ba' },
+                { id: 'darkgreen',  label: 'Dark Green',  hex: '#2e6b2e' },
+                { id: 'brown',      label: 'Brown',       hex: '#7a5230' },
+                { id: 'lightgreen', label: 'Light Green', hex: '#7be07b' },
+                { id: 'darkgrey',   label: 'Dark Grey',   hex: '#4a4a4a' },
+                { id: 'pink',       label: 'Pink',        hex: '#e84fb5' }
+            ];
+            var PSB_RACE_ICON = {
+                Z: 'images/races/zerg.png',
+                T: 'images/races/terran.png',
+                P: 'images/races/protoss.png',
+                R: 'images/races/dice.svg'
+            };
+            function psbRaceIconHtml(code) {
+                var src = PSB_RACE_ICON[code];
+                if (!src) return '';
+                var v = window.ASSET_VERSION ? ('?v=' + window.ASSET_VERSION) : '';
+                return '<img src="' + src + v + '" alt="" draggable="false">';
+            }
+            var PSB_DEFAULT_TEAMS = [
+                { name: 'PulledTheBoys', acr: 'PTB' },
+                { name: 'Angry Space Hares', acr: 'ASH' },
+                { name: 'Special Tactics', acr: 'ST' },
+                { name: 'PSIOP Gaming', acr: 'POG' }
+            ];
+            var PSB_DEFAULT_POS = { left: 24, top: 24, width: 320, height: 92 };
+
+            var psbData = null;
+            var psbEditMode = false;
+
+            function psbDefaultData() {
+                return {
+                    show: false,
+                    bestOf: 1,
+                    pos: Object.assign({}, PSB_DEFAULT_POS),
+                    players: [
+                        { name: '', score: 0, color: 'purple', team: '', race: '' },
+                        { name: '', score: 0, color: 'blue', team: '', race: '' }
+                    ],
+                    teams: PSB_DEFAULT_TEAMS.map(function(t) { return { name: t.name, acr: t.acr }; })
+                };
+            }
+
+            function psbColorHex(id) {
+                for (var i = 0; i < PSB_COLORS.length; i++) { if (PSB_COLORS[i].id === id) return PSB_COLORS[i].hex; }
+                return PSB_COLORS[0].hex;
+            }
+            /** Shade a hex color: pct < 0 darken, pct > 0 lighten (range -1..1). */
+            function psbShade(hex, pct) {
+                var h = String(hex).replace('#', '');
+                if (h.length === 3) h = h[0] + h[0] + h[1] + h[1] + h[2] + h[2];
+                var r = parseInt(h.substr(0, 2), 16), g = parseInt(h.substr(2, 2), 16), b = parseInt(h.substr(4, 2), 16);
+                var t = pct < 0 ? 0 : 255;
+                var p = Math.abs(pct);
+                r = Math.round((t - r) * p) + r;
+                g = Math.round((t - g) * p) + g;
+                b = Math.round((t - b) * p) + b;
+                return 'rgb(' + r + ',' + g + ',' + b + ')';
+            }
+            function psbRaceMeta(code) {
+                switch (code) {
+                    case 'Z': return { accent: '#9b59b6' };
+                    case 'T': return { accent: '#3a7bd5' };
+                    case 'P': return { accent: '#e0b13a' };
+                    default:  return { accent: '#888888' };
+                }
+            }
+            /** Resolve a player's race: explicit override, else rankings lookup, else ''. */
+            function psbResolveRace(player) {
+                if (player && player.race) return player.race;
+                if (player && player.name && typeof window.getRankingForPlayer === 'function') {
+                    var rk = window.getRankingForPlayer(player.name);
+                    if (rk && rk.race) return String(rk.race).toUpperCase().charAt(0);
+                }
+                return '';
+            }
+            /** Normalize a team name for tolerant matching (case/space/punctuation-insensitive). */
+            function psbNormTeam(s) {
+                return String(s == null ? '' : s).toLowerCase().replace(/[^a-z0-9]/g, '');
+            }
+            function psbTeamAcr(teamName) {
+                if (!teamName) return '';
+                var teams = (psbData && Array.isArray(psbData.teams)) ? psbData.teams : [];
+                var norm = psbNormTeam(teamName);
+                for (var i = 0; i < teams.length; i++) {
+                    if (psbNormTeam(teams[i].name) === norm) return teams[i].acr || '';
+                }
+                return '';
+            }
+
+            /* Player -> team roster, derived from the current FSL match in 2026/scoreboard.csv.
+               There is no global team field in rankings, so we map the two competing teams'
+               rosters from the live scoreboard (same source as the team-league banner). */
+            var psbTeamRoster = {};
+            function psbStripPlayerCell(s) {
+                return String(s == null ? '' : s).replace(/^\s*\([A-Za-z]\)\s*/, '').replace(/\[\d+\]/g, '').trim();
+            }
+            function psbLoadTeamRoster() {
+                if (typeof parseCSV !== 'function' || typeof cellStr !== 'function') return;
+                var base = window.location.pathname.replace(/\/[^/]*$/, '') || '';
+                var baseUrl = (base ? base + '/' : '');
+                fetch(baseUrl + '2026/scoreboard.csv?_t=' + Date.now(), { cache: 'no-store' })
+                    .then(function(r) { return r.ok ? r.text() : ''; })
+                    .then(function(text) {
+                        var raw = (text || '').trim();
+                        var rows = raw ? parseCSV(raw) : [];
+                        var map = {};
+                        if (rows.length) {
+                            var r0 = rows[0];
+                            var teamA = tlsCleanTeamName(cellStr(r0[2]));
+                            var teamB = tlsCleanTeamName(cellStr(r0[6]));
+                            for (var i = 1; i < rows.length; i++) {
+                                var row = rows[i];
+                                [2, 3].forEach(function(c) { var nm = psbStripPlayerCell(cellStr(row[c])); if (nm && teamA) map[nm.toLowerCase()] = teamA; });
+                                [6, 7].forEach(function(c) { var nm = psbStripPlayerCell(cellStr(row[c])); if (nm && teamB) map[nm.toLowerCase()] = teamB; });
+                            }
+                        }
+                        psbTeamRoster = map;
+                        if (typeof psbRenderPanel === 'function') psbRenderPanel();
+                    })
+                    .catch(function() {});
+            }
+            window.psbLoadTeamRoster = psbLoadTeamRoster;
+
+            /** Resolve a player's team: explicit override (settings dropdown), else roster lookup by name. */
+            function psbResolveTeamName(player) {
+                if (player && player.team) return player.team;
+                if (player && player.name && psbTeamRoster) {
+                    var t = psbTeamRoster[String(player.name).trim().toLowerCase()];
+                    if (t) return t;
+                }
+                return '';
+            }
+            /** Show a real value (team name or FA); skip only when there's nothing (empty / Null). */
+            function psbIsRealTeamAcr(acr) {
+                if (!acr) return false;
+                var u = String(acr).trim().toUpperCase();
+                return u !== '' && u !== 'NULL';
+            }
+            /** Resolve the team ACRONYM to display after the name.
+               Priority: explicit override -> rankings.team (team name or FA) -> scoreboard roster.
+               Returns '' only when there's no team value, so no empty tag is shown. */
+            function psbResolveTeamAcr(player) {
+                var acr = '';
+                if (player && player.team) {
+                    acr = psbTeamAcr(player.team);
+                } else if (player && player.name && typeof window.getRankingForPlayer === 'function') {
+                    var rk = window.getRankingForPlayer(player.name);
+                    if (rk && rk.team) acr = String(rk.team).trim();
+                }
+                return psbIsRealTeamAcr(acr) ? acr : '';
+            }
+            /** Resolve a player's rank/group from rankings (same source as race). */
+            function psbResolveRank(player) {
+                if (player && player.name && typeof window.getRankingForPlayer === 'function') {
+                    var rk = window.getRankingForPlayer(player.name);
+                    if (rk) return { rank: rk.rank, group: rk.group };
+                }
+                return null;
+            }
+
+            function psbRowHtml(player) {
+                var hex = psbColorHex(player.color);
+                var grad = 'linear-gradient(100deg, ' + psbShade(hex, -0.45) + ' 0%, ' + hex + ' 60%, ' + psbShade(hex, 0.12) + ' 100%)';
+                var race = psbResolveRace(player);
+                var raceIcon = psbRaceIconHtml(race);
+                var acr = psbResolveTeamAcr(player);
+                var rk = psbResolveRank(player);
+                var rankNum = (rk && rk.rank != null && String(rk.rank) !== '') ? String(rk.rank) : '';
+                var groupNum = (rk && rk.group != null && String(rk.group) !== '') ? String(rk.group) : '';
+                var nameHtml = escapeHtml(player.name || '');
+                if (acr) nameHtml += ' <span class="psb-team">(' + escapeHtml(acr) + ')</span>';
+                var rgHtml = '';
+                if (rankNum) {
+                    rgHtml = '<span class="psb-num">#' + escapeHtml(rankNum) + '</span>';
+                    if (groupNum) rgHtml += '<span class="psb-grp">G' + escapeHtml(groupNum) + '</span>';
+                }
+                var html = '<div class="psb-row" style="background:' + grad + ';">';
+                html += '<div class="psb-score">' + (parseInt(player.score, 10) || 0) + '</div>';
+                html += '<div class="psb-race">' + raceIcon + '</div>';
+                if (rgHtml) html += '<div class="psb-rg">' + rgHtml + '</div>';
+                html += '<div class="psb-name">' + nameHtml + '</div>';
+                if (raceIcon) html += '<div class="psb-watermark">' + raceIcon + '</div>';
+                html += '</div>';
+                return html;
+            }
+
+            function psbApplyPosition(pos) {
+                var panel = document.getElementById('player-scoreboard-panel');
+                if (!panel || !pos) return;
+                panel.style.left = (pos.left || 0) + 'px';
+                panel.style.top = (pos.top || 0) + 'px';
+                panel.style.width = (pos.width || PSB_DEFAULT_POS.width) + 'px';
+                panel.style.height = (pos.height || PSB_DEFAULT_POS.height) + 'px';
+                panel.style.fontSize = Math.max(8, Math.round((pos.height || PSB_DEFAULT_POS.height) * 0.30)) + 'px';
+            }
+
+            function psbRenderPanel() {
+                var overlay = document.getElementById('player-scoreboard-overlay');
+                var panel = document.getElementById('player-scoreboard-panel');
+                if (!overlay || !panel || !psbData) return;
+                var pa = psbData.players[0] || {};
+                var pb = psbData.players[1] || {};
+                var bo = parseInt(psbData.bestOf, 10) || 1;
+                panel.innerHTML =
+                    '<div class="psb-inner">' +
+                        '<div class="psb-bo">Bo' + bo + '</div>' +
+                        '<div class="psb-rows">' + psbRowHtml(pa) + psbRowHtml(pb) + '</div>' +
+                    '</div>';
+                psbApplyPosition(psbData.pos || PSB_DEFAULT_POS);
+                psbSyncQuickToggleBtn();
+                psbUpdateVisibility();
+                if (typeof psbUpdateAutoTeamLabels === 'function') psbUpdateAutoTeamLabels();
+            }
+            window.psbRenderPanel = psbRenderPanel;
+
+            /* True only when SC2 is the active scene AND no other scene button is active.
+               Other scenes (Schedule, Bracket, ASH, POG, scoreboards, matchup, videos...)
+               go through clearExclusiveScenes() which does NOT clear the SC2 button, so we
+               must also confirm none of the competing scene buttons are active. */
+            function psbIsSc2ActiveScene() {
+                var sc2Btn = document.getElementById('scene-btn-sc2');
+                if (!sc2Btn || !sc2Btn.classList.contains('active')) return false;
+                var actives = document.querySelectorAll('#scenes-section [id^="scene-btn-"].active');
+                for (var i = 0; i < actives.length; i++) {
+                    var id = actives[i].id;
+                    if (id === 'scene-btn-sc2' || id === 'scene-btn-sc2-quick') continue;
+                    return false;
+                }
+                return true;
+            }
+            window.psbIsSc2ActiveScene = psbIsSc2ActiveScene;
+
+            /* Lightweight show/hide only (no innerHTML rebuild). Safe to call from the
+               scenes MutationObserver on every scene-button class change. */
+            function psbUpdateVisibility() {
+                var overlay = document.getElementById('player-scoreboard-overlay');
+                var panel = document.getElementById('player-scoreboard-panel');
+                if (!overlay || !panel || !psbData) return;
+                var visible = psbEditMode || (psbData.show && psbIsSc2ActiveScene());
+                overlay.style.display = visible ? 'block' : 'none';
+                panel.style.display = visible ? 'block' : 'none';
+            }
+            window.psbUpdateVisibility = psbUpdateVisibility;
+
+            /* ---- Settings UI ---- */
+            function psbPopulateColorSelects() {
+                document.querySelectorAll('#player-scoreboard-settings-section .psb-color').forEach(function(sel) {
+                    var current = sel.value;
+                    sel.innerHTML = '';
+                    PSB_COLORS.forEach(function(c) {
+                        var o = document.createElement('option');
+                        o.value = c.id; o.textContent = c.label;
+                        sel.appendChild(o);
+                    });
+                    if (current) sel.value = current;
+                });
+            }
+            function psbPopulateTeamSelects() {
+                var teams = (psbData && Array.isArray(psbData.teams)) ? psbData.teams : [];
+                document.querySelectorAll('#player-scoreboard-settings-section .psb-team').forEach(function(sel) {
+                    var current = sel.value;
+                    sel.innerHTML = '';
+                    var none = document.createElement('option');
+                    none.value = ''; none.textContent = 'Auto'; none.className = 'psb-team-auto-opt';
+                    sel.appendChild(none);
+                    teams.forEach(function(t) {
+                        if (!t.name) return;
+                        var o = document.createElement('option');
+                        o.value = t.name; o.textContent = t.name + (t.acr ? ' (' + t.acr + ')' : '');
+                        sel.appendChild(o);
+                    });
+                    sel.value = current;
+                });
+                psbUpdateAutoTeamLabels();
+            }
+            /** Show what the "Auto" team option resolves to for each player's current name. */
+            function psbUpdateAutoTeamLabels() {
+                document.querySelectorAll('#player-scoreboard-settings-section .psb-player-edit').forEach(function(box) {
+                    var sel = box.querySelector('.psb-team');
+                    var nameEl = box.querySelector('.psb-name');
+                    if (!sel || !sel.options.length) return;
+                    var nm = nameEl ? nameEl.value : '';
+                    var acr = nm ? psbResolveTeamAcr({ name: nm, team: '' }) : '';
+                    sel.options[0].textContent = acr ? ('Auto (' + acr + ')') : 'Auto';
+                });
+            }
+            function psbRenderTeamRows() {
+                var wrap = document.getElementById('psb-teams-rows');
+                if (!wrap) return;
+                wrap.innerHTML = '';
+                var teams = (psbData && Array.isArray(psbData.teams)) ? psbData.teams : [];
+                teams.forEach(function(t, i) {
+                    var row = document.createElement('div');
+                    row.style.cssText = 'display:flex; gap:4px; align-items:center;';
+                    row.innerHTML =
+                        '<input type="text" class="psb-team-name" data-i="' + i + '" value="' + escapeHtml(t.name || '') + '" placeholder="Team name" style="flex:1; min-width:0; background:#1a1a1a; color:#eee; border:1px solid #444; border-radius:3px; padding:2px 5px; font-size:11px;">' +
+                        '<input type="text" class="psb-team-acr" data-i="' + i + '" value="' + escapeHtml(t.acr || '') + '" placeholder="ACR" style="width:60px; background:#1a1a1a; color:#eee; border:1px solid #444; border-radius:3px; padding:2px 5px; font-size:11px;">' +
+                        '<button type="button" class="psb-team-del" data-i="' + i + '" style="font-size:11px; padding:1px 7px;">&times;</button>';
+                    wrap.appendChild(row);
+                });
+                wrap.querySelectorAll('.psb-team-name, .psb-team-acr').forEach(function(inp) {
+                    inp.addEventListener('input', function() {
+                        var i = parseInt(inp.getAttribute('data-i'), 10);
+                        if (!psbData.teams[i]) return;
+                        if (inp.classList.contains('psb-team-name')) psbData.teams[i].name = inp.value;
+                        else psbData.teams[i].acr = inp.value;
+                        psbPopulateTeamSelects();
+                        psbRenderPanel();
+                    });
+                });
+                wrap.querySelectorAll('.psb-team-del').forEach(function(btn) {
+                    btn.addEventListener('click', function() {
+                        var i = parseInt(btn.getAttribute('data-i'), 10);
+                        psbData.teams.splice(i, 1);
+                        psbRenderTeamRows();
+                        psbPopulateTeamSelects();
+                        psbRenderPanel();
+                    });
+                });
+            }
+
+            /** Push the current settings inputs into psbData (excludes pos, set during edit/move). */
+            function psbCollectSettings() {
+                var showEl = document.getElementById('psb-show');
+                var boEl = document.getElementById('psb-best-of');
+                if (showEl) psbData.show = showEl.checked;
+                if (boEl) psbData.bestOf = Math.max(1, parseInt(boEl.value, 10) || 1);
+                document.querySelectorAll('#player-scoreboard-settings-section .psb-player-edit').forEach(function(box) {
+                    var idx = parseInt(box.getAttribute('data-idx'), 10) || 0;
+                    if (!psbData.players[idx]) psbData.players[idx] = { name: '', score: 0, color: 'default', team: '', race: '' };
+                    var p = psbData.players[idx];
+                    var nameEl = box.querySelector('.psb-name');
+                    var scoreEl = box.querySelector('.psb-score');
+                    var colorEl = box.querySelector('.psb-color');
+                    var teamEl = box.querySelector('.psb-team');
+                    var raceEl = box.querySelector('.psb-race');
+                    if (nameEl) p.name = nameEl.value;
+                    if (scoreEl) p.score = parseInt(scoreEl.value, 10) || 0;
+                    if (colorEl) p.color = colorEl.value;
+                    if (teamEl) p.team = teamEl.value;
+                    if (raceEl) p.race = raceEl.value;
+                });
+            }
+
+            /** Fill the settings inputs from psbData. */
+            function psbFillSettings() {
+                var showEl = document.getElementById('psb-show');
+                var boEl = document.getElementById('psb-best-of');
+                if (showEl) showEl.checked = !!psbData.show;
+                if (boEl) boEl.value = parseInt(psbData.bestOf, 10) || 1;
+                psbPopulateColorSelects();
+                psbPopulateTeamSelects();
+                document.querySelectorAll('#player-scoreboard-settings-section .psb-player-edit').forEach(function(box) {
+                    var idx = parseInt(box.getAttribute('data-idx'), 10) || 0;
+                    var p = psbData.players[idx] || { name: '', score: 0, color: 'default', team: '', race: '' };
+                    var nameEl = box.querySelector('.psb-name');
+                    var scoreEl = box.querySelector('.psb-score');
+                    var colorEl = box.querySelector('.psb-color');
+                    var teamEl = box.querySelector('.psb-team');
+                    var raceEl = box.querySelector('.psb-race');
+                    if (nameEl) nameEl.value = p.name || '';
+                    if (scoreEl) scoreEl.value = parseInt(p.score, 10) || 0;
+                    if (colorEl) colorEl.value = p.color || 'default';
+                    if (teamEl) teamEl.value = p.team || '';
+                    if (raceEl) raceEl.value = p.race || '';
+                });
+                psbRenderTeamRows();
+            }
+
+            /* ---- Player-name autocomplete (same player list as Player Intros) ---- */
+            var psbAcDropdown = null;
+            function psbClearAutocomplete() {
+                if (psbAcDropdown && psbAcDropdown.parentNode) psbAcDropdown.parentNode.removeChild(psbAcDropdown);
+                psbAcDropdown = null;
+            }
+            function psbShowAutocomplete(input, players) {
+                psbClearAutocomplete();
+                var rect = input.getBoundingClientRect();
+                var ul = document.createElement('ul');
+                ul.className = 'suggestion-list psb-autocomplete';
+                ul.style.cssText = 'position:fixed; top:' + (rect.bottom + window.scrollY) + 'px; left:' + (rect.left + window.scrollX) + 'px; width:' + Math.max(160, rect.width) + 'px; background:#fff; color:#111; border:1px solid #888; z-index:100020; list-style:none; padding:0; margin:0; max-height:220px; overflow-y:auto; box-shadow:0 4px 10px rgba(0,0,0,0.4);';
+                players.slice(0, 50).forEach(function(p) {
+                    var li = document.createElement('li');
+                    li.textContent = p[0];
+                    li.style.cssText = 'padding:4px 8px; cursor:pointer; font-size:12px;';
+                    li.addEventListener('mousedown', function(e) { e.preventDefault(); });
+                    li.addEventListener('mouseenter', function() { li.style.background = '#e6e6e6'; });
+                    li.addEventListener('mouseleave', function() { li.style.background = '#fff'; });
+                    li.addEventListener('click', function() {
+                        input.value = p[0];
+                        psbClearAutocomplete();
+                        psbCollectSettings();
+                        psbRenderPanel();
+                    });
+                    ul.appendChild(li);
+                });
+                document.body.appendChild(ul);
+                psbAcDropdown = ul;
+            }
+            function psbAttachAutocomplete(input) {
+                if (!input || input._psbAcBound) return;
+                input._psbAcBound = true;
+                input.addEventListener('input', function() {
+                    var v = input.value.trim().toLowerCase();
+                    var list = window.STREAM_PLAYER_LIST || [];
+                    if (v.length < 3 || !list.length) { psbClearAutocomplete(); return; }
+                    var matches = list.filter(function(p) { return p[0] && p[0].toLowerCase().indexOf(v) !== -1; });
+                    if (matches.length) psbShowAutocomplete(input, matches); else psbClearAutocomplete();
+                });
+                input.addEventListener('keydown', function(e) {
+                    if (e.key === 'Tab' && psbAcDropdown) {
+                        var items = psbAcDropdown.querySelectorAll('li');
+                        if (items.length === 1) { input.value = items[0].textContent; psbClearAutocomplete(); psbCollectSettings(); psbRenderPanel(); }
+                    }
+                });
+                input.addEventListener('blur', function() { setTimeout(psbClearAutocomplete, 150); });
+            }
+
+            var psbSettingsBound = false;
+            function psbBindSettings() {
+                if (psbSettingsBound) return;
+                psbSettingsBound = true;
+                var section = document.getElementById('player-scoreboard-settings-section');
+                if (!section) return;
+                section.querySelectorAll('.psb-player-edit .psb-name').forEach(psbAttachAutocomplete);
+                section.addEventListener('input', function(e) {
+                    if (e.target.closest('#psb-teams-rows')) return; /* handled per-row */
+                    if (e.target.id === 'psb-show' || e.target.id === 'psb-best-of' || e.target.closest('.psb-player-edit')) {
+                        psbCollectSettings();
+                        psbRenderPanel();
+                    }
+                });
+                section.addEventListener('change', function(e) {
+                    if (e.target.classList && (e.target.classList.contains('psb-color') || e.target.classList.contains('psb-team') || e.target.classList.contains('psb-race') || e.target.id === 'psb-show')) {
+                        psbCollectSettings();
+                        psbRenderPanel();
+                    }
+                });
+                var addBtn = document.getElementById('psb-team-add-btn');
+                if (addBtn) addBtn.addEventListener('click', function() {
+                    psbData.teams.push({ name: '', acr: '' });
+                    psbRenderTeamRows();
+                    psbPopulateTeamSelects();
+                });
+            }
+
+            window.togglePlayerScoreboardSettings = function(btn) {
+                var el = document.getElementById('player-scoreboard-settings-section');
+                if (!el) return;
+                if (el.style.display === 'none' || !el.style.display) {
+                    el.style.display = 'block';
+                    psbBindSettings();
+                    psbFillSettings();
+                } else {
+                    el.style.display = 'none';
+                }
+                if (btn) btn.classList.toggle('open', el.style.display === 'block');
+            };
+
+            function psbSyncQuickToggleBtn() {
+                var btn = document.getElementById('psb-quick-toggle-btn');
+                if (!btn || !psbData) return;
+                var on = !!psbData.show;
+                btn.classList.toggle('on', on);
+                btn.classList.toggle('off', !on);
+                btn.innerHTML = 'P<br>' + (on ? '&#9650;' : '&#9660;');
+            }
+            function psbSaveQuiet() {
+                if (!psbData) return;
+                fetch('save_player_scoreboard.php', {
+                    method: 'POST', headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(psbData)
+                }).catch(function() {});
+            }
+            window.psbToggleShow = function() {
+                if (!psbData) return;
+                psbData.show = !psbData.show;
+                var cb = document.getElementById('psb-show');
+                if (cb) cb.checked = psbData.show;
+                psbRenderPanel();
+                psbSaveQuiet();
+            };
+
+            window.psbSwapPlayers = function() {
+                if (!psbData) return;
+                psbCollectSettings();
+                var tmp = psbData.players[0];
+                psbData.players[0] = psbData.players[1];
+                psbData.players[1] = tmp;
+                psbFillSettings();
+                psbRenderPanel();
+            };
+
+            /* ---- Edit / move ---- */
+            window.psbToggleEditMode = function() {
+                var overlay = document.getElementById('player-scoreboard-overlay');
+                var panel = document.getElementById('player-scoreboard-panel');
+                var btn = document.getElementById('psb-editmove-btn');
+                if (!overlay || !panel) return;
+                if (psbEditMode) {
+                    var off = panel.getBoundingClientRect();
+                    var par = overlay.getBoundingClientRect();
+                    psbData.pos = {
+                        left: Math.round(off.left - par.left),
+                        top: Math.round(off.top - par.top),
+                        width: Math.round(off.width),
+                        height: Math.round(off.height)
+                    };
+                    if ($(panel).data('ui-draggable')) $(panel).draggable('destroy');
+                    if ($(panel).data('ui-resizable')) $(panel).resizable('destroy');
+                    overlay.classList.remove('psb-edit-mode');
+                    overlay.style.pointerEvents = 'none';
+                    overlay.style.zIndex = '';
+                    psbEditMode = false;
+                    if (btn) { btn.textContent = 'Edit and Move'; btn.classList.remove('active'); }
+                    psbRenderPanel();
+                    if (window.reapplyLayerOrder) window.reapplyLayerOrder();
+                    return;
+                }
+                psbEditMode = true;
+                overlay.style.display = 'block';
+                panel.style.display = 'block';
+                psbApplyPosition(psbData.pos || PSB_DEFAULT_POS);
+                overlay.classList.add('psb-edit-mode');
+                overlay.style.pointerEvents = 'none';
+                overlay.style.zIndex = '100002';
+                panel.style.pointerEvents = 'auto';
+                $(panel).draggable({ containment: '#player-scoreboard-overlay', scroll: false, cursor: 'move' });
+                $(panel).resizable({
+                    containment: '#player-scoreboard-overlay', handles: 'all',
+                    resize: function(e, ui) {
+                        panel.style.fontSize = Math.max(8, Math.round(ui.size.height * 0.30)) + 'px';
+                    }
+                });
+                if (btn) { btn.textContent = 'Save layout'; btn.classList.add('active'); }
+            };
+
+            window.psbResetPosition = function() {
+                psbData.pos = Object.assign({}, PSB_DEFAULT_POS);
+                if (psbEditMode) {
+                    var panel = document.getElementById('player-scoreboard-panel');
+                    if (panel && $(panel).data('ui-draggable')) { $(panel).draggable('destroy'); $(panel).resizable('destroy'); }
+                    psbApplyPosition(psbData.pos);
+                    var p2 = document.getElementById('player-scoreboard-panel');
+                    $(p2).draggable({ containment: '#player-scoreboard-overlay', scroll: false, cursor: 'move' });
+                    $(p2).resizable({ containment: '#player-scoreboard-overlay', handles: 'all', resize: function(e, ui) { p2.style.fontSize = Math.max(8, Math.round(ui.size.height * 0.30)) + 'px'; } });
+                } else {
+                    psbApplyPosition(psbData.pos);
+                }
+            };
+
+            /* ---- Persistence ---- */
+            window.psbSave = function() {
+                if (psbEditMode) window.psbToggleEditMode(); /* lock in position first */
+                psbCollectSettings();
+                var btn = document.getElementById('psb-save-btn');
+                var status = document.getElementById('psb-save-status');
+                if (btn) btn.disabled = true;
+                if (status) status.textContent = 'Saving…';
+                fetch('save_player_scoreboard.php', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(psbData)
+                }).then(function(r) { return r.json(); }).then(function(res) {
+                    if (status) status.textContent = (res && res.ok) ? 'Saved!' : 'Error saving.';
+                    setTimeout(function() { if (status) status.textContent = ''; if (btn) btn.disabled = false; }, 2500);
+                }).catch(function() {
+                    if (status) status.textContent = 'Network error.';
+                    setTimeout(function() { if (status) status.textContent = ''; if (btn) btn.disabled = false; }, 2500);
+                });
+            };
+
+            function psbNormalize(data) {
+                var d = psbDefaultData();
+                if (data && typeof data === 'object') {
+                    if (typeof data.show === 'boolean') d.show = data.show;
+                    if (data.bestOf != null) d.bestOf = Math.max(1, parseInt(data.bestOf, 10) || 1);
+                    if (data.pos && typeof data.pos === 'object') d.pos = Object.assign({}, PSB_DEFAULT_POS, data.pos);
+                    if (Array.isArray(data.players)) {
+                        for (var i = 0; i < 2; i++) {
+                            if (data.players[i]) d.players[i] = Object.assign(d.players[i], data.players[i]);
+                        }
+                    }
+                    if (Array.isArray(data.teams) && data.teams.length) {
+                        d.teams = data.teams.map(function(t) { return { name: (t && t.name) || '', acr: (t && t.acr) || '' }; });
+                    }
+                }
+                return d;
+            }
+
+            window.psbLoad = function() {
+                return fetch('save_player_scoreboard.php?_t=' + Date.now())
+                    .then(function(r) { return r.json(); })
+                    .then(function(data) { psbData = psbNormalize(data); })
+                    .catch(function() { psbData = psbDefaultData(); })
+                    .then(function() {
+                        psbRenderPanel();
+                        var section = document.getElementById('player-scoreboard-settings-section');
+                        if (section && section.style.display === 'block') { psbBindSettings(); psbFillSettings(); }
+                    });
+            };
+
+            (function psbInit() {
+                psbData = psbDefaultData();
+                window.psbLoad();
+                psbLoadTeamRoster();
+                /* Reload roster when the match scoreboard changes (teams/players may differ). */
+                document.addEventListener('status:score-saved', function() { psbLoadTeamRoster(); });
+                /* Robust visibility: re-check whenever ANY scene button's active state changes
+                   (SC2 activate/deactivate, or switching to Schedule/Bracket/ASH/POG/scoreboards/
+                   matchup/videos, etc.), regardless of which code path toggled it. The panel must
+                   show ONLY when SC2 is the active scene. */
+                var scenesSection = document.getElementById('scenes-section');
+                if (scenesSection && typeof MutationObserver !== 'undefined') {
+                    new MutationObserver(function() { psbUpdateVisibility(); })
+                        .observe(scenesSection, { attributes: true, attributeFilter: ['class'], subtree: true });
+                }
+                /* Re-render once rankings are available so Auto race resolves. */
+                document.addEventListener('DOMContentLoaded', function() {
+                    setTimeout(function() { if (psbData) psbRenderPanel(); }, 1500);
+                });
+            })();
+            /* ===== End Player Scoreboard ===== */
+
             /** Set VDO iframe src from data-src only if not already loaded (vdo.ninja), to avoid reload and preserve camera state. */
             function ensureVdoIframeLoaded(iframe) {
                 if (!iframe) return;
@@ -3624,6 +4339,7 @@ $streamLogoSmallSrc = ($streamSceneAssetsBase !== '') ? ($streamSceneAssetsBase 
                 var b2 = document.getElementById('scene-btn-sc2-quick');
                 if (b1) b1.classList.toggle('active', !!isActive);
                 if (b2) b2.classList.toggle('active', !!isActive);
+                if (typeof window.psbUpdateVisibility === 'function') window.psbUpdateVisibility();
             }
 
             /**
