@@ -644,6 +644,7 @@ body.layer-outline-debug [data-layer-id].layer-outline-active {
     align-items: center;
     min-width: 0;
     overflow: hidden;
+    padding-right: 1.05em;
 }
 .psb-panel .psb-row + .psb-row {
     border-top: 1px solid rgba(0, 0, 0, 0.45);
@@ -662,23 +663,27 @@ body.layer-outline-debug [data-layer-id].layer-outline-active {
     z-index: 3;
     text-shadow: -1px -1px 0 #000, 1px -1px 0 #000, -1px 1px 0 #000, 1px 1px 0 #000, 0 0 2px #000;
 }
-/* RACE: small icon on a very dark gray full-height slot. */
+/* RACE: small icon on a very dark gray full-height slot (last column). */
 .psb-panel .psb-race {
-    flex: 0 0 0.95em;
-    align-self: stretch;
-    margin: 0 0.1em 0 0;
+    position: absolute;
+    top: 0;
+    right: 0;
+    bottom: 0;
+    width: 1.05em;
+    margin: 0;
     background: #1b1b1f;
+    border-left: 1px solid rgba(0, 0, 0, 0.45);
     display: flex;
     align-items: center;
     justify-content: center;
     z-index: 2;
 }
 .psb-panel .psb-race img {
-    width: 76%;
-    height: 61%;
+    width: 72%;
+    height: 72%;
     object-fit: contain;
     display: block;
-    filter: drop-shadow(0 1px 1px rgba(0, 0, 0, 0.6));
+    filter: drop-shadow(0 0 1px rgba(0, 0, 0, 0.85));
     pointer-events: none;
     user-select: none;
 }
@@ -728,7 +733,7 @@ body.layer-outline-debug [data-layer-id].layer-outline-active {
 .psb-panel .psb-watermark {
     position: absolute;
     top: 50%;
-    right: 1.6em;
+    right: 2.4em;
     transform: translateY(-50%);
     height: 150%;
     aspect-ratio: 1 / 1;

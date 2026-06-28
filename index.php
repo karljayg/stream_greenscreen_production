@@ -3518,9 +3518,9 @@ $streamLogoSmallSrc = ($streamSceneAssetsBase !== '') ? ($streamSceneAssetsBase 
                 { id: 'pink',       label: 'Pink',        hex: '#e84fb5' }
             ];
             var PSB_RACE_ICON = {
-                Z: 'images/races/zerg.png',
-                T: 'images/races/terran.png',
-                P: 'images/races/protoss.png',
+                Z: 'images/races/zerg.svg',
+                T: 'images/races/terran.svg',
+                P: 'images/races/protoss.svg',
                 R: 'images/races/dice.svg'
             };
             function psbRaceIconHtml(code) {
@@ -3689,9 +3689,9 @@ $streamLogoSmallSrc = ($streamSceneAssetsBase !== '') ? ($streamSceneAssetsBase 
                 }
                 var html = '<div class="psb-row" style="background:' + grad + ';">';
                 html += '<div class="psb-score">' + (parseInt(player.score, 10) || 0) + '</div>';
-                html += '<div class="psb-race">' + raceIcon + '</div>';
                 if (rgHtml) html += '<div class="psb-rg">' + rgHtml + '</div>';
                 html += '<div class="psb-name">' + nameHtml + '</div>';
+                html += '<div class="psb-race">' + raceIcon + '</div>';
                 if (raceIcon) html += '<div class="psb-watermark">' + raceIcon + '</div>';
                 html += '</div>';
                 return html;
