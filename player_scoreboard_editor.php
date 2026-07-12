@@ -53,6 +53,7 @@ header('Cache-Control: no-cache, no-store, must-revalidate');
 
         <div class="toprow">
             <label><input type="checkbox" id="psb-show"> Show on overlay (SC2 scene)</label>
+            <label><input type="checkbox" id="psb-show-race"> Show race</label>
             <label>Best of <input type="number" id="psb-best-of" min="1" max="99" value="1"></label>
             <button type="button" id="psb-swap-btn" title="Swap top and bottom players">&#8645; Swap A/B</button>
         </div>
@@ -139,7 +140,7 @@ header('Cache-Control: no-cache, no-store, must-revalidate');
 
     function defaultData() {
         return {
-            show: false, bestOf: 1, pos: { left: 24, top: 24, width: 320, height: 92 },
+            show: false, showRace: false, bestOf: 1, pos: { left: 24, top: 24, width: 320, height: 92 },
             players: [
                 { name: '', score: 0, color: 'purple', team: '', race: '' },
                 { name: '', score: 0, color: 'blue', team: '', race: '' }
@@ -151,6 +152,7 @@ header('Cache-Control: no-cache, no-store, must-revalidate');
         var out = defaultData();
         if (d && typeof d === 'object') {
             if (typeof d.show === 'boolean') out.show = d.show;
+            if (typeof d.showRace === 'boolean') out.showRace = d.showRace;
             if (d.bestOf != null) out.bestOf = Math.max(1, parseInt(d.bestOf, 10) || 1);
             if (d.pos && typeof d.pos === 'object') out.pos = Object.assign(out.pos, d.pos);
             if (Array.isArray(d.players)) for (var i = 0; i < 2; i++) if (d.players[i]) out.players[i] = Object.assign(out.players[i], d.players[i]);
@@ -261,6 +263,7 @@ header('Cache-Control: no-cache, no-store, must-revalidate');
 
     function renderAll() {
         document.getElementById('psb-show').checked = !!_data.show;
+        document.getElementById('psb-show-race').checked = !!_data.showRace;
         document.getElementById('psb-best-of').value = parseInt(_data.bestOf, 10) || 1;
         document.querySelectorAll('.player').forEach(function(box) {
             var i = parseInt(box.getAttribute('data-idx'), 10) || 0;
@@ -278,6 +281,7 @@ header('Cache-Control: no-cache, no-store, must-revalidate');
     function collect() {
         if (!_data) return;
         _data.show = document.getElementById('psb-show').checked;
+        _data.showRace = document.getElementById('psb-show-race').checked;
         _data.bestOf = Math.max(1, parseInt(document.getElementById('psb-best-of').value, 10) || 1);
         document.querySelectorAll('.player').forEach(function(box) {
             var i = parseInt(box.getAttribute('data-idx'), 10) || 0;
@@ -346,6 +350,7 @@ header('Cache-Control: no-cache, no-store, must-revalidate');
 
     /* ---- Wire up ---- */
     document.getElementById('psb-show').addEventListener('change', scheduleSave);
+    document.getElementById('psb-show-race').addEventListener('change', scheduleSave);
     document.getElementById('psb-best-of').addEventListener('input', scheduleSave);
     document.querySelectorAll('.player').forEach(function(box) {
         attachAc(box.querySelector('.psb-name'));

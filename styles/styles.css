@@ -663,7 +663,8 @@ body.layer-outline-debug [data-layer-id].layer-outline-active {
     z-index: 3;
     text-shadow: -1px -1px 0 #000, 1px -1px 0 #000, -1px 1px 0 #000, 1px 1px 0 #000, 0 0 2px #000;
 }
-/* RACE: small icon on a very dark gray full-height slot (last column). */
+/* RACE: reserved right slot (always takes width so layout doesn't jump when toggled).
+   When race is off, paint greenscreen green so the reserved strip keys out. */
 .psb-panel .psb-race {
     position: absolute;
     top: 0;
@@ -671,12 +672,16 @@ body.layer-outline-debug [data-layer-id].layer-outline-active {
     bottom: 0;
     width: 1.05em;
     margin: 0;
-    background: #1b1b1f;
-    border-left: 1px solid rgba(0, 0, 0, 0.45);
+    background: #00FF00;
+    border-left: none;
     display: flex;
     align-items: center;
     justify-content: center;
     z-index: 2;
+}
+.psb-panel.psb-show-race .psb-race {
+    background: #000;
+    border-left: 1px solid rgba(0, 0, 0, 0.45);
 }
 .psb-panel .psb-race img {
     width: 72%;
@@ -687,7 +692,16 @@ body.layer-outline-debug [data-layer-id].layer-outline-active {
     pointer-events: none;
     user-select: none;
 }
-/* RANK/GROUP: compact stacked unit (#rank on top, G<group> 66% size under it). */
+.psb-panel .psb-race .psb-race-unknown {
+    color: #fff;
+    font-weight: 800;
+    font-size: 0.72em;
+    line-height: 1;
+    text-shadow: -1px -1px 0 #000, 1px -1px 0 #000, -1px 1px 0 #000, 1px 1px 0 #000;
+    pointer-events: none;
+    user-select: none;
+}
+/* RANK/GROUP: stacked #rank / G<group> — ~15% smaller than prior so name stays dominant. */
 .psb-panel .psb-rg {
     flex: 0 0 auto;
     display: flex;
@@ -695,8 +709,8 @@ body.layer-outline-debug [data-layer-id].layer-outline-active {
     align-items: center;
     justify-content: center;
     line-height: 1.05;
-    margin: 0 0.25em 0 0.05em;
-    font-size: 0.52em;
+    margin: 0 0.2em 0 0.1em;
+    font-size: 0.61em;
     white-space: nowrap;
     z-index: 2;
 }
@@ -707,9 +721,9 @@ body.layer-outline-debug [data-layer-id].layer-outline-active {
     text-shadow: -1px -1px 0 #000, 1px -1px 0 #000, -1px 1px 0 #000, 1px 1px 0 #000, 0 0 2px #000;
 }
 .psb-panel .psb-rg .psb-grp {
-    color: #cfcaa8;
+    color: #f0e8b8;
     font-weight: 700;
-    font-size: 0.80em;
+    font-size: 0.88em;
     text-shadow: -1px -1px 0 #000, 1px -1px 0 #000, -1px 1px 0 #000, 1px 1px 0 #000, 0 0 2px #000;
 }
 .psb-panel .psb-name {
@@ -717,12 +731,12 @@ body.layer-outline-debug [data-layer-id].layer-outline-active {
     min-width: 0;
     white-space: nowrap;
     overflow: hidden;
-    text-overflow: ellipsis;
     text-align: left;
     font-weight: 700;
     font-size: 0.74em;
     color: #fff;
     z-index: 2;
+    padding: 0 0.15em 0 0.05em;
     text-shadow: -1px -1px 0 #000, 1px -1px 0 #000, -1px 1px 0 #000, 1px 1px 0 #000, 0 0 2px #000;
 }
 .psb-panel .psb-name .psb-team {

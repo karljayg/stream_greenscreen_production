@@ -152,6 +152,9 @@ $streamLogoSmallSrc = ($streamSceneAssetsBase !== '') ? ($streamSceneAssetsBase 
                             <input type="checkbox" id="psb-show"> Show on overlay
                         </label>
                         <label style="display:flex; align-items:center; gap:6px; font-size:12px; color:#ccc;">
+                            <input type="checkbox" id="psb-show-race"> Show race
+                        </label>
+                        <label style="display:flex; align-items:center; gap:6px; font-size:12px; color:#ccc;">
                             Best of
                             <input type="number" id="psb-best-of" min="1" max="99" value="1" style="width:52px; text-align:center; padding:3px 4px;">
                         </label>
@@ -679,7 +682,7 @@ $streamLogoSmallSrc = ($streamSceneAssetsBase !== '') ? ($streamSceneAssetsBase 
             <!-- SC2: smaller VDO panel; when SC2 scene is on, BG is hidden and this overlay is shown. Panel is draggable/resizable like logos. -->
             <div id="sc2-overlay" data-layer-id="sc2-overlay" class="sc2-overlay" style="display: none; position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none;">
                 <div id="sc2-panel-wrap" class="sc2-panel-wrap logo-wrap" style="display: none; position: absolute; overflow: hidden; background: #000;">
-                    <iframe data-src="https://vdo.ninja/?scene=1&room=KJNinjaRoom123&password=FSL&sl&cover" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; border: none;" allow="autoplay; fullscreen"></iframe>
+                    <iframe data-src="https://vdo.ninja/?scene=1&room=KJNinjaRoom123&password=FSL&sl&cover&channels" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; border: none;" allow="autoplay; fullscreen"></iframe>
                 </div>
             </div>
             <!-- Shared Window: shows getDisplayMedia() stream (browser tab/window). Works like other non-SC2 scenes. -->
@@ -3525,7 +3528,7 @@ $streamLogoSmallSrc = ($streamSceneAssetsBase !== '') ? ($streamSceneAssetsBase 
             };
             function psbRaceIconHtml(code) {
                 var src = PSB_RACE_ICON[code];
-                if (!src) return '';
+                if (!src) return '<span class="psb-race-unknown">?</span>';
                 var v = window.ASSET_VERSION ? ('?v=' + window.ASSET_VERSION) : '';
                 return '<img src="' + src + v + '" alt="" draggable="false">';
             }
@@ -3543,6 +3546,7 @@ $streamLogoSmallSrc = ($streamSceneAssetsBase !== '') ? ($streamSceneAssetsBase 
             function psbDefaultData() {
                 return {
                     show: false,
+                    showRace: false,
                     bestOf: 1,
                     pos: Object.assign({}, PSB_DEFAULT_POS),
                     players: [
@@ -3672,10 +3676,11 @@ $streamLogoSmallSrc = ($streamSceneAssetsBase !== '') ? ($streamSceneAssetsBase 
             }
 
             function psbRowHtml(player) {
+                var showRace = !!(psbData && psbData.showRace);
                 var hex = psbColorHex(player.color);
-                var grad = 'linear-gradient(100deg, ' + psbShade(hex, -0.45) + ' 0%, ' + hex + ' 60%, ' + psbShade(hex, 0.12) + ' 100%)';
                 var race = psbResolveRace(player);
                 var raceIcon = psbRaceIconHtml(race);
+                var hasRaceAsset = !!PSB_RACE_ICON[race];
                 var acr = psbResolveTeamAcr(player);
                 var rk = psbResolveRank(player);
                 var rankNum = (rk && rk.rank != null && String(rk.rank) !== '') ? String(rk.rank) : '';
@@ -3687,12 +3692,13 @@ $streamLogoSmallSrc = ($streamSceneAssetsBase !== '') ? ($streamSceneAssetsBase 
                     rgHtml = '<span class="psb-num">#' + escapeHtml(rankNum) + '</span>';
                     if (groupNum) rgHtml += '<span class="psb-grp">G' + escapeHtml(groupNum) + '</span>';
                 }
-                var html = '<div class="psb-row" style="background:' + grad + ';">';
+                var html = '<div class="psb-row" style="background:linear-gradient(100deg, ' + psbShade(hex, -0.45) + ' 0%, ' + hex + ' 60%, ' + psbShade(hex, 0.12) + ' 100%);">';
                 html += '<div class="psb-score">' + (parseInt(player.score, 10) || 0) + '</div>';
                 if (rgHtml) html += '<div class="psb-rg">' + rgHtml + '</div>';
                 html += '<div class="psb-name">' + nameHtml + '</div>';
-                html += '<div class="psb-race">' + raceIcon + '</div>';
-                if (raceIcon) html += '<div class="psb-watermark">' + raceIcon + '</div>';
+                /* Always reserve race column width; icons/watermark only when showRace is on. */
+                html += '<div class="psb-race">' + (showRace ? raceIcon : '') + '</div>';
+                if (showRace && hasRaceAsset) html += '<div class="psb-watermark">' + raceIcon + '</div>';
                 html += '</div>';
                 return html;
             }
@@ -3705,6 +3711,23 @@ $streamLogoSmallSrc = ($streamSceneAssetsBase !== '') ? ($streamSceneAssetsBase 
                 panel.style.width = (pos.width || PSB_DEFAULT_POS.width) + 'px';
                 panel.style.height = (pos.height || PSB_DEFAULT_POS.height) + 'px';
                 panel.style.fontSize = Math.max(8, Math.round((pos.height || PSB_DEFAULT_POS.height) * 0.30)) + 'px';
+                psbFitNames();
+            }
+
+            /** Shrink each .psb-name until the full name+team fits (no ellipsis). */
+            function psbFitNames() {
+                var panel = document.getElementById('player-scoreboard-panel');
+                if (!panel) return;
+                panel.querySelectorAll('.psb-name').forEach(function(el) {
+                    el.style.fontSize = '';
+                    var base = parseFloat(window.getComputedStyle(el).fontSize) || 12;
+                    var size = base;
+                    var min = Math.max(5, base * 0.45);
+                    while (size > min && el.scrollWidth > el.clientWidth + 0.5) {
+                        size -= 0.5;
+                        el.style.fontSize = size + 'px';
+                    }
+                });
             }
 
             function psbRenderPanel() {
@@ -3719,6 +3742,7 @@ $streamLogoSmallSrc = ($streamSceneAssetsBase !== '') ? ($streamSceneAssetsBase 
                         '<div class="psb-bo">Bo' + bo + '</div>' +
                         '<div class="psb-rows">' + psbRowHtml(pa) + psbRowHtml(pb) + '</div>' +
                     '</div>';
+                panel.classList.toggle('psb-show-race', !!psbData.showRace);
                 psbApplyPosition(psbData.pos || PSB_DEFAULT_POS);
                 psbSyncQuickToggleBtn();
                 psbUpdateVisibility();
@@ -3835,8 +3859,10 @@ $streamLogoSmallSrc = ($streamSceneAssetsBase !== '') ? ($streamSceneAssetsBase 
             /** Push the current settings inputs into psbData (excludes pos, set during edit/move). */
             function psbCollectSettings() {
                 var showEl = document.getElementById('psb-show');
+                var showRaceEl = document.getElementById('psb-show-race');
                 var boEl = document.getElementById('psb-best-of');
                 if (showEl) psbData.show = showEl.checked;
+                if (showRaceEl) psbData.showRace = showRaceEl.checked;
                 if (boEl) psbData.bestOf = Math.max(1, parseInt(boEl.value, 10) || 1);
                 document.querySelectorAll('#player-scoreboard-settings-section .psb-player-edit').forEach(function(box) {
                     var idx = parseInt(box.getAttribute('data-idx'), 10) || 0;
@@ -3858,8 +3884,10 @@ $streamLogoSmallSrc = ($streamSceneAssetsBase !== '') ? ($streamSceneAssetsBase 
             /** Fill the settings inputs from psbData. */
             function psbFillSettings() {
                 var showEl = document.getElementById('psb-show');
+                var showRaceEl = document.getElementById('psb-show-race');
                 var boEl = document.getElementById('psb-best-of');
                 if (showEl) showEl.checked = !!psbData.show;
+                if (showRaceEl) showRaceEl.checked = !!psbData.showRace;
                 if (boEl) boEl.value = parseInt(psbData.bestOf, 10) || 1;
                 psbPopulateColorSelects();
                 psbPopulateTeamSelects();
@@ -3938,13 +3966,13 @@ $streamLogoSmallSrc = ($streamSceneAssetsBase !== '') ? ($streamSceneAssetsBase 
                 section.querySelectorAll('.psb-player-edit .psb-name').forEach(psbAttachAutocomplete);
                 section.addEventListener('input', function(e) {
                     if (e.target.closest('#psb-teams-rows')) return; /* handled per-row */
-                    if (e.target.id === 'psb-show' || e.target.id === 'psb-best-of' || e.target.closest('.psb-player-edit')) {
+                    if (e.target.id === 'psb-show' || e.target.id === 'psb-show-race' || e.target.id === 'psb-best-of' || e.target.closest('.psb-player-edit')) {
                         psbCollectSettings();
                         psbRenderPanel();
                     }
                 });
                 section.addEventListener('change', function(e) {
-                    if (e.target.classList && (e.target.classList.contains('psb-color') || e.target.classList.contains('psb-team') || e.target.classList.contains('psb-race') || e.target.id === 'psb-show')) {
+                    if (e.target.classList && (e.target.classList.contains('psb-color') || e.target.classList.contains('psb-team') || e.target.classList.contains('psb-race') || e.target.id === 'psb-show' || e.target.id === 'psb-show-race')) {
                         psbCollectSettings();
                         psbRenderPanel();
                     }
@@ -4044,6 +4072,7 @@ $streamLogoSmallSrc = ($streamSceneAssetsBase !== '') ? ($streamSceneAssetsBase 
                     containment: '#player-scoreboard-overlay', handles: 'all',
                     resize: function(e, ui) {
                         panel.style.fontSize = Math.max(8, Math.round(ui.size.height * 0.30)) + 'px';
+                        psbFitNames();
                     }
                 });
                 if (btn) { btn.textContent = 'Save layout'; btn.classList.add('active'); }
@@ -4057,7 +4086,7 @@ $streamLogoSmallSrc = ($streamSceneAssetsBase !== '') ? ($streamSceneAssetsBase 
                     psbApplyPosition(psbData.pos);
                     var p2 = document.getElementById('player-scoreboard-panel');
                     $(p2).draggable({ containment: '#player-scoreboard-overlay', scroll: false, cursor: 'move' });
-                    $(p2).resizable({ containment: '#player-scoreboard-overlay', handles: 'all', resize: function(e, ui) { p2.style.fontSize = Math.max(8, Math.round(ui.size.height * 0.30)) + 'px'; } });
+                    $(p2).resizable({ containment: '#player-scoreboard-overlay', handles: 'all', resize: function(e, ui) { p2.style.fontSize = Math.max(8, Math.round(ui.size.height * 0.30)) + 'px'; psbFitNames(); } });
                 } else {
                     psbApplyPosition(psbData.pos);
                 }
@@ -4089,6 +4118,7 @@ $streamLogoSmallSrc = ($streamSceneAssetsBase !== '') ? ($streamSceneAssetsBase 
                 var d = psbDefaultData();
                 if (data && typeof data === 'object') {
                     if (typeof data.show === 'boolean') d.show = data.show;
+                    if (typeof data.showRace === 'boolean') d.showRace = data.showRace;
                     if (data.bestOf != null) d.bestOf = Math.max(1, parseInt(data.bestOf, 10) || 1);
                     if (data.pos && typeof data.pos === 'object') d.pos = Object.assign({}, PSB_DEFAULT_POS, data.pos);
                     if (Array.isArray(data.players)) {
