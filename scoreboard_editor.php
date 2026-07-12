@@ -38,6 +38,12 @@ header('Cache-Control: no-cache, no-store, must-revalidate');
         .map-labels { display: flex; gap: 8px; align-items: center; font-size: 12px; color: #888; margin-bottom: 10px; }
         .map-labels input { flex: 1; min-width: 0; background: #1a1a1a; color: #a8f; border: 1px solid #446; border-radius: 3px; padding: 5px 8px; font-size: 12px; }
         .match-row { padding: 10px 12px; background: #111; border: 1px solid #2a2a2a; border-radius: 4px; margin-bottom: 6px; }
+        .match-row.sb-current-match { background: #1a2210; border-color: #e6b800; box-shadow: inset 0 0 0 1px #e6b800; }
+        .sb-current-badge {
+            display: none; font-size: 9px; font-weight: bold; letter-spacing: 0.3px;
+            color: #1a1200; background: #e6b800; border-radius: 2px; padding: 2px 6px; margin-left: 6px;
+        }
+        .match-row.sb-current-match .sb-current-badge { display: inline-block; }
         .match-top { display: flex; align-items: center; gap: 8px; margin-bottom: 6px; flex-wrap: wrap; }
         .match-players { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
         .inp { border-radius: 3px; padding: 5px 7px; font-size: 12px; min-width: 0; border: 1px solid #333; }
@@ -60,7 +66,7 @@ header('Cache-Control: no-cache, no-store, must-revalidate');
 <body>
     <div class="wrap">
         <h1>Scoreboard Editor</h1>
-        <p class="hint">Edit teams, players, maps, and match rows. Totals update automatically from row scores.</p>
+        <p class="hint">Edit teams, players, maps, and match rows. Totals update automatically from row scores. A gold <strong style="color:#e6b800;">CURRENT MATCH</strong> badge marks the row matching the Player Scoreboard (scores sync both ways when matched).</p>
 
         <div class="panel team-header">
             <input type="text" id="sb-team-a" class="team-a-inp" placeholder="Team A">
@@ -96,9 +102,11 @@ header('Cache-Control: no-cache, no-store, must-revalidate');
         </div>
     </div>
 
+    <script src="js/scoreboard_sync.js?v=<?php echo $v; ?>"></script>
     <script>
     (function() {
         var _rows = null;
+        var _psbNames = { nameA: '', nameB: '' };
 
         function esc(s) {
             if (s == null) return '';
@@ -224,10 +232,12 @@ header('Cache-Control: no-cache, no-store, must-revalidate');
 
         function makeRowEl(row, idx) {
             var div = document.createElement('div');
-            div.className = 'sb-match-row';
+            div.className = 'sb-match-row match-row';
+            div.dataset.rowIdx = idx;
             div.innerHTML =
                 '<div class="match-top">' +
                     '<span class="row-num">#' + (idx + 1) + '</span>' +
+                    '<span class="sb-current-badge">CURRENT MATCH</span>' +
                     '<input type="text" class="inp inp-type sb-type" value="' + attr((row[1] || '').trim()) + '" placeholder="1v1" list="sb-type-suggestions">' +
                     '<span style="font-size:11px;color:#777;">Maps</span>' +
                     '<input type="text" class="inp inp-map sb-map1" value="' + attr((row[10] || '').trim()) + '" placeholder="Map 1">' +
@@ -251,6 +261,34 @@ header('Cache-Control: no-cache, no-store, must-revalidate');
             return div;
         }
 
+        function applyCurrentMatchHighlight() {
+            if (!window.ScoreboardSync || !_rows) return;
+            var match = window.ScoreboardSync.findMatchedRow(_rows, _psbNames.nameA, _psbNames.nameB);
+            var matchedDataIdx = -1;
+            if (match) {
+                var seen = 0;
+                for (var r = 2; r < _rows.length; r++) {
+                    if (isDataRowEmpty(_rows[r])) continue;
+                    if (r === match.rowIndex) { matchedDataIdx = seen; break; }
+                    seen++;
+                }
+            }
+            document.querySelectorAll('#sb-match-rows .sb-match-row').forEach(function(el, idx) {
+                el.classList.toggle('sb-current-match', matchedDataIdx >= 0 && idx === matchedDataIdx);
+            });
+        }
+
+        function refreshPsbNamesThenHighlight() {
+            if (!window.ScoreboardSync) {
+                applyCurrentMatchHighlight();
+                return;
+            }
+            window.ScoreboardSync.loadPsbNames().then(function(names) {
+                _psbNames = names;
+                applyCurrentMatchHighlight();
+            });
+        }
+
         function render(rows) {
             if (!rows || rows.length === 0) return;
             var r0 = rows[0] || [];
@@ -269,6 +307,7 @@ header('Cache-Control: no-cache, no-store, must-revalidate');
                 container.appendChild(makeRowEl(row, idx));
             });
             recalcTotals();
+            applyCurrentMatchHighlight();
         }
 
         function loadFromCsv(showStatus) {
@@ -344,10 +383,23 @@ header('Cache-Control: no-cache, no-store, must-revalidate');
             }).then(function(r) { return r.json(); }).then(function(res) {
                 if (res && res.ok) {
                     if (status) status.textContent = 'Saved!';
-                    if (window.opener && !window.opener.closed) {
-                        try {
-                            window.opener.postMessage({ type: 'scoreboard-editor-saved' }, window.location.origin);
-                        } catch (e) {}
+                    var finish = function(psbSynced) {
+                        if (window.opener && !window.opener.closed) {
+                            try {
+                                window.opener.postMessage({
+                                    type: 'scoreboard-editor-saved',
+                                    psbSynced: !!psbSynced
+                                }, window.location.origin);
+                            } catch (e) {}
+                        }
+                        refreshPsbNamesThenHighlight();
+                    };
+                    if (window.ScoreboardSync) {
+                        window.ScoreboardSync.syncCsvToPsb(rows).then(function(syncRes) {
+                            finish(syncRes && syncRes.changed);
+                        });
+                    } else {
+                        finish(false);
                     }
                 } else {
                     if (status) status.textContent = 'Error saving.';
@@ -361,10 +413,14 @@ header('Cache-Control: no-cache, no-store, must-revalidate');
 
         document.getElementById('sb-add-btn').addEventListener('click', addRow);
         document.getElementById('sb-save-btn').addEventListener('click', save);
-        document.getElementById('sb-reload-btn').addEventListener('click', function() { loadFromCsv(true); });
+        document.getElementById('sb-reload-btn').addEventListener('click', function() {
+            loadFromCsv(true).then(function() { refreshPsbNamesThenHighlight(); });
+        });
 
         if (!bootstrapFromSession()) {
-            loadFromCsv(false);
+            loadFromCsv(false).then(function() { refreshPsbNamesThenHighlight(); });
+        } else {
+            refreshPsbNamesThenHighlight();
         }
     })();
     </script>

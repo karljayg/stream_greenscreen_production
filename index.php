@@ -11,7 +11,6 @@ require_once __DIR__ . '/config.local.php';
 require_once __DIR__ . '/partials/music-config.php'; // defines $safeUser, $moodSongs, $sceneMoodMap, $musicFiles
 require_once __DIR__ . '/partials/production-files-bootstrap.php'; // $streamPfBootstrap, $streamPfIconHref, $streamPfGifHref, $streamMxMusicPath, $streamSceneAssetsBase
 
-$streamLogoS10Src = ($streamSceneAssetsBase !== '') ? ($streamSceneAssetsBase . '2026/FSL_s10_logo.png') : '2026/FSL_s10_logo.png';
 $streamLogoSmallSrc = ($streamSceneAssetsBase !== '') ? ($streamSceneAssetsBase . '2026/fsl_sc2_logo_small.png') : '2026/fsl_sc2_logo_small.png';
 ?>
 <!DOCTYPE html>
@@ -28,7 +27,7 @@ $streamLogoSmallSrc = ($streamSceneAssetsBase !== '') ? ($streamSceneAssetsBase 
     <link rel="stylesheet" href="styles/styles.css?v=<?php echo $v; ?>">
     <link rel="stylesheet" href="styles/main.css?v=<?php echo $v; ?>">
     <link rel="stylesheet" href="https://code.jquery.com/ui/1.13.1/themes/smoothness/jquery-ui.css">
-    <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Rajdhani:wght@500;600;700;800;900&family=Teko:wght@700&family=Orbitron:wght@700;800;900&family=Exo+2:wght@400;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Oswald:wght@600;700&family=Rajdhani:wght@500;600;700;800;900&family=Teko:wght@700&family=Orbitron:wght@700;800;900&family=Exo+2:wght@400;600;700&display=swap" rel="stylesheet">
 
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
     <script src="https://code.jquery.com/ui/1.13.1/jquery-ui.min.js"></script>
@@ -416,25 +415,45 @@ $streamLogoSmallSrc = ($streamSceneAssetsBase !== '') ? ($streamSceneAssetsBase 
                         </div>
                     </div>
                 </div>
-                <button class="collapsible-btn" id="btn-logos-settings" onclick="toggleLogosSettings(this)">Positioning</button>
+                <button class="collapsible-btn" id="btn-vdo-settings" onclick="toggleSection('vdo-settings-section', this)">VDO</button>
+                <div class="collapsible-content" id="vdo-settings-section" style="display: none;">
+                    <h2 class="layer-order-heading">VDO</h2>
+                    <p class="layer-order-hint">Right-click the large or small VDO panel on the overlay to open this URL in a new window (director / push link).</p>
+                    <div style="display: flex; flex-direction: column; gap: 0.4rem; margin-top: 6px;">
+                        <label for="vdo-director-url" style="font-size: 0.85rem;">Director URL</label>
+                        <input type="url" id="vdo-director-url" value="https://vdo.ninja/?director=KJNinjaRoom123&amp;password=FSL&amp;showdirector&amp;push=cBnXZEM" placeholder="https://vdo.ninja/?director=..." autocomplete="off" style="width: 100%; padding: 6px 8px; background: #111; color: #eee; border: 1px solid #444; border-radius: 3px; font-size: 0.82rem;">
+                    </div>
+                </div>
+                <button class="collapsible-btn" id="btn-logos-settings" onclick="toggleLogosSettings(this)">Positioning (Text & Logos)</button>
                 <div class="collapsible-content" id="logos-settings-section" style="display: none;">
                     <h2>Positional settings</h2>
+                    <div style="display: flex; flex-direction: column; gap: 0.35rem; margin-bottom: 10px;">
+                        <label for="event-title-input" style="font-size: 0.85rem;">Event Title</label>
+                        <input type="text" id="event-title-input" value="SEASON 11" maxlength="40" autocomplete="off" placeholder="SEASON 11" style="width: 100%; padding: 6px 8px; background: #111; color: #eee; border: 1px solid #444; border-radius: 3px; font-size: 0.9rem; text-transform: uppercase;">
+                        <p class="layer-order-hint" style="margin:0;">Styled text on the overlay (transparent background). Toggle with the checkbox below.</p>
+                    </div>
                     <div class="logos-checkboxes">
-                        <label><input type="checkbox" id="logo-s10-cb" data-logo="s10"> FSL S10 logo</label><br>
+                        <label><input type="checkbox" id="logo-s10-cb" data-logo="s10"> Event Title banner</label><br>
                         <label><input type="checkbox" id="logo-fsl-small-cb" data-logo="fsl-small"> FSL SC2 logo small</label><br>
                         <label><input type="checkbox" id="logo-vdo-large-cb" data-vdo="large" checked> Large VDO</label><br>
                         <label><input type="checkbox" id="logo-sc2-cb" data-logo="sc2"> Small VDO</label>
                     </div>
                     <div class="logos-edit-actions" style="margin-top: 10px;">
-                        <p class="layer-order-hint">Edit and Move: drag/resize logos and VDO panels. SC2 scene shows small VDO; non-SC2 shows large VDO. Save stores all positions.</p>
+                        <p class="layer-order-hint">Hold left-click and drag Event Title / FSL logo anytime they are visible &mdash; position autosaves to the server. Edit and Move also enables resize (and VDO panels). SC2 scene shows small VDO; non-SC2 shows large VDO.</p>
                         <button type="button" id="logos-edit-save-btn" onclick="toggleLogosEditMode()">Edit and Move</button>
                         <button type="button" id="logos-reset-btn" onclick="resetLogosPositions()">Reset</button>
                     </div>
                     <hr style="border-color:#2a2a2a; margin:12px 0;">
                     <div class="psb-edit-actions" style="margin-top: 10px;">
-                        <p class="layer-order-hint"><strong>Player Scoreboard</strong> &mdash; drag/resize the player scoreboard panel. Position is saved for everyone. (Content like names &amp; scores is in the Player Scoreboard section.)</p>
+                        <p class="layer-order-hint"><strong>Player Scoreboard</strong> &mdash; hold left-click and drag anytime it is visible (autosaves for everyone). Edit and Move also enables resize. Content is in the Player Scoreboard section.</p>
                         <button type="button" id="psb-editmove-btn" onclick="psbToggleEditMode()">Edit and Move</button>
                         <button type="button" id="psb-reset-btn" onclick="psbResetPosition()">Reset position</button>
+                    </div>
+                    <hr style="border-color:#2a2a2a; margin:12px 0;">
+                    <div class="tls-edit-actions" style="margin-top: 10px;">
+                        <p class="layer-order-hint"><strong>Team League Score</strong> &mdash; hold left-click and drag the banner anytime it is visible. Position autosaves to the server.</p>
+                        <button type="button" id="tls-editmove-btn" onclick="tlsToggleEditMode()">Edit and Move</button>
+                        <button type="button" id="tls-reset-btn" onclick="tlsResetPosition()">Reset position</button>
                     </div>
                 </div>
                 <button class="collapsible-btn" id="btn-overlays" onclick="toggleSection('overlays-section', this)">Overlays</button>
@@ -452,7 +471,7 @@ $streamLogoSmallSrc = ($streamSceneAssetsBase !== '') ? ($streamSceneAssetsBase 
                 <button class="collapsible-btn" id="btn-save-load" onclick="toggleSection('save-load-section', this)">Save / Load</button>
                 <div class="collapsible-content" id="save-load-section" style="display: none;">
                     <h2 class="layer-order-heading">Import / Export all settings</h2>
-                    <p class="layer-order-hint">Export saves: layer order, volume, Status, Player Ratings, Logos (checkboxes + positions), VDO full and SC2 panel positions, Scenes visibility, Player Intros names, SC2 button effects, Chroma key, YT crop, Video button labels/URLs, and Break timer/message. <strong>Save to server</strong> stores the current setup so anyone opening this link gets the same settings. You can still <strong>Export all</strong> / <strong>Import all</strong> to share via file.</p>
+                    <p class="layer-order-hint">Export saves: layer order, volume, Status, Player Ratings, Logos (checkboxes + positions), Event Title, VDO full and SC2 panel positions, VDO director URL, Scenes visibility, Player Intros names, SC2 button effects, Chroma key, YT crop, Video button labels/URLs, and Break timer/message. <strong>Save to server</strong> stores the current setup so anyone opening this link gets the same settings. You can still <strong>Export all</strong> / <strong>Import all</strong> to share via file.</p>
                     <div class="layer-order-actions">
                         <button type="button" id="layer-export-btn">Export all</button>
                         <button type="button" id="layer-save-server-btn">Save to server</button>
@@ -669,10 +688,12 @@ $streamLogoSmallSrc = ($streamSceneAssetsBase !== '') ? ($streamSceneAssetsBase 
                 </div>
             </div>
 
-            <!-- Logos overlay: each logo is a wrapper div (dragged/resized) with img inside -->
+            <!-- Logos overlay: each logo is a wrapper div (dragged/resized); Event Title is styled text -->
             <div id="logos-overlay" data-layer-id="logos-overlay" class="logos-overlay" style="display: none; position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none;">
-                <div id="logo-s10-wrap" class="logo-wrap" style="display: none; position: absolute;">
-                    <img src="<?php echo htmlspecialchars($streamLogoS10Src, ENT_QUOTES, 'UTF-8'); ?>?v=<?php echo $v; ?>" alt="FSL S10" draggable="false">
+                <div id="logo-s10-wrap" class="logo-wrap event-title-wrap" style="display: none; position: absolute; width: 560px; height: 150px;">
+                    <div class="event-title-badge">
+                        <span id="event-title-text" class="event-title-text">SEASON 11</span>
+                    </div>
                 </div>
                 <div id="logo-fsl-small-wrap" class="logo-wrap" style="display: none; position: absolute;">
                     <img src="<?php echo htmlspecialchars($streamLogoSmallSrc, ENT_QUOTES, 'UTF-8'); ?>?v=<?php echo $v; ?>" alt="FSL SC2" draggable="false">
@@ -761,6 +782,7 @@ $streamLogoSmallSrc = ($streamSceneAssetsBase !== '') ? ($streamSceneAssetsBase 
         window.STREAM_FSL_PROXY_MATCHUP_URL = '<?php echo rtrim(dirname($_SERVER['SCRIPT_NAME']), '/'); ?>/fsl_proxy_matchup.php';
     </script>
     <script src="js/production-files.js?v=<?php echo $v; ?>"></script>
+    <script src="js/scoreboard_sync.js?v=<?php echo $v; ?>"></script>
     <script type="module" src="js/stream_production.js?v=<?php echo $v; ?>"></script>
 
     <script>
@@ -960,6 +982,7 @@ $streamLogoSmallSrc = ($streamSceneAssetsBase !== '') ? ($streamSceneAssetsBase 
                 status: { title: "", teamA: "", teamB: "", valueA: "", valueB: "" },
                 playerRatings: { playerName: "littlereaper", division: "A" },
                 logos: { s10: false, fslSmall: false, vdoLarge: true, sc2: false, positions: {}, sc2Panel: null, vdoFullPanel: { left: 50, top: 100, width: 1180, height: 570 } },
+                eventTitle: "SEASON 11",
                 scenes: { bg: false, vdoFull: false, logos: false, sc2: false },
                 playerIntros: ["DarkMenace", "LittleReaper", "PulledTheBoys", "HyperTurtle", "Harouz", "InfiniteCyclists", "Random Music", "FSL intro", "GG", "Match GG"],
                 chromaKey: true,
@@ -974,12 +997,29 @@ $streamLogoSmallSrc = ($streamSceneAssetsBase !== '') ? ($streamSceneAssetsBase 
                     teams: { ash: "2026/ASH.mp4", pog: "2026/POG.mp4", ptb: "2026/PTB.mp4", st: "2026/ST.mp4" }
                 },
                 breakSettings: { min: 5, sec: 0, msg: "be right back..." },
+                vdoDirectorUrl: "https://vdo.ninja/?director=KJNinjaRoom123&password=FSL&showdirector&push=cBnXZEM",
                 sc2ButtonEffects: { effect1: "Random Music", effect2: "FSL intro" },
                 musicMode: 'sequence',
                 musicVol: 22,
                 musicFade: 4,
-                productionFiles: { mode: "remote", remoteBaseUrl: "https://psistorm.com/stream_production/production_files/" }
+                productionFiles: { mode: "remote", remoteBaseUrl: "https://psistorm.com/stream_production/production_files/" },
+                tlsScorePos: null
             };
+
+            var _quietSettingsSaveTimer = null;
+            function saveSettingsToServerQuiet() {
+                if (typeof exportAllSettings !== "function") return;
+                clearTimeout(_quietSettingsSaveTimer);
+                _quietSettingsSaveTimer = setTimeout(function() {
+                    var out = exportAllSettings();
+                    fetch("settings.php", {
+                        method: "POST",
+                        headers: { "Content-Type": "application/json" },
+                        body: JSON.stringify(out)
+                    }).catch(function() {});
+                }, 400);
+            }
+            window.saveSettingsToServerQuiet = saveSettingsToServerQuiet;
 
             function persistEditModePositions() {
                 if (typeof logosEditMode === "undefined" || !logosEditMode) return;
@@ -1046,6 +1086,7 @@ $streamLogoSmallSrc = ($streamSceneAssetsBase !== '') ? ($streamSceneAssetsBase 
                     status: { title: s("status-title"), teamA: s("status-teamA"), teamB: s("status-teamB"), valueA: s("status-valueA"), valueB: s("status-valueB") },
                     playerRatings: { playerName: s("player-input"), division: s("division-input") },
                     logos: { s10: !!document.getElementById("logo-s10-cb") && document.getElementById("logo-s10-cb").checked, fslSmall: !!document.getElementById("logo-fsl-small-cb") && document.getElementById("logo-fsl-small-cb").checked, vdoLarge: !!document.getElementById("logo-vdo-large-cb") && document.getElementById("logo-vdo-large-cb").checked, sc2: !!document.getElementById("logo-sc2-cb") && document.getElementById("logo-sc2-cb").checked, positions: logoPositions, sc2Panel: sc2PanelPos, vdoFullPanel: vdoFullPanelPos },
+                    eventTitle: typeof getEventTitle === "function" ? getEventTitle() : DEFAULT_SETTINGS.eventTitle,
                     scenes: { bg: sceneBg && sceneBg.style.display === "block", vdoFull: sceneVdo && sceneVdo.style.display === "block", logos: overlay && overlay.style.display === "block", sc2: sc2OverlayExport && sc2OverlayExport.style.display === "block" },
                     playerIntros: intros,
                     chromaKey: !!document.getElementById("chroma-key-cb") && document.getElementById("chroma-key-cb").checked,
@@ -1053,6 +1094,7 @@ $streamLogoSmallSrc = ($streamSceneAssetsBase !== '') ? ($streamSceneAssetsBase 
                     ytIframeVideos: typeof getYtIframeVideos === "function" ? getYtIframeVideos() : DEFAULT_SETTINGS.ytIframeVideos,
                     sceneVideos: typeof getSceneVideoSettings === "function" ? getSceneVideoSettings() : DEFAULT_SETTINGS.sceneVideos,
                     breakSettings: typeof getBreakSettings === "function" ? getBreakSettings() : DEFAULT_SETTINGS.breakSettings,
+                    vdoDirectorUrl: typeof getVdoDirectorUrl === "function" ? getVdoDirectorUrl() : DEFAULT_SETTINGS.vdoDirectorUrl,
                     sc2ButtonEffects: typeof getSc2ButtonEffects === "function" ? getSc2ButtonEffects() : DEFAULT_SETTINGS.sc2ButtonEffects,
                     musicMode: (function() { var el = document.querySelector('input[name="music-mode"]:checked'); return el ? el.value : 'sequence'; })(),
                 musicVol: (function() { var el = document.getElementById('lpMusicVol'); return el ? parseFloat(el.value) : 22; })(),
@@ -1063,7 +1105,8 @@ $streamLogoSmallSrc = ($streamSceneAssetsBase !== '') ? ($streamSceneAssetsBase 
                 productionFiles: {
                     mode: (function() { var el = document.querySelector('input[name="production-files-mode"]:checked'); return el && el.value === "remote" ? "remote" : "local"; })(),
                     remoteBaseUrl: (function() { var el = document.getElementById("production-files-remote-url"); return el ? el.value.trim() : ""; })()
-                }
+                },
+                tlsScorePos: (typeof window.getSavedTlsPos === "function" ? window.getSavedTlsPos() : null)
                 };
                 return out;
             }
@@ -1109,6 +1152,14 @@ $streamLogoSmallSrc = ($streamSceneAssetsBase !== '') ? ($streamSceneAssetsBase 
                     if (lo.positions && typeof lo.positions === "object") { try { localStorage.setItem("stream_production_logo_positions", JSON.stringify(lo.positions)); } catch (e) {} }
                     if (lo.sc2Panel && typeof lo.sc2Panel === "object" && lo.sc2Panel.left != null) { try { localStorage.setItem("stream_production_sc2_panel", JSON.stringify(lo.sc2Panel)); } catch (e) {} }
                     if (lo.vdoFullPanel && typeof lo.vdoFullPanel === "object" && lo.vdoFullPanel.left != null) { try { localStorage.setItem("stream_production_vdo_full_panel", JSON.stringify(lo.vdoFullPanel)); } catch (e) {} }
+                }
+                if (parsed.eventTitle != null && typeof setEventTitle === "function") {
+                    setEventTitle(parsed.eventTitle);
+                    if (typeof saveEventTitle === "function") saveEventTitle();
+                }
+                if (parsed.tlsScorePos && typeof parsed.tlsScorePos === "object" && parsed.tlsScorePos.left != null && typeof window.setSavedTlsPos === "function") {
+                    window.setSavedTlsPos(parsed.tlsScorePos);
+                    if (typeof window.applyTlsPos === "function") window.applyTlsPos(parsed.tlsScorePos);
                 }
                 var sc = parsed.scenes || def.scenes;
                 if (sc) {
@@ -1186,6 +1237,10 @@ $streamLogoSmallSrc = ($streamSceneAssetsBase !== '') ? ($streamSceneAssetsBase 
                         if (typeof saveBreakSettings === "function") saveBreakSettings();
                     }
                 }
+                if (parsed.vdoDirectorUrl != null && typeof setVdoDirectorUrl === "function") {
+                    setVdoDirectorUrl(parsed.vdoDirectorUrl);
+                    if (typeof saveVdoDirectorUrl === "function") saveVdoDirectorUrl();
+                }
                 var sc2Fx = parsed.sc2ButtonEffects;
                 if (sc2Fx && typeof sc2Fx === "object") {
                     if (typeof setSc2ButtonEffects === "function") setSc2ButtonEffects(sc2Fx);
@@ -1233,6 +1288,7 @@ $streamLogoSmallSrc = ($streamSceneAssetsBase !== '') ? ($streamSceneAssetsBase 
                 }
                 if (window.updateLogosOverlay) window.updateLogosOverlay();
                 if (window.updateSc2Panel) window.updateSc2Panel();
+                if (window.enableVdoLiveDragAll) window.enableVdoLiveDragAll();
                 if (window.reapplyLayerOrder) window.reapplyLayerOrder();
             }
 
@@ -1316,6 +1372,18 @@ $streamLogoSmallSrc = ($streamSceneAssetsBase !== '') ? ($streamSceneAssetsBase 
                                 if (overlay && overlay.style.display === "block") loadAndRenderScoreboard();
                             }
                             try { document.dispatchEvent(new CustomEvent('status:score-saved')); } catch (err) {}
+                            if (window.ScoreboardSync && typeof parseCSV === 'function') {
+                                var rows = parseCSV(csv);
+                                window.ScoreboardSync.syncCsvToPsb(rows).then(function(syncRes) {
+                                    if (syncRes && syncRes.changed && typeof window.psbLoad === 'function') {
+                                        window.psbLoad();
+                                        if (_psbEditorWin && !_psbEditorWin.closed) {
+                                            try { _psbEditorWin.postMessage({ type: 'psb-reload' }, window.location.origin); } catch (e) {}
+                                        }
+                                    }
+                                    if (typeof sbHighlightCurrentMatch === 'function') sbHighlightCurrentMatch();
+                                });
+                            }
                         } else {
                             btn.textContent = "Error";
                         }
@@ -1336,6 +1404,12 @@ $streamLogoSmallSrc = ($streamSceneAssetsBase !== '') ? ($streamSceneAssetsBase 
                 if (!e.data || e.data.type !== 'scoreboard-editor-saved') return;
                 scoreboardEditorLoad();
                 try { document.dispatchEvent(new CustomEvent('status:score-saved')); } catch (err) {}
+                if (e.data.psbSynced && typeof window.psbLoad === 'function') {
+                    window.psbLoad();
+                    if (_psbEditorWin && !_psbEditorWin.closed) {
+                        try { _psbEditorWin.postMessage({ type: 'psb-reload' }, window.location.origin); } catch (err2) {}
+                    }
+                }
             });
 
             window.scoreboardEditorLoad = function scoreboardEditorLoad() {
@@ -1438,6 +1512,19 @@ $streamLogoSmallSrc = ($streamSceneAssetsBase !== '') ? ($streamSceneAssetsBase 
                             if (overlay && overlay.style.display === 'block') loadAndRenderScoreboard();
                         }
                         try { document.dispatchEvent(new CustomEvent('status:score-saved')); } catch (err) {}
+                        if (window.ScoreboardSync) {
+                            window.ScoreboardSync.syncCsvToPsb(rows).then(function(syncRes) {
+                                if (syncRes && syncRes.changed) {
+                                    if (typeof window.psbLoad === 'function') window.psbLoad();
+                                    if (_psbEditorWin && !_psbEditorWin.closed) {
+                                        try { _psbEditorWin.postMessage({ type: 'psb-reload' }, window.location.origin); } catch (e) {}
+                                    }
+                                }
+                                if (typeof sbHighlightCurrentMatch === 'function') sbHighlightCurrentMatch();
+                            });
+                        } else if (typeof sbHighlightCurrentMatch === 'function') {
+                            sbHighlightCurrentMatch();
+                        }
                         if (onSuccess) onSuccess();
                     } else {
                         if (statusEl) statusEl.textContent = 'Error saving.';
@@ -1496,8 +1583,9 @@ $streamLogoSmallSrc = ($streamSceneAssetsBase !== '') ? ($streamSceneAssetsBase 
                     var div = document.createElement('div');
                     div.className = 'sb-matchup-row';
                     div.dataset.rowIdx = idx;
-                    div.style.cssText = 'display:flex; align-items:center; gap:6px; padding:5px 8px; background:#111; border-radius:3px; font-size:12px; margin-bottom:3px;';
+                    div.style.cssText = 'display:flex; align-items:center; gap:6px; padding:5px 8px; background:#111; border-radius:3px; font-size:12px; margin-bottom:3px; border:1px solid transparent;';
                     div.innerHTML =
+                        '<span class="sb-current-badge" style="display:none; flex-shrink:0; font-size:9px; font-weight:bold; letter-spacing:0.3px; color:#1a1200; background:#e6b800; border-radius:2px; padding:2px 5px; margin-right:2px;">CURRENT</span>' +
                         '<span style="color:#666; min-width:28px; font-size:11px; flex-shrink:0;">' + sbEsc(matchType) + '</span>' +
                         '<span style="flex:1; text-align:right; color:#bbb; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; padding-right:4px;" title="' + sbAttr(playersA) + '">' + sbEsc(playersA) + '</span>' +
                         '<input type="number" class="sb-score-a-input" min="0" max="99" value="' + sbAttr(String(sA)) + '" oninput="sbRecalcTotals()" style="width:44px; text-align:center; background:#1a2a1a; color:#8f8; border:1px solid #484; border-radius:3px; padding:2px 4px; flex-shrink:0;">' +
@@ -1508,18 +1596,60 @@ $streamLogoSmallSrc = ($streamSceneAssetsBase !== '') ? ($streamSceneAssetsBase 
                     container.appendChild(div);
                 });
                 sbRecalcTotals();
+                sbHighlightCurrentMatch();
             }
+
+            /** Highlight the TLS row that matches the current Player Scoreboard pair. */
+            function sbHighlightCurrentMatch() {
+                if (!window.ScoreboardSync || !_sbEditorRows) return;
+                function apply(nA, nB) {
+                    var match = window.ScoreboardSync.findMatchedRow(_sbEditorRows, nA, nB);
+                    var matchedDataIdx = -1;
+                    if (match) {
+                        var seen = 0;
+                        for (var r = 2; r < _sbEditorRows.length; r++) {
+                            if (sbEditorIsDataRowEmpty(_sbEditorRows[r])) continue;
+                            if (r === match.rowIndex) { matchedDataIdx = seen; break; }
+                            seen++;
+                        }
+                    }
+                    document.querySelectorAll('#scoreboard-matchup-rows .sb-matchup-row').forEach(function(el, idx) {
+                        var isCur = matchedDataIdx >= 0 && idx === matchedDataIdx;
+                        el.classList.toggle('sb-current-match', isCur);
+                        el.style.background = isCur ? '#1a2210' : '#111';
+                        el.style.borderColor = isCur ? '#e6b800' : 'transparent';
+                        var badge = el.querySelector('.sb-current-badge');
+                        if (badge) badge.style.display = isCur ? 'inline-block' : 'none';
+                    });
+                }
+                var nameA = '';
+                var nameB = '';
+                if (typeof psbData !== 'undefined' && psbData && psbData.players) {
+                    nameA = (psbData.players[0] && psbData.players[0].name) || '';
+                    nameB = (psbData.players[1] && psbData.players[1].name) || '';
+                }
+                if (nameA && nameB) {
+                    apply(nameA, nameB);
+                    return;
+                }
+                window.ScoreboardSync.loadPsbNames().then(function(names) {
+                    apply(names.nameA, names.nameB);
+                });
+            }
+            window.sbHighlightCurrentMatch = sbHighlightCurrentMatch;
 
             function scoreboardEditorRender(rows) {
                 scoreboardEditorRenderSimple(rows);
             }
 
             window.sbEditorOpenWindow = function sbEditorOpenWindow() {
-                if (!_sbEditorRows) { alert('Load the CSV first.'); return; }
-                sbEditorApplySimpleScores();
-                try {
-                    sessionStorage.setItem('sb_editor_bootstrap', JSON.stringify(_sbEditorRows));
-                } catch (e) {}
+                /* Bootstrap from in-memory rows when available; otherwise the popup loads CSV itself. */
+                if (_sbEditorRows) {
+                    sbEditorApplySimpleScores();
+                    try {
+                        sessionStorage.setItem('sb_editor_bootstrap', JSON.stringify(_sbEditorRows));
+                    } catch (e) {}
+                }
                 if (_sbEditorWindow && !_sbEditorWindow.closed) {
                     _sbEditorWindow.focus();
                     return;
@@ -1658,6 +1788,118 @@ $streamLogoSmallSrc = ($streamSceneAssetsBase !== '') ? ($streamSceneAssetsBase 
                 localStorage.setItem(LOGO_POSITIONS_KEY, JSON.stringify(obj));
             } catch (e) {}
         }
+
+        function persistLogoPositionFromEl(el, key) {
+            var overlay = document.getElementById("logos-overlay");
+            if (!el || !key || !overlay) return;
+            var saved = getSavedLogoPositions();
+            var off = el.getBoundingClientRect();
+            var par = overlay.getBoundingClientRect();
+            saved[key] = {
+                left: Math.round(off.left - par.left),
+                top: Math.round(off.top - par.top),
+                width: Math.round(off.width),
+                height: Math.round(off.height)
+            };
+            setSavedLogoPositions(saved);
+            applyPositionToLogo(el, saved[key]);
+            if (typeof saveSettingsToServerQuiet === "function") saveSettingsToServerQuiet();
+        }
+
+        function ensureLogoLiveDrag(el, key) {
+            if (!el || !key) return;
+            if (el.style.display === "none") {
+                if ($(el).data("ui-draggable") && !logosEditMode) $(el).draggable("destroy");
+                if ($(el).data("ui-resizable") && !logosEditMode) $(el).resizable("destroy");
+                el.style.pointerEvents = "";
+                el.style.cursor = "";
+                el.classList.remove("logo-live-drag");
+                return;
+            }
+            el.classList.add("logo-live-drag");
+            el.style.pointerEvents = "auto";
+            el.style.cursor = "move";
+            if ($(el).data("ui-draggable")) {
+                try {
+                    $(el).draggable("option", "stop", function() {
+                        persistLogoPositionFromEl(el, key);
+                        if (key === "s10" && typeof fitEventTitleText === "function") fitEventTitleText();
+                    });
+                } catch (e) {}
+                return;
+            }
+            $(el).draggable({
+                containment: "#logos-overlay",
+                scroll: false,
+                cursor: "move",
+                stop: function() {
+                    persistLogoPositionFromEl(el, key);
+                    if (key === "s10" && typeof fitEventTitleText === "function") fitEventTitleText();
+                }
+            });
+        }
+
+        function enableLogoLiveDragAll() {
+            logoIds.forEach(function(id) {
+                var el = document.getElementById(id);
+                var key = logoIdToKey[id];
+                ensureLogoLiveDrag(el, key);
+            });
+        }
+
+        function persistVdoPanelPos(panelEl, overlayEl, setter) {
+            if (!panelEl || !overlayEl || typeof setter !== "function") return;
+            var off = panelEl.getBoundingClientRect();
+            var par = overlayEl.getBoundingClientRect();
+            var pos = {
+                left: Math.round(off.left - par.left),
+                top: Math.round(off.top - par.top),
+                width: Math.round(off.width),
+                height: Math.round(off.height)
+            };
+            setter(pos);
+            if (typeof saveSettingsToServerQuiet === "function") saveSettingsToServerQuiet();
+            return pos;
+        }
+
+        function ensureVdoPanelLiveDrag(panelId, overlayId, setter) {
+            var panel = document.getElementById(panelId);
+            var overlay = document.getElementById(overlayId);
+            if (!panel || !overlay) return;
+            var hidden = panel.style.display === "none" || overlay.style.display === "none";
+            if (hidden || logosEditMode) {
+                if (hidden) {
+                    if ($(panel).data("ui-draggable") && !logosEditMode) $(panel).draggable("destroy");
+                    if ($(panel).data("ui-resizable") && !logosEditMode) $(panel).resizable("destroy");
+                    panel.classList.remove("vdo-live-drag");
+                    panel.style.cursor = "";
+                }
+                return;
+            }
+            panel.classList.add("vdo-live-drag");
+            panel.style.pointerEvents = "auto";
+            panel.style.cursor = "move";
+            var containment = "#" + overlayId;
+            if (!$(panel).data("ui-draggable")) {
+                $(panel).draggable({
+                    containment: containment,
+                    scroll: false,
+                    cursor: "move",
+                    stop: function() { persistVdoPanelPos(panel, overlay, setter); }
+                });
+            } else {
+                try {
+                    $(panel).draggable("option", "stop", function() { persistVdoPanelPos(panel, overlay, setter); });
+                } catch (e) {}
+            }
+        }
+
+        function enableVdoLiveDragAll() {
+            if (typeof logosEditMode !== "undefined" && logosEditMode) return;
+            ensureVdoPanelLiveDrag("vdo-full-panel-wrap", "scene-overlay-vdo-full", setSavedVdoFullPanel);
+            ensureVdoPanelLiveDrag("sc2-panel-wrap", "sc2-overlay", setSavedSc2Panel);
+        }
+        window.enableVdoLiveDragAll = enableVdoLiveDragAll;
 
         function getSavedSc2Panel() {
             try {
@@ -2174,6 +2416,7 @@ $streamLogoSmallSrc = ($streamSceneAssetsBase !== '') ? ($streamSceneAssetsBase 
                 el.style.height = "";
                 el.style.right = "";
                 el.style.transform = "";
+                if (key === "s10") el.style.overflow = "visible";
                 return;
             }
             el.style.left = (saved.left + "px") || "";
@@ -2182,6 +2425,7 @@ $streamLogoSmallSrc = ($streamSceneAssetsBase !== '') ? ($streamSceneAssetsBase 
             el.style.height = (saved.height + "px") || "";
             el.style.right = "";
             el.style.transform = "";
+            if (key === "s10") el.style.overflow = "visible";
         }
 
         function getDefaultLogoPosition(key, overlayRect, el) {
@@ -2191,6 +2435,8 @@ $streamLogoSmallSrc = ($streamSceneAssetsBase !== '') ? ($streamSceneAssetsBase 
             var top = 20;
             var ow = overlayRect.width || 1280;
             if (key === "s10") {
+                w = (el && el.offsetWidth > 40) ? el.offsetWidth : 560;
+                h = (el && el.offsetHeight > 20) ? el.offsetHeight : 150;
                 return { left: Math.round((ow - w) / 2), top: top, width: w, height: h };
             }
             if (key === "fsl-small") {
@@ -2207,6 +2453,7 @@ $streamLogoSmallSrc = ($streamSceneAssetsBase !== '') ? ($streamSceneAssetsBase 
             el.style.height = (pos.height + "px");
             el.style.right = "";
             el.style.transform = "";
+            if (el.id === "logo-s10-wrap") el.style.overflow = "visible";
         }
 
         function updateLogosOverlay() {
@@ -2240,6 +2487,8 @@ $streamLogoSmallSrc = ($streamSceneAssetsBase !== '') ? ($streamSceneAssetsBase 
                     applyPositionToLogo(el, pos);
                 }
             });
+            if (typeof fitEventTitleText === "function") fitEventTitleText();
+            enableLogoLiveDragAll();
         }
 
         function updateSc2Panel() {
@@ -2253,6 +2502,7 @@ $streamLogoSmallSrc = ($streamSceneAssetsBase !== '') ? ($streamSceneAssetsBase 
             var overlayRect = sc2Overlay.getBoundingClientRect();
             var pos = saved || getDefaultSc2PanelPosition(overlayRect);
             applyPositionToSc2Panel(panel, pos);
+            enableVdoLiveDragAll();
         }
 
         function makeVisibleLogosDraggable() {
@@ -2271,8 +2521,7 @@ $streamLogoSmallSrc = ($streamSceneAssetsBase !== '') ? ($streamSceneAssetsBase 
                     return;
                 }
                 el.style.pointerEvents = "auto";
-                if ($(el).data("ui-draggable")) return;
-
+                el.style.cursor = "move";
                 if (saved[key]) {
                     applySavedPositionToLogo(el, key);
                 } else {
@@ -2280,9 +2529,38 @@ $streamLogoSmallSrc = ($streamSceneAssetsBase !== '') ? ($streamSceneAssetsBase 
                     applyPositionToLogo(el, pos);
                 }
                 var img = el.querySelector("img");
-                var ratio = (img && img.naturalWidth && img.naturalHeight) ? img.naturalWidth / img.naturalHeight : 1;
-                $(el).draggable({ containment: "#logos-overlay", scroll: false, cursor: "move" });
-                $(el).resizable({ containment: "#logos-overlay", handles: "all", aspectRatio: ratio });
+                var ratio = (key === "s10") ? false : ((img && img.naturalWidth && img.naturalHeight) ? img.naturalWidth / img.naturalHeight : 1);
+                if (!$(el).data("ui-draggable")) {
+                    $(el).draggable({
+                        containment: "#logos-overlay",
+                        scroll: false,
+                        cursor: "move",
+                        stop: function() {
+                            persistLogoPositionFromEl(el, key);
+                            if (key === "s10" && typeof fitEventTitleText === "function") fitEventTitleText();
+                        }
+                    });
+                } else {
+                    try {
+                        $(el).draggable("option", "stop", function() {
+                            persistLogoPositionFromEl(el, key);
+                            if (key === "s10" && typeof fitEventTitleText === "function") fitEventTitleText();
+                        });
+                    } catch (e) {}
+                }
+                if (!$(el).data("ui-resizable")) {
+                    $(el).resizable({
+                        containment: "#logos-overlay",
+                        handles: "all",
+                        aspectRatio: ratio,
+                        resize: function() { if (key === "s10" && typeof fitEventTitleText === "function") fitEventTitleText(); },
+                        stop: function() {
+                            persistLogoPositionFromEl(el, key);
+                            if (key === "s10" && typeof fitEventTitleText === "function") fitEventTitleText();
+                        }
+                    });
+                }
+                if (key === "s10" && typeof fitEventTitleText === "function") fitEventTitleText();
             });
             updateVdoPanelsInEditMode();
         }
@@ -2341,7 +2619,9 @@ $streamLogoSmallSrc = ($streamSceneAssetsBase !== '') ? ($streamSceneAssetsBase 
                     if (el && key) applyPositionToLogo(el, saved[key]);
                 });
                 if (window.updateSc2Panel) updateSc2Panel();
+                enableLogoLiveDragAll();
             }
+            if (typeof saveSettingsToServerQuiet === "function") saveSettingsToServerQuiet();
         }
 
         function toggleLogosEditMode() {
@@ -2432,7 +2712,7 @@ $streamLogoSmallSrc = ($streamSceneAssetsBase !== '') ? ($streamSceneAssetsBase 
                     var key = logoIdToKey[id];
                     if (el && key) {
                         applySavedPositionToLogo(el, key);
-                        el.style.pointerEvents = "";
+                        if ($(el).data("ui-resizable")) $(el).resizable("destroy");
                     }
                 });
                 overlay.style.pointerEvents = "none";
@@ -2440,8 +2720,11 @@ $streamLogoSmallSrc = ($streamSceneAssetsBase !== '') ? ($streamSceneAssetsBase 
                 overlay.classList.remove("logos-edit-mode");
                 logosEditMode = false;
                 btn.textContent = "Edit and Move";
+                enableLogoLiveDragAll();
+                if (typeof saveSettingsToServerQuiet === "function") saveSettingsToServerQuiet();
                 if (window.reapplyLayerOrder) window.reapplyLayerOrder();
                 if (window.updateSc2Panel) window.updateSc2Panel();
+                enableVdoLiveDragAll();
                 return;
             }
 
@@ -2528,6 +2811,106 @@ $streamLogoSmallSrc = ($streamSceneAssetsBase !== '') ? ($streamSceneAssetsBase 
             document.getElementById("logo-sc2-cb").addEventListener("change", function() { if (!logosEditMode) updateSc2Panel(); });
         })();
         window.updateSc2Panel = updateSc2Panel;
+
+        /* ── Event Title (styled banner replacing S10 logo image) ── */
+        var EVENT_TITLE_KEY = 'stream_production_event_title';
+        var EVENT_TITLE_DEFAULT = 'SEASON 11';
+
+        function getEventTitle() {
+            var el = document.getElementById('event-title-input');
+            var v = el ? el.value.trim() : '';
+            return v || EVENT_TITLE_DEFAULT;
+        }
+
+        function applyEventTitleToOverlay(title) {
+            var text = (title != null && String(title).trim()) ? String(title).trim() : EVENT_TITLE_DEFAULT;
+            text = text.toUpperCase();
+            var span = document.getElementById('event-title-text');
+            if (!span) return;
+            /* Split trailing number (e.g. SEASON 11) so digits can render larger. */
+            var m = text.match(/^(.*?)(\s+)(\d+)$/);
+            if (m) {
+                span.innerHTML = '<span class="event-title-word">' + escapeHtml(m[1]) + '</span>' +
+                    '<span class="event-title-gap">' + escapeHtml(m[2]) + '</span>' +
+                    '<span class="event-title-num">' + escapeHtml(m[3]) + '</span>';
+            } else {
+                span.textContent = text;
+            }
+            fitEventTitleText();
+        }
+
+        function escapeHtml(s) {
+            return String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+        }
+
+        function fitEventTitleText() {
+            var wrap = document.getElementById('logo-s10-wrap');
+            var badge = wrap ? wrap.querySelector('.event-title-badge') : null;
+            var span = document.getElementById('event-title-text');
+            if (!wrap || !badge || !span || wrap.style.display === 'none') return;
+            /* Resizable/edit mode can leave overflow:hidden inline and clip italic glyphs. */
+            wrap.style.overflow = 'visible';
+            badge.style.overflow = 'visible';
+            span.style.overflow = 'visible';
+            span.style.fontSize = '';
+            var num = span.querySelector('.event-title-num');
+            var word = span.querySelector('.event-title-word');
+            if (num) num.style.fontSize = '';
+            if (word) word.style.fontSize = '';
+            var maxH = badge.clientHeight * 0.85;
+            /* Leave extra horizontal room for italic slant + outline glow on the last char. */
+            var maxW = badge.clientWidth * 0.86;
+            if (maxH < 8 || maxW < 8) return;
+            var size = maxH;
+            span.style.fontSize = size + 'px';
+            if (num) num.style.fontSize = (size * 1.28) + 'px';
+            if (word) word.style.fontSize = (size * 0.92) + 'px';
+            var guard = 0;
+            while (guard++ < 40 && (span.scrollWidth > maxW || span.scrollHeight > maxH) && size > 10) {
+                size *= 0.92;
+                span.style.fontSize = size + 'px';
+                if (num) num.style.fontSize = (size * 1.28) + 'px';
+                if (word) word.style.fontSize = (size * 0.92) + 'px';
+            }
+        }
+
+        function setEventTitle(title) {
+            var el = document.getElementById('event-title-input');
+            var text = (title != null && String(title).trim()) ? String(title).trim() : EVENT_TITLE_DEFAULT;
+            if (el) el.value = text;
+            applyEventTitleToOverlay(text);
+        }
+
+        function saveEventTitle() {
+            try { localStorage.setItem(EVENT_TITLE_KEY, getEventTitle()); } catch (e) {}
+            applyEventTitleToOverlay(getEventTitle());
+        }
+
+        function loadEventTitle() {
+            try {
+                var raw = localStorage.getItem(EVENT_TITLE_KEY);
+                if (raw && String(raw).trim()) {
+                    setEventTitle(raw);
+                    return;
+                }
+            } catch (e) {}
+            setEventTitle(EVENT_TITLE_DEFAULT);
+        }
+
+        window.getEventTitle = getEventTitle;
+        window.setEventTitle = setEventTitle;
+        window.saveEventTitle = saveEventTitle;
+
+        (function initEventTitle() {
+            loadEventTitle();
+            var el = document.getElementById('event-title-input');
+            if (!el) return;
+            el.addEventListener('input', function() {
+                applyEventTitleToOverlay(el.value);
+            });
+            el.addEventListener('change', saveEventTitle);
+            el.addEventListener('blur', saveEventTitle);
+        })();
 
         /**
          * Reusable fullscreen transition: play a video with fade-in at start and fade-out at end.
@@ -3194,22 +3577,142 @@ $streamLogoSmallSrc = ($streamSceneAssetsBase !== '') ? ($streamSceneAssetsBase 
 
             /* ---- Team League total score banner (top-right brand area) ---- */
             var TLS_ENABLED_KEY = 'stream_production_tls_score_enabled';
+            var TLS_POS_KEY = 'stream_production_tls_pos';
+            var tlsEditMode = false;
             window.tlsScoreEnabled = (function() {
                 try { return localStorage.getItem(TLS_ENABLED_KEY) !== 'false'; } catch (e) { return true; }
             })();
             function tlsCleanTeamName(s) {
                 return String(s == null ? '' : s).replace(/\[\d+\]/g, '').replace(/^\s*\([A-Za-z]\)\s*/, '').trim();
             }
+            function getDefaultTlsPos(frameRect) {
+                var w = (frameRect && frameRect.width) ? frameRect.width : 1280;
+                return { left: Math.round(w * 0.52), top: 18 };
+            }
+            function getSavedTlsPos() {
+                try {
+                    var raw = localStorage.getItem(TLS_POS_KEY);
+                    if (raw) {
+                        var p = JSON.parse(raw);
+                        if (p && typeof p === 'object' && p.left != null && p.top != null) {
+                            return { left: Math.round(p.left), top: Math.round(p.top) };
+                        }
+                    }
+                } catch (e) {}
+                return null;
+            }
+            function setSavedTlsPos(obj) {
+                try {
+                    if (obj && obj.left != null && obj.top != null) {
+                        localStorage.setItem(TLS_POS_KEY, JSON.stringify({ left: Math.round(obj.left), top: Math.round(obj.top) }));
+                    }
+                } catch (e) {}
+            }
+            window.getSavedTlsPos = getSavedTlsPos;
+            window.setSavedTlsPos = setSavedTlsPos;
+            function applyTlsPos(pos) {
+                var banner = document.getElementById('team-league-score-banner');
+                if (!banner || !pos || pos.left == null) return;
+                banner.style.left = Math.round(pos.left) + 'px';
+                banner.style.top = Math.round(pos.top) + 'px';
+                banner.style.right = 'auto';
+            }
+            window.applyTlsPos = applyTlsPos;
+            function tlsPersistPosFromBanner() {
+                var banner = document.getElementById('team-league-score-banner');
+                if (!banner || !banner.parentElement) return null;
+                var off = banner.getBoundingClientRect();
+                var par = banner.parentElement.getBoundingClientRect();
+                var pos = {
+                    left: Math.round(off.left - par.left),
+                    top: Math.round(off.top - par.top)
+                };
+                setSavedTlsPos(pos);
+                applyTlsPos(pos);
+                if (typeof saveSettingsToServerQuiet === 'function') saveSettingsToServerQuiet();
+                return pos;
+            }
+            function tlsEnsureLiveDrag() {
+                var banner = document.getElementById('team-league-score-banner');
+                if (!banner) return;
+                if (banner.style.display === 'none' && !tlsEditMode) {
+                    if ($(banner).data('ui-draggable')) $(banner).draggable('destroy');
+                    banner.classList.remove('tls-drag-ready');
+                    return;
+                }
+                var saved = getSavedTlsPos();
+                if (saved) applyTlsPos(saved);
+                else {
+                    var parent = banner.parentElement;
+                    applyTlsPos(getDefaultTlsPos(parent ? parent.getBoundingClientRect() : { width: 1280 }));
+                }
+                banner.classList.add('tls-drag-ready');
+                banner.style.cursor = 'move';
+                if (!$(banner).data('ui-draggable')) {
+                    $(banner).draggable({
+                        containment: 'parent',
+                        scroll: false,
+                        cursor: 'move',
+                        stop: function() { tlsPersistPosFromBanner(); }
+                    });
+                } else {
+                    try {
+                        $(banner).draggable('option', 'stop', function() { tlsPersistPosFromBanner(); });
+                    } catch (e) {}
+                }
+            }
+            window.tlsEnsureLiveDrag = tlsEnsureLiveDrag;
+            window.tlsToggleEditMode = function() {
+                var banner = document.getElementById('team-league-score-banner');
+                var btn = document.getElementById('tls-editmove-btn');
+                if (!banner) return;
+                if (tlsEditMode) {
+                    tlsPersistPosFromBanner();
+                    banner.classList.remove('tls-edit-mode');
+                    tlsEditMode = false;
+                    if (btn) { btn.textContent = 'Edit and Move'; btn.classList.remove('active'); }
+                    if (!window.tlsScoreEnabled) {
+                        banner.style.display = 'none';
+                        if ($(banner).data('ui-draggable')) $(banner).draggable('destroy');
+                        banner.classList.remove('tls-drag-ready');
+                    } else {
+                        window.tlsShowTeamLeagueScoreBannerIfReady();
+                        tlsEnsureLiveDrag();
+                    }
+                    return;
+                }
+                tlsEditMode = true;
+                banner.style.display = 'block';
+                banner.classList.add('tls-edit-mode');
+                tlsEnsureLiveDrag();
+                if (btn) { btn.textContent = 'Save layout'; btn.classList.add('active'); }
+            };
+            window.tlsResetPosition = function() {
+                var banner = document.getElementById('team-league-score-banner');
+                var parent = banner ? banner.parentElement : null;
+                var pos = getDefaultTlsPos(parent ? parent.getBoundingClientRect() : { width: 1280 });
+                setSavedTlsPos(pos);
+                applyTlsPos(pos);
+                if (banner && (banner.style.display !== 'none' || tlsEditMode)) tlsEnsureLiveDrag();
+                if (typeof saveSettingsToServerQuiet === 'function') saveSettingsToServerQuiet();
+            };
             window.tlsHideTeamLeagueScoreBanner = function() {
                 var b = document.getElementById('team-league-score-banner');
-                if (b) b.style.display = 'none';
+                if (!b) return;
+                if (tlsEditMode) return;
+                b.style.display = 'none';
+                if ($(b).data('ui-draggable')) $(b).draggable('destroy');
+                b.classList.remove('tls-drag-ready');
             };
             window.tlsShowTeamLeagueScoreBannerIfReady = function() {
-                if (!window.tlsScoreEnabled) return;
+                if (!window.tlsScoreEnabled && !tlsEditMode) return;
                 var sbOverlay = document.getElementById('scoreboard-overlay');
-                if (sbOverlay && sbOverlay.style.display === 'block') return;
+                if (sbOverlay && sbOverlay.style.display === 'block' && !tlsEditMode) return;
                 var b = document.getElementById('team-league-score-banner');
-                if (b && b.innerHTML && b.innerHTML.trim()) b.style.display = 'block';
+                if (b && b.innerHTML && b.innerHTML.trim()) {
+                    b.style.display = 'block';
+                    tlsEnsureLiveDrag();
+                }
             };
             window.toggleTeamLeagueScoreBanner = function() {
                 window.tlsScoreEnabled = !window.tlsScoreEnabled;
@@ -3240,26 +3743,47 @@ $streamLogoSmallSrc = ($streamSceneAssetsBase !== '') ? ($streamSceneAssetsBase 
                     .then(function(text) {
                         var raw = (text || '').trim();
                         var rows = raw ? parseCSV(raw) : [];
-                        if (!rows.length) { banner.innerHTML = ''; banner.style.display = 'none'; return; }
+                        if (!rows.length) { banner.innerHTML = ''; if (!tlsEditMode) banner.style.display = 'none'; return; }
                         var r0 = rows[0];
                         var teamA = tlsCleanTeamName(cellStr(r0[2]));
                         var teamB = tlsCleanTeamName(cellStr(r0[6]));
                         var scoreA = cellStr(r0[4]).trim();
                         var scoreB = cellStr(r0[8]).trim();
-                        if (!teamA || !teamB) { banner.innerHTML = ''; banner.style.display = 'none'; return; }
+                        if (!teamA || !teamB) { banner.innerHTML = ''; if (!tlsEditMode) banner.style.display = 'none'; return; }
                         if (scoreA === '') scoreA = '0';
                         if (scoreB === '') scoreB = '0';
-                        banner.innerHTML = '<span class="tls-team">' + escapeHtml(teamA) + '</span>' +
+                        banner.innerHTML = '<span class="tls-banner-inner"><span class="tls-team">' + escapeHtml(teamA) + '</span>' +
                             '<span class="tls-score">' + escapeHtml(scoreA) + '&ndash;' + escapeHtml(scoreB) + '</span>' +
-                            '<span class="tls-team">' + escapeHtml(teamB) + '</span>';
+                            '<span class="tls-team">' + escapeHtml(teamB) + '</span></span>';
                         var sbOverlay = document.getElementById('scoreboard-overlay');
                         var scoreboardActive = sbOverlay && sbOverlay.style.display === 'block';
-                        banner.style.display = (!window.tlsScoreEnabled || scoreboardActive) ? 'none' : 'block';
+                        if (tlsEditMode) {
+                            banner.style.display = 'block';
+                            tlsEnsureLiveDrag();
+                        } else if (!window.tlsScoreEnabled || scoreboardActive) {
+                            banner.style.display = 'none';
+                            if ($(banner).data('ui-draggable')) $(banner).draggable('destroy');
+                            banner.classList.remove('tls-drag-ready');
+                        } else {
+                            banner.style.display = 'block';
+                            tlsEnsureLiveDrag();
+                        }
                     })
                     .catch(function() {});
             };
             document.addEventListener('status:score-saved', function() { window.updateTeamLeagueScoreBanner(); });
             window.updateTeamLeagueScoreBanner();
+            /* Right-click the team league score banner → same scoreboard editor as Settings → Edit Details.
+               Hit-test by rect because the banner may use pointer-events:none when hidden. */
+            document.addEventListener('contextmenu', function(e) {
+                var banner = document.getElementById('team-league-score-banner');
+                if (!banner || banner.style.display === 'none' || !banner.innerHTML || !banner.innerHTML.trim()) return;
+                var r = banner.getBoundingClientRect();
+                if (e.clientX >= r.left && e.clientX <= r.right && e.clientY >= r.top && e.clientY <= r.bottom) {
+                    e.preventDefault();
+                    if (typeof window.sbEditorOpenWindow === 'function') window.sbEditorOpenWindow();
+                }
+            });
 
             /* ---- Custom Scoreboard ---- */
 
@@ -3776,8 +4300,51 @@ $streamLogoSmallSrc = ($streamSceneAssetsBase !== '') ? ($streamSceneAssetsBase 
                 var visible = psbEditMode || (psbData.show && psbIsSc2ActiveScene());
                 overlay.style.display = visible ? 'block' : 'none';
                 panel.style.display = visible ? 'block' : 'none';
+                if (visible) psbEnsureLiveDrag();
+                else if (!psbEditMode) {
+                    if ($(panel).data('ui-draggable')) $(panel).draggable('destroy');
+                    if ($(panel).data('ui-resizable')) $(panel).resizable('destroy');
+                    panel.style.pointerEvents = '';
+                    panel.style.cursor = '';
+                }
             }
             window.psbUpdateVisibility = psbUpdateVisibility;
+
+            function psbPersistPosFromPanel() {
+                var overlay = document.getElementById('player-scoreboard-overlay');
+                var panel = document.getElementById('player-scoreboard-panel');
+                if (!overlay || !panel || !psbData) return;
+                var off = panel.getBoundingClientRect();
+                var par = overlay.getBoundingClientRect();
+                psbData.pos = {
+                    left: Math.round(off.left - par.left),
+                    top: Math.round(off.top - par.top),
+                    width: Math.round(off.width),
+                    height: Math.round(off.height)
+                };
+                if (typeof psbSaveQuiet === 'function') psbSaveQuiet();
+            }
+
+            function psbEnsureLiveDrag() {
+                var overlay = document.getElementById('player-scoreboard-overlay');
+                var panel = document.getElementById('player-scoreboard-panel');
+                if (!overlay || !panel || !psbData) return;
+                if (panel.style.display === 'none' || overlay.style.display === 'none') return;
+                panel.style.pointerEvents = 'auto';
+                panel.style.cursor = 'move';
+                if (!$(panel).data('ui-draggable')) {
+                    $(panel).draggable({
+                        containment: '#player-scoreboard-overlay',
+                        scroll: false,
+                        cursor: 'move',
+                        stop: function() { psbPersistPosFromPanel(); }
+                    });
+                } else {
+                    try {
+                        $(panel).draggable('option', 'stop', function() { psbPersistPosFromPanel(); });
+                    } catch (e) {}
+                }
+            }
 
             /* ---- Settings UI ---- */
             function psbPopulateColorSelects() {
@@ -4039,15 +4606,7 @@ $streamLogoSmallSrc = ($streamSceneAssetsBase !== '') ? ($streamSceneAssetsBase 
                 var btn = document.getElementById('psb-editmove-btn');
                 if (!overlay || !panel) return;
                 if (psbEditMode) {
-                    var off = panel.getBoundingClientRect();
-                    var par = overlay.getBoundingClientRect();
-                    psbData.pos = {
-                        left: Math.round(off.left - par.left),
-                        top: Math.round(off.top - par.top),
-                        width: Math.round(off.width),
-                        height: Math.round(off.height)
-                    };
-                    if ($(panel).data('ui-draggable')) $(panel).draggable('destroy');
+                    psbPersistPosFromPanel();
                     if ($(panel).data('ui-resizable')) $(panel).resizable('destroy');
                     overlay.classList.remove('psb-edit-mode');
                     overlay.style.pointerEvents = 'none';
@@ -4055,8 +4614,8 @@ $streamLogoSmallSrc = ($streamSceneAssetsBase !== '') ? ($streamSceneAssetsBase 
                     psbEditMode = false;
                     if (btn) { btn.textContent = 'Edit and Move'; btn.classList.remove('active'); }
                     psbRenderPanel();
+                    psbEnsureLiveDrag();
                     if (window.reapplyLayerOrder) window.reapplyLayerOrder();
-                    if (typeof psbSaveQuiet === 'function') psbSaveQuiet(); /* persist position for everyone */
                     return;
                 }
                 psbEditMode = true;
@@ -4066,15 +4625,17 @@ $streamLogoSmallSrc = ($streamSceneAssetsBase !== '') ? ($streamSceneAssetsBase 
                 overlay.classList.add('psb-edit-mode');
                 overlay.style.pointerEvents = 'none';
                 overlay.style.zIndex = '100002';
-                panel.style.pointerEvents = 'auto';
-                $(panel).draggable({ containment: '#player-scoreboard-overlay', scroll: false, cursor: 'move' });
-                $(panel).resizable({
-                    containment: '#player-scoreboard-overlay', handles: 'all',
-                    resize: function(e, ui) {
-                        panel.style.fontSize = Math.max(8, Math.round(ui.size.height * 0.30)) + 'px';
-                        psbFitNames();
-                    }
-                });
+                psbEnsureLiveDrag();
+                if (!$(panel).data('ui-resizable')) {
+                    $(panel).resizable({
+                        containment: '#player-scoreboard-overlay', handles: 'all',
+                        resize: function(e, ui) {
+                            panel.style.fontSize = Math.max(8, Math.round(ui.size.height * 0.30)) + 'px';
+                            psbFitNames();
+                        },
+                        stop: function() { psbPersistPosFromPanel(); }
+                    });
+                }
                 if (btn) { btn.textContent = 'Save layout'; btn.classList.add('active'); }
             };
 
@@ -4082,13 +4643,19 @@ $streamLogoSmallSrc = ($streamSceneAssetsBase !== '') ? ($streamSceneAssetsBase 
                 psbData.pos = Object.assign({}, PSB_DEFAULT_POS);
                 if (psbEditMode) {
                     var panel = document.getElementById('player-scoreboard-panel');
-                    if (panel && $(panel).data('ui-draggable')) { $(panel).draggable('destroy'); $(panel).resizable('destroy'); }
+                    if (panel && $(panel).data('ui-draggable')) { $(panel).draggable('destroy'); }
+                    if (panel && $(panel).data('ui-resizable')) { $(panel).resizable('destroy'); }
                     psbApplyPosition(psbData.pos);
+                    psbEnsureLiveDrag();
                     var p2 = document.getElementById('player-scoreboard-panel');
-                    $(p2).draggable({ containment: '#player-scoreboard-overlay', scroll: false, cursor: 'move' });
-                    $(p2).resizable({ containment: '#player-scoreboard-overlay', handles: 'all', resize: function(e, ui) { p2.style.fontSize = Math.max(8, Math.round(ui.size.height * 0.30)) + 'px'; psbFitNames(); } });
+                    $(p2).resizable({
+                        containment: '#player-scoreboard-overlay', handles: 'all',
+                        resize: function(e, ui) { p2.style.fontSize = Math.max(8, Math.round(ui.size.height * 0.30)) + 'px'; psbFitNames(); },
+                        stop: function() { psbPersistPosFromPanel(); }
+                    });
                 } else {
                     psbApplyPosition(psbData.pos);
+                    psbEnsureLiveDrag();
                 }
                 if (typeof psbSaveQuiet === 'function') psbSaveQuiet(); /* persist reset for everyone */
             };
@@ -4107,6 +4674,25 @@ $streamLogoSmallSrc = ($streamSceneAssetsBase !== '') ? ($streamSceneAssetsBase 
                     body: JSON.stringify(psbData)
                 }).then(function(r) { return r.json(); }).then(function(res) {
                     if (status) status.textContent = (res && res.ok) ? 'Saved!' : 'Error saving.';
+                    if (res && res.ok && window.ScoreboardSync) {
+                        window.ScoreboardSync.syncPsbToCsv(psbData).then(function(syncRes) {
+                            if (syncRes && syncRes.changed) {
+                                try { document.dispatchEvent(new CustomEvent('status:score-saved')); } catch (err) {}
+                                if (typeof scoreboardEditorLoad === 'function' && document.getElementById('scoreboard-editor-content') &&
+                                    document.getElementById('scoreboard-editor-content').style.display === 'block') {
+                                    scoreboardEditorLoad();
+                                } else if (typeof sbHighlightCurrentMatch === 'function') {
+                                    sbHighlightCurrentMatch();
+                                }
+                                if (typeof loadAndRenderScoreboard === 'function') {
+                                    var overlay = document.getElementById('scoreboard-overlay');
+                                    if (overlay && overlay.style.display === 'block') loadAndRenderScoreboard();
+                                }
+                            } else if (typeof sbHighlightCurrentMatch === 'function') {
+                                sbHighlightCurrentMatch();
+                            }
+                        });
+                    }
                     setTimeout(function() { if (status) status.textContent = ''; if (btn) btn.disabled = false; }, 2500);
                 }).catch(function() {
                     if (status) status.textContent = 'Network error.';
@@ -4191,9 +4777,112 @@ $streamLogoSmallSrc = ($streamSceneAssetsBase !== '') ? ($streamSceneAssetsBase 
             window.addEventListener('message', function(e) {
                 if (e.origin !== window.location.origin) return;
                 if (!e.data || e.data.type !== 'psb-editor-saved') return;
-                if (typeof window.psbLoad === 'function') window.psbLoad();
+                if (typeof window.psbLoad === 'function') {
+                    window.psbLoad().then(function() {
+                        if (typeof sbHighlightCurrentMatch === 'function') sbHighlightCurrentMatch();
+                    });
+                }
+                /* Popup may have synced scores into the TLS CSV. */
+                if (e.data.tlsSynced) {
+                    try { document.dispatchEvent(new CustomEvent('status:score-saved')); } catch (err) {}
+                    if (typeof scoreboardEditorLoad === 'function' && document.getElementById('scoreboard-editor-content') &&
+                        document.getElementById('scoreboard-editor-content').style.display === 'block') {
+                        scoreboardEditorLoad();
+                    }
+                    if (typeof loadAndRenderScoreboard === 'function') {
+                        var overlay = document.getElementById('scoreboard-overlay');
+                        if (overlay && overlay.style.display === 'block') loadAndRenderScoreboard();
+                    }
+                }
             });
             /* ===== End Player Scoreboard ===== */
+
+            /* ── VDO director URL (right-click panel → open in new window) ── */
+            var VDO_DIRECTOR_URL_KEY = 'stream_production_vdo_director_url';
+            var VDO_DIRECTOR_URL_DEFAULT = 'https://vdo.ninja/?director=KJNinjaRoom123&password=FSL&showdirector&push=cBnXZEM';
+            var _vdoDirectorWin = null;
+
+            function getVdoDirectorUrl() {
+                var el = document.getElementById('vdo-director-url');
+                var v = el ? el.value.trim() : '';
+                return v || VDO_DIRECTOR_URL_DEFAULT;
+            }
+
+            function setVdoDirectorUrl(url) {
+                var el = document.getElementById('vdo-director-url');
+                if (!el) return;
+                el.value = (url != null && String(url).trim()) ? String(url).trim() : VDO_DIRECTOR_URL_DEFAULT;
+            }
+
+            function saveVdoDirectorUrl() {
+                try { localStorage.setItem(VDO_DIRECTOR_URL_KEY, getVdoDirectorUrl()); } catch (e) {}
+            }
+
+            function loadVdoDirectorUrl() {
+                try {
+                    var raw = localStorage.getItem(VDO_DIRECTOR_URL_KEY);
+                    if (raw && String(raw).trim()) {
+                        setVdoDirectorUrl(raw);
+                        return;
+                    }
+                } catch (e) {}
+                setVdoDirectorUrl(VDO_DIRECTOR_URL_DEFAULT);
+            }
+
+            function openVdoDirectorWindow() {
+                var url = getVdoDirectorUrl();
+                if (!url) return;
+                try {
+                    if (_vdoDirectorWin && !_vdoDirectorWin.closed) {
+                        _vdoDirectorWin.focus();
+                        _vdoDirectorWin.location.href = url;
+                        return;
+                    }
+                } catch (e) {}
+                _vdoDirectorWin = window.open(url, 'vdoDirector', 'width=1280,height=800,resizable=yes,scrollbars=yes');
+            }
+
+            window.getVdoDirectorUrl = getVdoDirectorUrl;
+            window.setVdoDirectorUrl = setVdoDirectorUrl;
+            window.saveVdoDirectorUrl = saveVdoDirectorUrl;
+            window.openVdoDirectorWindow = openVdoDirectorWindow;
+
+            (function initVdoDirectorUrl() {
+                loadVdoDirectorUrl();
+                var el = document.getElementById('vdo-director-url');
+                if (el) {
+                    el.addEventListener('change', saveVdoDirectorUrl);
+                    el.addEventListener('blur', saveVdoDirectorUrl);
+                }
+            })();
+
+            /* Right-click large/small VDO panel → open director URL.
+               Hit-test by rect because overlays use pointer-events:none. */
+            document.addEventListener('contextmenu', function(e) {
+                if (typeof logosEditMode !== 'undefined' && logosEditMode) return;
+                function rectHit(el) {
+                    if (!el || el.style.display === 'none' || el.style.visibility === 'hidden') return false;
+                    var r = el.getBoundingClientRect();
+                    return e.clientX >= r.left && e.clientX <= r.right && e.clientY >= r.top && e.clientY <= r.bottom;
+                }
+                /* Prefer scoreboard / TLS banner right-click actions when overlapping. */
+                if (rectHit(document.getElementById('player-scoreboard-panel'))) return;
+                var tls = document.getElementById('team-league-score-banner');
+                if (tls && tls.innerHTML && tls.innerHTML.trim() && rectHit(tls)) return;
+                function panelHit(panelId, overlayId) {
+                    var panel = document.getElementById(panelId);
+                    var overlay = document.getElementById(overlayId);
+                    if (!panel || !overlay) return false;
+                    if (overlay.style.display === 'none' || panel.style.display === 'none') return false;
+                    if (panel.style.visibility === 'hidden') return false;
+                    return rectHit(panel);
+                }
+                var hit = panelHit('vdo-full-panel-wrap', 'scene-overlay-vdo-full') ||
+                    panelHit('sc2-panel-wrap', 'sc2-overlay');
+                if (!hit) return;
+                e.preventDefault();
+                openVdoDirectorWindow();
+            });
 
             /** Set VDO iframe src from data-src only if not already loaded (vdo.ninja), to avoid reload and preserve camera state. */
             function ensureVdoIframeLoaded(iframe) {
@@ -4343,6 +5032,7 @@ $streamLogoSmallSrc = ($streamSceneAssetsBase !== '') ? ($streamSceneAssetsBase 
                     ensureVdoIframeLoaded(sc2Iframe);
                 }
                 if (typeof logosEditMode !== 'undefined' && logosEditMode) updateVdoPanelsInEditMode();
+                else if (typeof enableVdoLiveDragAll === 'function') enableVdoLiveDragAll();
             }
 
             function deactivateSc2Scene() {
@@ -4398,6 +5088,7 @@ $streamLogoSmallSrc = ($streamSceneAssetsBase !== '') ? ($streamSceneAssetsBase 
                 if (sc2Overlay) sc2Overlay.style.display = 'none';
                 setSc2ButtonsActive(false);
                 if (typeof logosEditMode !== 'undefined' && logosEditMode) updateVdoPanelsInEditMode();
+                else if (typeof enableVdoLiveDragAll === 'function') enableVdoLiveDragAll();
             }
 
             function setSc2ButtonsActive(isActive) {
@@ -4730,9 +5421,11 @@ $streamLogoSmallSrc = ($streamSceneAssetsBase !== '') ? ($streamSceneAssetsBase 
                         var iframe = panel.querySelector('iframe');
                         ensureVdoIframeLoaded(iframe);
                     }
+                    if (typeof enableVdoLiveDragAll === 'function') enableVdoLiveDragAll();
                 } else {
                     overlay.style.display = 'none';
                     btn.classList.remove('active');
+                    if (typeof enableVdoLiveDragAll === 'function') enableVdoLiveDragAll();
                 }
             } else if (sceneId === 'logos') {
                 const overlay = document.getElementById('logos-overlay');

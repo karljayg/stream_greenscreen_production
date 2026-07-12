@@ -49,7 +49,7 @@ header('Cache-Control: no-cache, no-store, must-revalidate');
 <body>
     <div class="wrap">
         <h1>Player Scoreboard</h1>
-        <p class="hint">Edits apply to the overlay live. Move/resize the panel from the main page (Settings &rarr; Player Scoreboard &rarr; Edit and Move).</p>
+        <p class="hint">Edits apply to the overlay live. Move/resize the panel from the main page (Settings &rarr; Player Scoreboard &rarr; Edit and Move). When both names match a Team League 1v1 row, scores sync both ways.</p>
 
         <div class="toprow">
             <label><input type="checkbox" id="psb-show"> Show on overlay (SC2 scene)</label>
@@ -114,6 +114,7 @@ header('Cache-Control: no-cache, no-store, must-revalidate');
         </div>
     </div>
 
+    <script src="js/scoreboard_sync.js?v=<?php echo $v; ?>"></script>
     <script type="module">
     import playerList from './js/playerlist.js?v=<?php echo $v; ?>';
 
@@ -295,9 +296,14 @@ header('Cache-Control: no-cache, no-store, must-revalidate');
         });
     }
 
-    function notifyOpener() {
+    function notifyOpener(tlsSynced) {
         if (window.opener && !window.opener.closed) {
-            try { window.opener.postMessage({ type: 'psb-editor-saved' }, window.location.origin); } catch (e) {}
+            try {
+                window.opener.postMessage({
+                    type: 'psb-editor-saved',
+                    tlsSynced: !!tlsSynced
+                }, window.location.origin);
+            } catch (e) {}
         }
     }
     function save(showStatus) {
@@ -308,9 +314,23 @@ header('Cache-Control: no-cache, no-store, must-revalidate');
         return fetch('save_player_scoreboard.php', {
             method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(_data)
         }).then(function(r) { return r.json(); }).then(function(res) {
-            if (showStatus && status) status.textContent = (res && res.ok) ? 'Saved!' : 'Error saving.';
-            notifyOpener();
-            if (showStatus) setTimeout(function() { if (status) status.textContent = ''; if (btn) btn.disabled = false; }, 2000);
+            if (!(res && res.ok)) {
+                if (showStatus && status) status.textContent = 'Error saving.';
+                if (showStatus) setTimeout(function() { if (status) status.textContent = ''; if (btn) btn.disabled = false; }, 2000);
+                return;
+            }
+            var afterSync = function(tlsSynced) {
+                notifyOpener(tlsSynced);
+                if (showStatus && status) status.textContent = 'Saved!';
+                if (showStatus) setTimeout(function() { if (status) status.textContent = ''; if (btn) btn.disabled = false; }, 2000);
+            };
+            if (window.ScoreboardSync) {
+                window.ScoreboardSync.syncPsbToCsv(_data).then(function(syncRes) {
+                    afterSync(syncRes && syncRes.changed);
+                });
+            } else {
+                afterSync(false);
+            }
         }).catch(function() {
             if (showStatus && status) { status.textContent = 'Network error.'; setTimeout(function() { status.textContent = ''; if (btn) btn.disabled = false; }, 2000); }
         });
@@ -406,6 +426,12 @@ header('Cache-Control: no-cache, no-store, must-revalidate');
     Promise.all([loadData(), loadRankings()]).then(function() {
         renderAll();
         setTimeout(fitWindow, 0);
+    });
+
+    window.addEventListener('message', function(e) {
+        if (e.origin !== window.location.origin) return;
+        if (!e.data || e.data.type !== 'psb-reload') return;
+        loadData().then(function() { renderAll(); });
     });
     </script>
 </body>

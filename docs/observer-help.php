@@ -213,7 +213,8 @@ ul.ref-list strong { color: #cbd5e1; font-weight: 600; }
     <li><strong>Scoreboard</strong> — Quick team totals and matchup scores. <em>Edit Details&hellip;</em> opens the full TeamLeague editor (or use the pop-up above).</li>
     <li><strong>Custom Scoreboard</strong> — Ad-hoc side labels and match rows for non-standard events.</li>
     <li><strong>Player Scoreboard</strong> — Inline editor for the SC2 match graphic; <em>Open in window</em> for the pop-up editor.</li>
-    <li><strong>Positioning</strong> — Drag/resize logos, VDO panels, and the player scoreboard on the overlay.</li>
+    <li><strong>VDO</strong> — Director URL opened when you right-click the large or small VDO panel.</li>
+    <li><strong>Positioning</strong> — Event Title text (styled banner), drag/resize logos, VDO panels, and the player scoreboard on the overlay.</li>
     <li><strong>Music</strong> — Link to Music Admin pop-up.</li>
     <li><strong>Status Message</strong> — On-screen title / team A / team B message overlay.</li>
     <li><strong>Layer Order</strong> — Z-order for logos, scoreboards, SC2 panel, etc.</li>

@@ -173,6 +173,18 @@ body.layer-outline-debug [data-layer-id].layer-outline-active {
     border: 0 solid black;
     text-align: center;
     z-index: 100000; /* above scene overlays (99999) so player intros (gif, video, name) are visible */
+    /* Let clicks pass through empty areas to logos / VDO underneath; children still receive events. */
+    pointer-events: none;
+}
+.video-wrapper > * {
+    pointer-events: auto;
+}
+/* Overlays that are themselves pass-through keep none (panel children opt back in via JS/CSS). */
+.video-wrapper > .psb-overlay,
+.video-wrapper > .scoreboard-overlay-wrap,
+.video-wrapper > #external-chart-overlay,
+.video-wrapper > #matchup-overlay {
+    pointer-events: none;
 }
 
 #video-container {
@@ -413,11 +425,19 @@ body.layer-outline-debug [data-layer-id].layer-outline-active {
     position: absolute;
     top: 18px;
     left: 52%;
-    right: 11%;
+    right: auto;
+    width: max-content;
+    max-width: calc(100% - 24px);
     z-index: 100001;
     pointer-events: none;
     text-align: center;
     white-space: nowrap;
+    color: #fff;
+    cursor: move;
+}
+
+.team-league-score-banner .tls-banner-inner {
+    display: inline-block;
     font-family: "Rajdhani", "Teko", "Orbitron", "Montserrat", sans-serif;
     font-weight: 900;
     font-size: 20px;
@@ -441,6 +461,15 @@ body.layer-outline-debug [data-layer-id].layer-outline-active {
         0 -1px 0 rgba(255, 255, 255, 0.85),
         0 0 10px rgba(255, 70, 245, 0.55),
         0 0 18px rgba(150, 50, 255, 0.4);
+}
+
+.team-league-score-banner.tls-drag-ready {
+    pointer-events: auto;
+}
+
+.team-league-score-banner.tls-edit-mode {
+    outline: 2px dashed rgba(255, 200, 80, 0.9);
+    outline-offset: 6px;
 }
 
 .team-league-score-banner .tls-score {
@@ -570,12 +599,90 @@ body.layer-outline-debug [data-layer-id].layer-outline-active {
     user-select: none;
 }
 
+/* Event Title — clean italic split-tone text, transparent background */
+.logos-overlay .logo-wrap.event-title-wrap {
+    overflow: visible;
+    box-sizing: border-box;
+    background: transparent;
+}
+.event-title-badge {
+    width: 100%;
+    height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    pointer-events: none;
+    user-select: none;
+    background: transparent;
+    container-type: size;
+    overflow: visible;
+    box-sizing: border-box;
+    /* Room for italic overhang + outline/glow on both sides */
+    padding: 0 0.18em;
+}
+.event-title-text {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    max-width: 100%;
+    white-space: nowrap;
+    overflow: visible;
+    font-family: "Oswald", "Teko", Impact, "Arial Narrow", sans-serif;
+    font-weight: 700;
+    font-style: italic;
+    font-size: clamp(16px, 55cqh, 110px);
+    line-height: 0.9;
+    letter-spacing: 0.02em;
+    text-transform: uppercase;
+    text-align: center;
+    /* Extra trailing pad so the last italic glyph + drop-shadow aren't clipped */
+    padding-right: 0.14em;
+    box-sizing: border-box;
+    /* White top / blue bottom */
+    background-image: linear-gradient(
+        to bottom,
+        #ffffff 0%,
+        #ffffff 48%,
+        #2a7dff 50%,
+        #0a4fd6 100%
+    );
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+    -webkit-text-fill-color: transparent;
+    /* Black outline only — no light outer glow */
+    filter:
+        drop-shadow(0 0 1.2px #000)
+        drop-shadow(0 0 1.2px #000)
+        drop-shadow(1px 0 0 #000)
+        drop-shadow(-1px 0 0 #000)
+        drop-shadow(0 1px 0 #000)
+        drop-shadow(0 -1px 0 #000);
+}
+.event-title-text .event-title-word,
+.event-title-text .event-title-num,
+.event-title-text .event-title-gap {
+    background-image: inherit;
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+    -webkit-text-fill-color: transparent;
+}
+.event-title-text .event-title-num {
+    font-weight: 700;
+    margin-left: 0.06em;
+    line-height: 0.85;
+}
+
 /* Edit mode: wrapper is draggable/resizable; pointer-events auto so logos receive clicks despite overlay's pointer-events: none */
-.logos-overlay.logos-edit-mode .logo-wrap {
+.logos-overlay.logos-edit-mode .logo-wrap,
+.logos-overlay .logo-wrap.logo-live-drag {
     cursor: move;
+    pointer-events: auto;
+}
+.logos-overlay.logos-edit-mode .logo-wrap {
     outline: 2px dashed rgba(255, 255, 255, 0.8);
     outline-offset: 2px;
-    pointer-events: auto;
 }
 .logos-overlay.logos-edit-mode .ui-resizable-handle {
     background: rgba(255, 255, 255, 0.3);
@@ -585,14 +692,18 @@ body.layer-outline-debug [data-layer-id].layer-outline-active {
 .sc2-overlay .sc2-panel-wrap {
     position: absolute;
 }
-.sc2-overlay.logos-edit-mode .sc2-panel-wrap {
+.sc2-overlay.logos-edit-mode .sc2-panel-wrap,
+.sc2-overlay .sc2-panel-wrap.vdo-live-drag {
     cursor: move;
-    outline: 2px dashed rgba(255, 255, 255, 0.8);
-    outline-offset: 2px;
     pointer-events: auto;
 }
-/* In edit mode iframe must not capture pointer so the wrapper can be dragged/resized */
-.sc2-overlay.logos-edit-mode .sc2-panel-wrap iframe {
+.sc2-overlay.logos-edit-mode .sc2-panel-wrap {
+    outline: 2px dashed rgba(255, 255, 255, 0.8);
+    outline-offset: 2px;
+}
+/* Iframe must not steal drag — stream tool never needs in-panel VDO UI clicks */
+.sc2-overlay .sc2-panel-wrap iframe,
+.vdo-full-overlay .vdo-full-panel-wrap iframe {
     pointer-events: none !important;
 }
 
@@ -772,15 +883,15 @@ body.layer-outline-debug [data-layer-id].layer-outline-active {
     background: rgba(255, 255, 255, 0.3);
 }
 
-/* VDO full overlay: panel draggable/resizable in edit mode */
-.vdo-full-overlay.logos-edit-mode .vdo-full-panel-wrap {
+/* VDO full overlay: panel draggable/resizable in edit mode + live drag */
+.vdo-full-overlay.logos-edit-mode .vdo-full-panel-wrap,
+.vdo-full-overlay .vdo-full-panel-wrap.vdo-live-drag {
     cursor: move;
-    outline: 2px dashed rgba(255, 255, 255, 0.8);
-    outline-offset: 2px;
     pointer-events: auto;
 }
-.vdo-full-overlay.logos-edit-mode .vdo-full-panel-wrap iframe {
-    pointer-events: none !important;
+.vdo-full-overlay.logos-edit-mode .vdo-full-panel-wrap {
+    outline: 2px dashed rgba(255, 255, 255, 0.8);
+    outline-offset: 2px;
 }
 
 /* Transition video (fade in/out) – right panel only; used by playTransitionVideo() */
