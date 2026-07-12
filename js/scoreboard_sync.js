@@ -34,24 +34,73 @@
     }
 
     /**
-     * Find a 1v1 CSV row matching the two player-scoreboard names.
-     * @returns {{ rowIndex: number, orientation: 'ab'|'ba' }|null}
-     *   orientation 'ab' = CSV A is PSB[0], CSV B is PSB[1]
-     *   orientation 'ba' = sides swapped
+     * All 1v1 CSV rows matching the two PSB names (top → bottom).
+     * occurrence = 0-based index among matches for this pair (stable if other rows insert above).
      */
-    function findMatchedRow(rows, nameA, nameB) {
+    function findAllMatchedRows(rows, nameA, nameB) {
         var n0 = normName(nameA);
         var n1 = normName(nameB);
-        if (!n0 || !n1 || n0 === n1 || !rows || !rows.length) return null;
+        var out = [];
+        if (!n0 || !n1 || n0 === n1 || !rows || !rows.length) return out;
+        var occurrence = 0;
         for (var i = 2; i < rows.length; i++) {
             var row = rows[i];
             if (!is1v1Row(row)) continue;
             var a = normName(row[2]);
             var b = normName(row[6]);
-            if (a === n0 && b === n1) return { rowIndex: i, orientation: 'ab' };
-            if (a === n1 && b === n0) return { rowIndex: i, orientation: 'ba' };
+            if (a === n0 && b === n1) {
+                out.push({ rowIndex: i, orientation: 'ab', occurrence: occurrence });
+                occurrence++;
+            } else if (a === n1 && b === n0) {
+                out.push({ rowIndex: i, orientation: 'ba', occurrence: occurrence });
+                occurrence++;
+            }
         }
-        return null;
+        return out;
+    }
+
+    function matchScoreDistance(row, orientation, scoreA, scoreB) {
+        var sA = scoreInt(scoreA);
+        var sB = scoreInt(scoreB);
+        if (orientation === 'ab') {
+            return Math.abs(scoreInt(row[4]) - sA) + Math.abs(scoreInt(row[8]) - sB);
+        }
+        return Math.abs(scoreInt(row[8]) - sA) + Math.abs(scoreInt(row[4]) - sB);
+    }
+
+    /**
+     * Pick which matching row to sync.
+     * opts: { scoreA, scoreB, pinOccurrence }
+     * 1) Valid pinOccurrence → that match
+     * 2) Else closest scores to PSB; ties → last match (ACE rematches)
+     */
+    function findMatchedRow(rows, nameA, nameB, opts) {
+        opts = opts || {};
+        var all = findAllMatchedRows(rows, nameA, nameB);
+        if (!all.length) return null;
+        if (all.length === 1) return all[0];
+
+        var pin = opts.pinOccurrence;
+        if (pin != null && pin !== '') {
+            pin = parseInt(pin, 10);
+            if (!isNaN(pin)) {
+                for (var i = 0; i < all.length; i++) {
+                    if (all[i].occurrence === pin) return all[i];
+                }
+            }
+        }
+
+        var best = null;
+        var bestDist = Infinity;
+        for (var j = 0; j < all.length; j++) {
+            var m = all[j];
+            var dist = matchScoreDistance(rows[m.rowIndex], m.orientation, opts.scoreA, opts.scoreB);
+            if (dist < bestDist || (dist === bestDist && (!best || m.occurrence > best.occurrence))) {
+                bestDist = dist;
+                best = m;
+            }
+        }
+        return best;
     }
 
     function scoreInt(v) {
@@ -77,9 +126,14 @@
 
     /**
      * Apply PSB scores onto a matching CSV row. Returns { matched, changed, rows, match }.
+     * pinOccurrence optional — forces which duplicate pair row to update.
      */
-    function applyPsbToRows(rows, nameA, nameB, scoreA, scoreB) {
-        var match = findMatchedRow(rows, nameA, nameB);
+    function applyPsbToRows(rows, nameA, nameB, scoreA, scoreB, pinOccurrence) {
+        var match = findMatchedRow(rows, nameA, nameB, {
+            scoreA: scoreA,
+            scoreB: scoreB,
+            pinOccurrence: pinOccurrence
+        });
         if (!match) return { matched: false, changed: false, rows: rows, match: null };
         var newA;
         var newB;
@@ -186,6 +240,18 @@
         };
     }
 
+    function matchOptsFromPsb(psb) {
+        var p = playersFromPsb(psb);
+        var pin = (psb && psb.tlsPinOccurrence != null && psb.tlsPinOccurrence !== '')
+            ? parseInt(psb.tlsPinOccurrence, 10)
+            : null;
+        return {
+            scoreA: p.scoreA,
+            scoreB: p.scoreB,
+            pinOccurrence: (pin != null && !isNaN(pin)) ? pin : null
+        };
+    }
+
     /**
      * Push PSB scores into the matching TLS CSV row (if any).
      * @returns {Promise<{matched:boolean, changed:boolean, match:object|null}>}
@@ -197,12 +263,13 @@
         }
         if (_lock) return Promise.resolve({ matched: false, changed: false, match: null, skipped: true });
         var base = pageBaseUrl();
+        var opts = matchOptsFromPsb(psb);
         _lock = true;
         return fetch(base + '2026/scoreboard.csv?_t=' + Date.now(), { cache: 'no-store' })
             .then(function (r) { return r.ok ? r.text() : ''; })
             .then(function (text) {
                 var rows = parseCSV(text);
-                var result = applyPsbToRows(rows, p.nameA, p.nameB, p.scoreA, p.scoreB);
+                var result = applyPsbToRows(rows, p.nameA, p.nameB, p.scoreA, p.scoreB, opts.pinOccurrence);
                 if (!result.changed) return result;
                 return fetch(base + 'save_scoreboard.php', {
                     method: 'POST',
@@ -240,7 +307,8 @@
                     return { matched: false, changed: false, match: null };
                 }
                 var p = playersFromPsb(psb);
-                var match = findMatchedRow(rows, p.nameA, p.nameB);
+                var opts = matchOptsFromPsb(psb);
+                var match = findMatchedRow(rows, p.nameA, p.nameB, opts);
                 if (!match) return { matched: false, changed: false, match: null };
                 var mapped = scoresFromRowForPsb(rows[match.rowIndex], p.nameA, p.nameB);
                 if (!mapped) return { matched: false, changed: false, match: null };
@@ -270,8 +338,7 @@
     }
 
     /**
-     * Load PSB names for CURRENT MATCH highlighting.
-     * @returns {Promise<{nameA:string, nameB:string}>}
+     * Load PSB names/scores/pin for CURRENT MATCH highlighting.
      */
     function loadPsbNames() {
         var base = pageBaseUrl();
@@ -279,10 +346,41 @@
             .then(function (r) { return r.json(); })
             .then(function (psb) {
                 var p = playersFromPsb(psb);
-                return { nameA: p.nameA, nameB: p.nameB };
+                var opts = matchOptsFromPsb(psb);
+                return {
+                    nameA: p.nameA,
+                    nameB: p.nameB,
+                    scoreA: p.scoreA,
+                    scoreB: p.scoreB,
+                    pinOccurrence: opts.pinOccurrence,
+                    psb: psb
+                };
             })
             .catch(function () {
-                return { nameA: '', nameB: '' };
+                return { nameA: '', nameB: '', scoreA: 0, scoreB: 0, pinOccurrence: null, psb: null };
+            });
+    }
+
+    /** Persist tlsPinOccurrence on the player scoreboard (null clears). */
+    function setTlsPinOccurrence(occurrence) {
+        var base = pageBaseUrl();
+        return fetch(base + 'save_player_scoreboard.php?_t=' + Date.now(), { cache: 'no-store' })
+            .then(function (r) { return r.json(); })
+            .then(function (psb) {
+                if (!psb || typeof psb !== 'object') psb = {};
+                if (occurrence == null || occurrence === '') {
+                    delete psb.tlsPinOccurrence;
+                } else {
+                    psb.tlsPinOccurrence = parseInt(occurrence, 10);
+                }
+                return fetch(base + 'save_player_scoreboard.php', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(psb)
+                }).then(function (r) { return r.json(); }).then(function (res) {
+                    if (!res || !res.ok) throw new Error('psb pin save failed');
+                    return { ok: true, tlsPinOccurrence: psb.tlsPinOccurrence != null ? psb.tlsPinOccurrence : null, psb: psb };
+                });
             });
     }
 
@@ -290,6 +388,7 @@
         stripPlayerCell: stripPlayerCell,
         normName: normName,
         is1v1Row: is1v1Row,
+        findAllMatchedRows: findAllMatchedRows,
         findMatchedRow: findMatchedRow,
         applyPsbToRows: applyPsbToRows,
         scoresFromRowForPsb: scoresFromRowForPsb,
@@ -298,6 +397,8 @@
         syncPsbToCsv: syncPsbToCsv,
         syncCsvToPsb: syncCsvToPsb,
         loadPsbNames: loadPsbNames,
-        playersFromPsb: playersFromPsb
+        setTlsPinOccurrence: setTlsPinOccurrence,
+        playersFromPsb: playersFromPsb,
+        matchOptsFromPsb: matchOptsFromPsb
     };
 })(typeof window !== 'undefined' ? window : this);

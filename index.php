@@ -1585,7 +1585,8 @@ $streamLogoSmallSrc = ($streamSceneAssetsBase !== '') ? ($streamSceneAssetsBase 
                     div.dataset.rowIdx = idx;
                     div.style.cssText = 'display:flex; align-items:center; gap:6px; padding:5px 8px; background:#111; border-radius:3px; font-size:12px; margin-bottom:3px; border:1px solid transparent;';
                     div.innerHTML =
-                        '<span class="sb-current-badge" style="display:none; flex-shrink:0; font-size:9px; font-weight:bold; letter-spacing:0.3px; color:#1a1200; background:#e6b800; border-radius:2px; padding:2px 5px; margin-right:2px;">CURRENT</span>' +
+                        '<span class="sb-current-badge" style="display:none; flex-shrink:0; font-size:9px; font-weight:bold; letter-spacing:0.3px; color:#1a1200; background:#e6b800; border-radius:2px; padding:2px 5px; margin-right:2px; cursor:pointer;" title="Current match for Player Scoreboard sync">CURRENT</span>' +
+                        '<span class="sb-pin-btn" style="display:none; flex-shrink:0; font-size:9px; font-weight:bold; letter-spacing:0.3px; color:#ccc; background:#333; border:1px solid #666; border-radius:2px; padding:2px 5px; margin-right:2px; cursor:pointer;" title="Pin this row as current (ACE rematch)">PIN</span>' +
                         '<span style="color:#666; min-width:28px; font-size:11px; flex-shrink:0;">' + sbEsc(matchType) + '</span>' +
                         '<span style="flex:1; text-align:right; color:#bbb; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; padding-right:4px;" title="' + sbAttr(playersA) + '">' + sbEsc(playersA) + '</span>' +
                         '<input type="number" class="sb-score-a-input" min="0" max="99" value="' + sbAttr(String(sA)) + '" oninput="sbRecalcTotals()" style="width:44px; text-align:center; background:#1a2a1a; color:#8f8; border:1px solid #484; border-radius:3px; padding:2px 4px; flex-shrink:0;">' +
@@ -1602,41 +1603,96 @@ $streamLogoSmallSrc = ($streamSceneAssetsBase !== '') ? ($streamSceneAssetsBase 
             /** Highlight the TLS row that matches the current Player Scoreboard pair. */
             function sbHighlightCurrentMatch() {
                 if (!window.ScoreboardSync || !_sbEditorRows) return;
-                function apply(nA, nB) {
-                    var match = window.ScoreboardSync.findMatchedRow(_sbEditorRows, nA, nB);
-                    var matchedDataIdx = -1;
-                    if (match) {
-                        var seen = 0;
-                        for (var r = 2; r < _sbEditorRows.length; r++) {
-                            if (sbEditorIsDataRowEmpty(_sbEditorRows[r])) continue;
-                            if (r === match.rowIndex) { matchedDataIdx = seen; break; }
-                            seen++;
-                        }
+                function apply(state) {
+                    var nA = state.nameA || '';
+                    var nB = state.nameB || '';
+                    var opts = {
+                        scoreA: state.scoreA,
+                        scoreB: state.scoreB,
+                        pinOccurrence: state.pinOccurrence
+                    };
+                    var all = window.ScoreboardSync.findAllMatchedRows(_sbEditorRows, nA, nB);
+                    var match = window.ScoreboardSync.findMatchedRow(_sbEditorRows, nA, nB, opts);
+                    var rowIndexToDataIdx = {};
+                    var seen = 0;
+                    for (var r = 2; r < _sbEditorRows.length; r++) {
+                        if (sbEditorIsDataRowEmpty(_sbEditorRows[r])) continue;
+                        rowIndexToDataIdx[r] = seen;
+                        seen++;
                     }
+                    var matchedDataIdx = (match && rowIndexToDataIdx[match.rowIndex] != null) ? rowIndexToDataIdx[match.rowIndex] : -1;
+                    var candidateDataIdx = {};
+                    all.forEach(function(m) {
+                        if (rowIndexToDataIdx[m.rowIndex] != null) {
+                            candidateDataIdx[rowIndexToDataIdx[m.rowIndex]] = m.occurrence;
+                        }
+                    });
+                    var multi = all.length > 1;
                     document.querySelectorAll('#scoreboard-matchup-rows .sb-matchup-row').forEach(function(el, idx) {
                         var isCur = matchedDataIdx >= 0 && idx === matchedDataIdx;
+                        var occ = candidateDataIdx[idx];
+                        var isCand = occ != null;
                         el.classList.toggle('sb-current-match', isCur);
-                        el.style.background = isCur ? '#1a2210' : '#111';
-                        el.style.borderColor = isCur ? '#e6b800' : 'transparent';
+                        el.classList.toggle('sb-match-candidate', isCand && !isCur);
+                        el.style.background = isCur ? '#1a2210' : (isCand ? '#181810' : '#111');
+                        el.style.borderColor = isCur ? '#e6b800' : (isCand ? '#665500' : 'transparent');
                         var badge = el.querySelector('.sb-current-badge');
-                        if (badge) badge.style.display = isCur ? 'inline-block' : 'none';
+                        if (badge) {
+                            badge.style.display = isCur ? 'inline-block' : 'none';
+                            var pinned = isCur && state.pinOccurrence != null && match && match.occurrence === state.pinOccurrence;
+                            badge.textContent = pinned ? 'CURRENT (PINNED)' : 'CURRENT';
+                            badge.title = pinned ? 'Click to clear pin' : 'Current match for Player Scoreboard sync';
+                            badge.onclick = null;
+                            if (pinned) {
+                                badge.onclick = function(ev) {
+                                    ev.preventDefault();
+                                    ev.stopPropagation();
+                                    sbPinMatchOccurrence(null);
+                                };
+                            }
+                        }
+                        var pinBtn = el.querySelector('.sb-pin-btn');
+                        if (pinBtn) {
+                            pinBtn.style.display = (multi && isCand && !isCur) ? 'inline-block' : 'none';
+                            pinBtn.onclick = null;
+                            if (multi && isCand && !isCur) {
+                                pinBtn.onclick = function(ev) {
+                                    ev.preventDefault();
+                                    ev.stopPropagation();
+                                    sbPinMatchOccurrence(occ);
+                                };
+                            }
+                        }
                     });
                 }
-                var nameA = '';
-                var nameB = '';
+                var state = { nameA: '', nameB: '', scoreA: 0, scoreB: 0, pinOccurrence: null };
                 if (typeof psbData !== 'undefined' && psbData && psbData.players) {
-                    nameA = (psbData.players[0] && psbData.players[0].name) || '';
-                    nameB = (psbData.players[1] && psbData.players[1].name) || '';
+                    state.nameA = (psbData.players[0] && psbData.players[0].name) || '';
+                    state.nameB = (psbData.players[1] && psbData.players[1].name) || '';
+                    state.scoreA = parseInt(psbData.players[0] && psbData.players[0].score, 10) || 0;
+                    state.scoreB = parseInt(psbData.players[1] && psbData.players[1].score, 10) || 0;
+                    state.pinOccurrence = (psbData.tlsPinOccurrence != null && psbData.tlsPinOccurrence !== '')
+                        ? parseInt(psbData.tlsPinOccurrence, 10) : null;
+                    if (state.nameA && state.nameB) {
+                        apply(state);
+                        return;
+                    }
                 }
-                if (nameA && nameB) {
-                    apply(nameA, nameB);
-                    return;
-                }
-                window.ScoreboardSync.loadPsbNames().then(function(names) {
-                    apply(names.nameA, names.nameB);
-                });
+                window.ScoreboardSync.loadPsbNames().then(apply);
             }
             window.sbHighlightCurrentMatch = sbHighlightCurrentMatch;
+
+            function sbPinMatchOccurrence(occurrence) {
+                if (!window.ScoreboardSync) return;
+                window.ScoreboardSync.setTlsPinOccurrence(occurrence).then(function(res) {
+                    if (res && res.psb && typeof psbData !== 'undefined') {
+                        psbData.tlsPinOccurrence = res.tlsPinOccurrence;
+                    }
+                    sbHighlightCurrentMatch();
+                    if (typeof window.psbLoad === 'function') window.psbLoad();
+                }).catch(function() {});
+            }
+            window.sbPinMatchOccurrence = sbPinMatchOccurrence;
 
             function scoreboardEditorRender(rows) {
                 scoreboardEditorRenderSimple(rows);
@@ -4072,6 +4128,7 @@ $streamLogoSmallSrc = ($streamSceneAssetsBase !== '') ? ($streamSceneAssetsBase 
                     show: false,
                     showRace: false,
                     bestOf: 1,
+                    tlsPinOccurrence: null,
                     pos: Object.assign({}, PSB_DEFAULT_POS),
                     players: [
                         { name: '', score: 0, color: 'purple', team: '', race: '' },
@@ -4706,6 +4763,12 @@ $streamLogoSmallSrc = ($streamSceneAssetsBase !== '') ? ($streamSceneAssetsBase 
                     if (typeof data.show === 'boolean') d.show = data.show;
                     if (typeof data.showRace === 'boolean') d.showRace = data.showRace;
                     if (data.bestOf != null) d.bestOf = Math.max(1, parseInt(data.bestOf, 10) || 1);
+                    if (data.tlsPinOccurrence != null && data.tlsPinOccurrence !== '') {
+                        var pin = parseInt(data.tlsPinOccurrence, 10);
+                        d.tlsPinOccurrence = isNaN(pin) ? null : pin;
+                    } else {
+                        d.tlsPinOccurrence = null;
+                    }
                     if (data.pos && typeof data.pos === 'object') d.pos = Object.assign({}, PSB_DEFAULT_POS, data.pos);
                     if (Array.isArray(data.players)) {
                         for (var i = 0; i < 2; i++) {

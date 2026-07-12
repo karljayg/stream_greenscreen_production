@@ -39,11 +39,17 @@ header('Cache-Control: no-cache, no-store, must-revalidate');
         .map-labels input { flex: 1; min-width: 0; background: #1a1a1a; color: #a8f; border: 1px solid #446; border-radius: 3px; padding: 5px 8px; font-size: 12px; }
         .match-row { padding: 10px 12px; background: #111; border: 1px solid #2a2a2a; border-radius: 4px; margin-bottom: 6px; }
         .match-row.sb-current-match { background: #1a2210; border-color: #e6b800; box-shadow: inset 0 0 0 1px #e6b800; }
+        .match-row.sb-match-candidate { background: #181810; border-color: #665500; }
         .sb-current-badge {
             display: none; font-size: 9px; font-weight: bold; letter-spacing: 0.3px;
-            color: #1a1200; background: #e6b800; border-radius: 2px; padding: 2px 6px; margin-left: 6px;
+            color: #1a1200; background: #e6b800; border-radius: 2px; padding: 2px 6px; margin-left: 6px; cursor: pointer;
+        }
+        .sb-pin-btn {
+            display: none; font-size: 9px; font-weight: bold; letter-spacing: 0.3px;
+            color: #ccc; background: #333; border: 1px solid #666; border-radius: 2px; padding: 2px 6px; margin-left: 4px; cursor: pointer;
         }
         .match-row.sb-current-match .sb-current-badge { display: inline-block; }
+        .match-row.sb-match-candidate .sb-pin-btn { display: inline-block; }
         .match-top { display: flex; align-items: center; gap: 8px; margin-bottom: 6px; flex-wrap: wrap; }
         .match-players { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
         .inp { border-radius: 3px; padding: 5px 7px; font-size: 12px; min-width: 0; border: 1px solid #333; }
@@ -66,7 +72,7 @@ header('Cache-Control: no-cache, no-store, must-revalidate');
 <body>
     <div class="wrap">
         <h1>Scoreboard Editor</h1>
-        <p class="hint">Edit teams, players, maps, and match rows. Totals update automatically from row scores. A gold <strong style="color:#e6b800;">CURRENT MATCH</strong> badge marks the row matching the Player Scoreboard (scores sync both ways when matched).</p>
+        <p class="hint">Edit teams, players, maps, and match rows. Totals update automatically from row scores. Gold <strong style="color:#e6b800;">CURRENT MATCH</strong> = Player Scoreboard pair (auto-picks closest scores / last row for ACE rematches). If two rows share the same players, click <strong>PIN</strong> on the other to force sync there.</p>
 
         <div class="panel team-header">
             <input type="text" id="sb-team-a" class="team-a-inp" placeholder="Team A">
@@ -106,7 +112,7 @@ header('Cache-Control: no-cache, no-store, must-revalidate');
     <script>
     (function() {
         var _rows = null;
-        var _psbNames = { nameA: '', nameB: '' };
+        var _psbState = { nameA: '', nameB: '', scoreA: 0, scoreB: 0, pinOccurrence: null };
 
         function esc(s) {
             if (s == null) return '';
@@ -237,7 +243,8 @@ header('Cache-Control: no-cache, no-store, must-revalidate');
             div.innerHTML =
                 '<div class="match-top">' +
                     '<span class="row-num">#' + (idx + 1) + '</span>' +
-                    '<span class="sb-current-badge">CURRENT MATCH</span>' +
+                    '<span class="sb-current-badge" title="Current match for Player Scoreboard sync">CURRENT MATCH</span>' +
+                    '<button type="button" class="sb-pin-btn" title="Pin this row as current (ACE rematch)">PIN</button>' +
                     '<input type="text" class="inp inp-type sb-type" value="' + attr((row[1] || '').trim()) + '" placeholder="1v1" list="sb-type-suggestions">' +
                     '<span style="font-size:11px;color:#777;">Maps</span>' +
                     '<input type="text" class="inp inp-map sb-map1" value="' + attr((row[10] || '').trim()) + '" placeholder="Map 1">' +
@@ -258,24 +265,74 @@ header('Cache-Control: no-cache, no-store, must-revalidate');
             });
             div.querySelector('.sb-score-a').addEventListener('input', recalcTotals);
             div.querySelector('.sb-score-b').addEventListener('input', recalcTotals);
+            var pinBtn = div.querySelector('.sb-pin-btn');
+            if (pinBtn) {
+                pinBtn.addEventListener('click', function(ev) {
+                    ev.preventDefault();
+                    var occ = parseInt(div.getAttribute('data-occurrence'), 10);
+                    if (isNaN(occ)) return;
+                    pinMatchOccurrence(occ);
+                });
+            }
+            var badge = div.querySelector('.sb-current-badge');
+            if (badge) {
+                badge.addEventListener('click', function(ev) {
+                    ev.preventDefault();
+                    if (_psbState.pinOccurrence == null) return;
+                    pinMatchOccurrence(null);
+                });
+            }
             return div;
         }
 
         function applyCurrentMatchHighlight() {
             if (!window.ScoreboardSync || !_rows) return;
-            var match = window.ScoreboardSync.findMatchedRow(_rows, _psbNames.nameA, _psbNames.nameB);
-            var matchedDataIdx = -1;
-            if (match) {
-                var seen = 0;
-                for (var r = 2; r < _rows.length; r++) {
-                    if (isDataRowEmpty(_rows[r])) continue;
-                    if (r === match.rowIndex) { matchedDataIdx = seen; break; }
-                    seen++;
-                }
+            var opts = {
+                scoreA: _psbState.scoreA,
+                scoreB: _psbState.scoreB,
+                pinOccurrence: _psbState.pinOccurrence
+            };
+            var all = window.ScoreboardSync.findAllMatchedRows(_rows, _psbState.nameA, _psbState.nameB);
+            var match = window.ScoreboardSync.findMatchedRow(_rows, _psbState.nameA, _psbState.nameB, opts);
+            var rowIndexToDataIdx = {};
+            var seen = 0;
+            for (var r = 2; r < _rows.length; r++) {
+                if (isDataRowEmpty(_rows[r])) continue;
+                rowIndexToDataIdx[r] = seen;
+                seen++;
             }
-            document.querySelectorAll('#sb-match-rows .sb-match-row').forEach(function(el, idx) {
-                el.classList.toggle('sb-current-match', matchedDataIdx >= 0 && idx === matchedDataIdx);
+            var matchedDataIdx = (match && rowIndexToDataIdx[match.rowIndex] != null) ? rowIndexToDataIdx[match.rowIndex] : -1;
+            var candidateDataIdx = {};
+            all.forEach(function(m) {
+                if (rowIndexToDataIdx[m.rowIndex] != null) candidateDataIdx[rowIndexToDataIdx[m.rowIndex]] = m.occurrence;
             });
+            var multi = all.length > 1;
+            document.querySelectorAll('#sb-match-rows .sb-match-row').forEach(function(el, idx) {
+                var isCur = matchedDataIdx >= 0 && idx === matchedDataIdx;
+                var occ = candidateDataIdx[idx];
+                var isCand = occ != null;
+                el.classList.toggle('sb-current-match', isCur);
+                el.classList.toggle('sb-match-candidate', isCand && !isCur);
+                if (isCand) el.setAttribute('data-occurrence', String(occ));
+                else el.removeAttribute('data-occurrence');
+                var badge = el.querySelector('.sb-current-badge');
+                if (badge) {
+                    var pinned = isCur && _psbState.pinOccurrence != null && match && match.occurrence === _psbState.pinOccurrence;
+                    badge.textContent = pinned ? 'CURRENT (PINNED)' : 'CURRENT MATCH';
+                    badge.title = pinned ? 'Click to clear pin' : 'Current match for Player Scoreboard sync';
+                }
+            });
+        }
+
+        function pinMatchOccurrence(occurrence) {
+            if (!window.ScoreboardSync) return;
+            window.ScoreboardSync.setTlsPinOccurrence(occurrence).then(function(res) {
+                _psbState.pinOccurrence = res.tlsPinOccurrence != null ? res.tlsPinOccurrence : null;
+                applyCurrentMatchHighlight();
+                if (window.opener && !window.opener.closed) {
+                    try { window.opener.postMessage({ type: 'psb-editor-saved' }, window.location.origin); } catch (e) {}
+                }
+            }).catch(function() {});
         }
 
         function refreshPsbNamesThenHighlight() {
@@ -283,8 +340,14 @@ header('Cache-Control: no-cache, no-store, must-revalidate');
                 applyCurrentMatchHighlight();
                 return;
             }
-            window.ScoreboardSync.loadPsbNames().then(function(names) {
-                _psbNames = names;
+            window.ScoreboardSync.loadPsbNames().then(function(state) {
+                _psbState = {
+                    nameA: state.nameA || '',
+                    nameB: state.nameB || '',
+                    scoreA: state.scoreA || 0,
+                    scoreB: state.scoreB || 0,
+                    pinOccurrence: state.pinOccurrence
+                };
                 applyCurrentMatchHighlight();
             });
         }

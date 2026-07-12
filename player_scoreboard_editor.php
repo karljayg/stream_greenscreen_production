@@ -141,7 +141,8 @@ header('Cache-Control: no-cache, no-store, must-revalidate');
 
     function defaultData() {
         return {
-            show: false, showRace: false, bestOf: 1, pos: { left: 24, top: 24, width: 320, height: 92 },
+            show: false, showRace: false, bestOf: 1, tlsPinOccurrence: null,
+            pos: { left: 24, top: 24, width: 320, height: 92 },
             players: [
                 { name: '', score: 0, color: 'purple', team: '', race: '' },
                 { name: '', score: 0, color: 'blue', team: '', race: '' }
@@ -155,6 +156,10 @@ header('Cache-Control: no-cache, no-store, must-revalidate');
             if (typeof d.show === 'boolean') out.show = d.show;
             if (typeof d.showRace === 'boolean') out.showRace = d.showRace;
             if (d.bestOf != null) out.bestOf = Math.max(1, parseInt(d.bestOf, 10) || 1);
+            if (d.tlsPinOccurrence != null && d.tlsPinOccurrence !== '') {
+                var pin = parseInt(d.tlsPinOccurrence, 10);
+                out.tlsPinOccurrence = isNaN(pin) ? null : pin;
+            }
             if (d.pos && typeof d.pos === 'object') out.pos = Object.assign(out.pos, d.pos);
             if (Array.isArray(d.players)) for (var i = 0; i < 2; i++) if (d.players[i]) out.players[i] = Object.assign(out.players[i], d.players[i]);
             if (Array.isArray(d.teams) && d.teams.length) out.teams = d.teams.map(function(t) { return { name: (t && t.name) || '', acr: (t && t.acr) || '' }; });
