@@ -1,0 +1,349 @@
+:root {
+    --mx-bg: #0c1118;
+    --mx-surface: #141b24;
+    --mx-surface-2: #1a2330;
+    --mx-border: #2a3545;
+    --mx-text: #e7edf5;
+    --mx-muted: #8b9bb0;
+    --mx-accent: #3d9cf0;
+    --mx-accent-soft: rgba(61, 156, 240, 0.14);
+    --mx-win: #3ecf8e;
+    --mx-lose: #f07178;
+    --mx-protoss: #c9a227;
+    --mx-terran: #5b9fd4;
+    --mx-zerg: #b86bdb;
+}
+
+.mathison-body {
+    margin: 0;
+    min-height: 100vh;
+    font-family: "Outfit", system-ui, sans-serif;
+    color: var(--mx-text);
+    background:
+        radial-gradient(1200px 600px at 10% -10%, rgba(61, 156, 240, 0.16), transparent 55%),
+        radial-gradient(900px 500px at 100% 0%, rgba(62, 207, 142, 0.08), transparent 50%),
+        linear-gradient(180deg, #0a0f15 0%, var(--mx-bg) 40%, #0e1520 100%);
+}
+
+.mathison-shell {
+    width: min(1100px, calc(100% - 2rem));
+    margin: 0 auto;
+    padding: 1.75rem 0 3rem;
+}
+
+.mathison-shell--wide {
+    width: min(1480px, calc(100% - 1.25rem));
+}
+
+.mathison-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 1rem;
+    margin-bottom: 1rem;
+}
+
+.mathison-eyebrow {
+    margin: 0 0 0.15rem;
+    font-size: 0.75rem;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--mx-muted);
+}
+
+.mathison-header h1 {
+    margin: 0;
+    font-size: clamp(1.75rem, 3vw, 2.35rem);
+    font-weight: 700;
+    letter-spacing: -0.02em;
+}
+
+.mathison-header-meta {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.mathison-breadcrumb {
+    display: flex;
+    gap: 0.4rem;
+    align-items: center;
+    margin-bottom: 0.25rem;
+    font-size: 0.85rem;
+    color: var(--mx-muted);
+}
+
+.mathison-breadcrumb a {
+    color: var(--mx-accent);
+    text-decoration: none;
+}
+
+.mathison-lead {
+    color: var(--mx-muted);
+    margin: 0 0 1.5rem;
+    max-width: 40rem;
+}
+
+.mathison-card-link {
+    text-decoration: none;
+    color: inherit;
+    display: block;
+    height: 100%;
+}
+
+.mathison-card {
+    height: 100%;
+    padding: 1.25rem 1.35rem;
+    border-radius: 0.75rem;
+    background: linear-gradient(160deg, var(--mx-surface-2), var(--mx-surface));
+    border: 1px solid var(--mx-border);
+    transition: border-color 0.2s ease, transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.mathison-card-link:hover .mathison-card {
+    border-color: var(--mx-accent);
+    transform: translateY(-2px);
+    box-shadow: 0 12px 28px rgba(0, 0, 0, 0.35);
+}
+
+.mathison-card.is-muted {
+    opacity: 0.55;
+}
+
+.mathison-card h2 {
+    margin: 0 0 0.5rem;
+    font-size: 1.25rem;
+}
+
+.mathison-card p {
+    margin: 0;
+    color: var(--mx-muted);
+    font-size: 0.95rem;
+    line-height: 1.45;
+}
+
+.mathison-card-cta {
+    display: inline-block;
+    margin-top: 1rem;
+    color: var(--mx-accent);
+    font-weight: 600;
+    font-size: 0.9rem;
+}
+
+.mathison-filters {
+    background: var(--mx-surface) !important;
+    border: 1px solid var(--mx-border) !important;
+    border-radius: 0.75rem !important;
+    margin-bottom: 0.85rem;
+}
+
+.mathison-filters .form-label {
+    margin-bottom: 0.2rem;
+    font-size: 0.72rem;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: var(--mx-muted);
+}
+
+.mathison-body .form-control,
+.mathison-body .form-select,
+.mathison-modal .form-control,
+.mathison-modal .form-select {
+    background: #0f1520;
+    border-color: var(--mx-border);
+    color: var(--mx-text);
+}
+
+.mathison-body .form-control:focus,
+.mathison-body .form-select:focus,
+.mathison-modal .form-control:focus,
+.mathison-modal .form-select:focus {
+    background: #101826;
+    border-color: var(--mx-accent);
+    color: var(--mx-text);
+    box-shadow: 0 0 0 0.2rem var(--mx-accent-soft);
+}
+
+.mathison-body .form-control::placeholder {
+    color: #667688;
+}
+
+.mathison-table-toolbar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 0.75rem;
+    margin-bottom: 0.5rem;
+}
+
+.mathison-status {
+    font-size: 0.85rem;
+    color: var(--mx-muted);
+}
+
+.mathison-table-wrap {
+    border: 1px solid var(--mx-border);
+    border-radius: 0.75rem;
+    background: var(--mx-surface);
+    overflow: auto;
+    max-height: calc(100vh - 15rem);
+}
+
+.mathison-table {
+    --bs-table-bg: transparent;
+    --bs-table-color: var(--mx-text);
+    --bs-table-hover-bg: rgba(61, 156, 240, 0.08);
+    --bs-table-hover-color: var(--mx-text);
+    --bs-table-border-color: var(--mx-border);
+    font-size: 0.82rem;
+}
+
+.mathison-table thead th {
+    position: sticky;
+    top: 0;
+    z-index: 2;
+    background: #182231;
+    color: var(--mx-muted);
+    font-weight: 600;
+    font-size: 0.72rem;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    white-space: nowrap;
+    border-bottom-width: 1px;
+    cursor: default;
+    user-select: none;
+}
+
+.mathison-table thead th[data-sort] {
+    cursor: pointer;
+}
+
+.mathison-table thead th[data-sort]:hover,
+.mathison-table thead th.is-sorted {
+    color: var(--mx-accent);
+}
+
+.mathison-table thead th.is-sorted::after {
+    content: attr(data-dir);
+    margin-left: 0.25rem;
+    opacity: 0.8;
+}
+
+.mathison-table tbody td {
+    vertical-align: middle;
+    white-space: nowrap;
+    border-color: rgba(42, 53, 69, 0.7);
+}
+
+.mathison-table .id-cell {
+    font-family: "JetBrains Mono", ui-monospace, monospace;
+    font-size: 0.78rem;
+    color: #a8c0dc;
+}
+
+.mathison-table .player-cell {
+    max-width: 9.5rem;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+a.player-link {
+    color: var(--mx-accent);
+    text-decoration: none;
+    font-weight: 500;
+}
+
+a.player-link:hover {
+    text-decoration: underline;
+    color: #6bb3f5;
+}
+
+.mathison-table .map-cell {
+    max-width: 11rem;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.race-pill {
+    display: inline-block;
+    min-width: 3.6rem;
+    padding: 0.1rem 0.4rem;
+    border-radius: 0.3rem;
+    font-size: 0.72rem;
+    font-weight: 600;
+    text-align: center;
+    background: #243041;
+}
+
+.race-pill.is-protoss { color: var(--mx-protoss); background: rgba(201, 162, 39, 0.12); }
+.race-pill.is-terran { color: var(--mx-terran); background: rgba(91, 159, 212, 0.12); }
+.race-pill.is-zerg { color: var(--mx-zerg); background: rgba(184, 107, 219, 0.12); }
+
+.result-win { color: var(--mx-win); font-weight: 600; }
+.result-lose { color: var(--mx-lose); font-weight: 600; }
+
+.mathison-actions {
+    display: inline-flex;
+    gap: 0.25rem;
+}
+
+.mathison-actions .btn {
+    --bs-btn-padding-y: 0.15rem;
+    --bs-btn-padding-x: 0.45rem;
+    --bs-btn-font-size: 0.72rem;
+}
+
+.mathison-lazy-sentinel {
+    height: 1px;
+}
+
+.mathison-lazy-status {
+    padding: 0.75rem 1rem 1rem;
+    text-align: center;
+    color: var(--mx-muted);
+    font-size: 0.85rem;
+}
+
+.mathison-modal {
+    background: var(--mx-surface-2);
+    color: var(--mx-text);
+    border: 1px solid var(--mx-border);
+}
+
+.mathison-modal .modal-header,
+.mathison-modal .modal-footer {
+    border-color: var(--mx-border);
+}
+
+.mathison-modal .form-label {
+    font-size: 0.72rem;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: var(--mx-muted);
+    margin-bottom: 0.2rem;
+}
+
+.font-mono,
+.mathison-modal .font-mono {
+    font-family: "JetBrains Mono", ui-monospace, monospace;
+}
+
+.mathison-modal-names {
+    font-size: 0.85rem;
+    color: var(--mx-muted);
+}
+
+.row-loading td {
+    color: var(--mx-muted);
+    font-style: italic;
+}
+
+@media (max-width: 768px) {
+    .mathison-header {
+        flex-direction: column;
+    }
+    .mathison-table-wrap {
+        max-height: none;
+    }
+}

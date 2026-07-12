@@ -11,6 +11,7 @@ production_files/process_videos.py
 
 # Local secrets
 config.local.php
+mathison/config.local.php
 
 # Per-user settings (local/personal, not shared)
 data/settings_*.json
