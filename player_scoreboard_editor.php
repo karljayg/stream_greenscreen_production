@@ -49,11 +49,12 @@ header('Cache-Control: no-cache, no-store, must-revalidate');
 <body>
     <div class="wrap">
         <h1>Player Scoreboard</h1>
-        <p class="hint">Edits apply to the overlay live. Move/resize the panel from the main page (Settings &rarr; Player Scoreboard &rarr; Edit and Move). When both names match a Team League 1v1 row, scores sync both ways.</p>
+        <p class="hint">Edits apply to the overlay live. Move/resize the panel from the main page (Settings &rarr; Player Scoreboard &rarr; Edit and Move). <strong>Team league</strong> on: sync with FSL CSV when names match. Off: custom/show 1v1 — no team ACR, activity logs as mode 1v1 (does not touch team CSV).</p>
 
         <div class="toprow">
             <label><input type="checkbox" id="psb-show"> Show on overlay (SC2 scene)</label>
             <label><input type="checkbox" id="psb-show-race"> Show race</label>
+            <label title="When checked, sync with Team League scoreboard and show team ACR. Uncheck for custom/show 1v1 matches."><input type="checkbox" id="psb-team-league"> Team league</label>
             <label>Best of <input type="number" id="psb-best-of" min="1" max="99" value="1"></label>
             <button type="button" id="psb-swap-btn" title="Swap top and bottom players">&#8645; Swap A/B</button>
         </div>
@@ -67,8 +68,8 @@ header('Cache-Control: no-cache, no-store, must-revalidate');
                 <input type="number" class="psb-score" min="0" max="99" value="0">
                 <label>Color:</label>
                 <select class="psb-color"></select>
-                <label>Team:</label>
-                <select class="psb-team"></select>
+                <label class="psb-team-field">Team:</label>
+                <select class="psb-team psb-team-field"></select>
                 <label>Race:</label>
                 <select class="psb-race">
                     <option value="">Auto (from rankings)</option>
@@ -89,8 +90,8 @@ header('Cache-Control: no-cache, no-store, must-revalidate');
                 <input type="number" class="psb-score" min="0" max="99" value="0">
                 <label>Color:</label>
                 <select class="psb-color"></select>
-                <label>Team:</label>
-                <select class="psb-team"></select>
+                <label class="psb-team-field">Team:</label>
+                <select class="psb-team psb-team-field"></select>
                 <label>Race:</label>
                 <select class="psb-race">
                     <option value="">Auto (from rankings)</option>
@@ -102,7 +103,7 @@ header('Cache-Control: no-cache, no-store, must-revalidate');
             </div>
         </div>
 
-        <details>
+        <details id="psb-teams-details">
             <summary>Team list (name &rarr; acronym)</summary>
             <div id="psb-teams-rows"></div>
             <button type="button" id="psb-team-add-btn" style="margin-top:6px; font-size:12px;">+ Add team</button>
@@ -141,7 +142,7 @@ header('Cache-Control: no-cache, no-store, must-revalidate');
 
     function defaultData() {
         return {
-            show: false, showRace: false, bestOf: 1, tlsPinOccurrence: null,
+            show: false, showRace: false, bestOf: 1, teamLeague: true, tlsPinOccurrence: null,
             pos: { left: 24, top: 24, width: 320, height: 92 },
             players: [
                 { name: '', score: 0, color: 'purple', team: '', race: '' },
@@ -155,6 +156,7 @@ header('Cache-Control: no-cache, no-store, must-revalidate');
         if (d && typeof d === 'object') {
             if (typeof d.show === 'boolean') out.show = d.show;
             if (typeof d.showRace === 'boolean') out.showRace = d.showRace;
+            if (typeof d.teamLeague === 'boolean') out.teamLeague = d.teamLeague;
             if (d.bestOf != null) out.bestOf = Math.max(1, parseInt(d.bestOf, 10) || 1);
             if (d.tlsPinOccurrence != null && d.tlsPinOccurrence !== '') {
                 var pin = parseInt(d.tlsPinOccurrence, 10);
@@ -267,9 +269,19 @@ header('Cache-Control: no-cache, no-store, must-revalidate');
         });
     }
 
+    function applyTeamLeagueUi() {
+        var on = !_data || _data.teamLeague !== false;
+        document.querySelectorAll('.psb-team-field').forEach(function(el) {
+            el.style.display = on ? '' : 'none';
+        });
+        var details = document.getElementById('psb-teams-details');
+        if (details) details.style.display = on ? '' : 'none';
+    }
+
     function renderAll() {
         document.getElementById('psb-show').checked = !!_data.show;
         document.getElementById('psb-show-race').checked = !!_data.showRace;
+        document.getElementById('psb-team-league').checked = _data.teamLeague !== false;
         document.getElementById('psb-best-of').value = parseInt(_data.bestOf, 10) || 1;
         document.querySelectorAll('.player').forEach(function(box) {
             var i = parseInt(box.getAttribute('data-idx'), 10) || 0;
@@ -282,12 +294,14 @@ header('Cache-Control: no-cache, no-store, must-revalidate');
         });
         renderTeamRows();
         updateAutoLabels();
+        applyTeamLeagueUi();
     }
 
     function collect() {
         if (!_data) return;
         _data.show = document.getElementById('psb-show').checked;
         _data.showRace = document.getElementById('psb-show-race').checked;
+        _data.teamLeague = !!document.getElementById('psb-team-league').checked;
         _data.bestOf = Math.max(1, parseInt(document.getElementById('psb-best-of').value, 10) || 1);
         document.querySelectorAll('.player').forEach(function(box) {
             var i = parseInt(box.getAttribute('data-idx'), 10) || 0;
@@ -301,18 +315,26 @@ header('Cache-Control: no-cache, no-store, must-revalidate');
         });
     }
 
-    function notifyOpener(tlsSynced) {
+    var _scoreSnap = null;
+    function rememberSnap() {
+        if (window.ScoreboardSync && typeof window.ScoreboardSync.scoreSnapshot === 'function' && _data) {
+            _scoreSnap = window.ScoreboardSync.scoreSnapshot(_data);
+        }
+    }
+
+    function notifyOpener(extra) {
         if (window.opener && !window.opener.closed) {
             try {
-                window.opener.postMessage({
+                window.opener.postMessage(Object.assign({
                     type: 'psb-editor-saved',
-                    tlsSynced: !!tlsSynced
-                }, window.location.origin);
+                    tlsSynced: false
+                }, extra || {}), window.location.origin);
             } catch (e) {}
         }
     }
     function save(showStatus) {
         collect();
+        var prev = _scoreSnap;
         var status = document.getElementById('save-status');
         var btn = document.getElementById('psb-save-btn');
         if (showStatus) { if (btn) btn.disabled = true; if (status) status.textContent = 'Saving…'; }
@@ -324,18 +346,35 @@ header('Cache-Control: no-cache, no-store, must-revalidate');
                 if (showStatus) setTimeout(function() { if (status) status.textContent = ''; if (btn) btn.disabled = false; }, 2000);
                 return;
             }
-            var afterSync = function(tlsSynced) {
-                notifyOpener(tlsSynced);
+            var finish = function(extra) {
+                rememberSnap();
+                notifyOpener(extra);
                 if (showStatus && status) status.textContent = 'Saved!';
                 if (showStatus) setTimeout(function() { if (status) status.textContent = ''; if (btn) btn.disabled = false; }, 2000);
             };
-            if (window.ScoreboardSync) {
-                window.ScoreboardSync.syncPsbToCsv(_data).then(function(syncRes) {
-                    afterSync(syncRes && syncRes.changed);
-                });
-            } else {
-                afterSync(false);
+            if (!window.ScoreboardSync) {
+                finish({});
+                return;
             }
+            var isTl = typeof window.ScoreboardSync.isTeamLeague === 'function'
+                ? window.ScoreboardSync.isTeamLeague(_data)
+                : (_data.teamLeague !== false);
+            if (!isTl) {
+                if (typeof window.ScoreboardSync.report1v1Score !== 'function') {
+                    finish({ tlsSynced: false, syncJsStale: true });
+                    return;
+                }
+                return window.ScoreboardSync.report1v1Score(_data, prev).then(function(r1) {
+                    finish({
+                        tlsSynced: false,
+                        oneVOne: !!(r1 && !r1.skipped),
+                        customSynced: !!(r1 && r1.customOk)
+                    });
+                });
+            }
+            return window.ScoreboardSync.syncPsbToCsv(_data).then(function(syncRes) {
+                finish({ tlsSynced: !!(syncRes && syncRes.changed) });
+            });
         }).catch(function() {
             if (showStatus && status) { status.textContent = 'Network error.'; setTimeout(function() { status.textContent = ''; if (btn) btn.disabled = false; }, 2000); }
         });
@@ -376,6 +415,12 @@ header('Cache-Control: no-cache, no-store, must-revalidate');
     /* ---- Wire up ---- */
     document.getElementById('psb-show').addEventListener('change', scheduleSave);
     document.getElementById('psb-show-race').addEventListener('change', scheduleSave);
+    document.getElementById('psb-team-league').addEventListener('change', function() {
+        collect();
+        applyTeamLeagueUi();
+        scheduleSave();
+        if (typeof fitWindow === 'function') setTimeout(fitWindow, 0);
+    });
     document.getElementById('psb-best-of').addEventListener('input', scheduleSave);
     document.querySelectorAll('.player').forEach(function(box) {
         attachAc(box.querySelector('.psb-name'));
@@ -430,6 +475,7 @@ header('Cache-Control: no-cache, no-store, must-revalidate');
 
     Promise.all([loadData(), loadRankings()]).then(function() {
         renderAll();
+        rememberSnap();
         setTimeout(fitWindow, 0);
     });
 

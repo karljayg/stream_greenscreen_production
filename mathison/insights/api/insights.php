@@ -1,27 +1,34 @@
 <?php
 /**
- * Mathison Insights API (read-only)
+ * Mathison Insights API
  *
- * GET ?action=status              relabeler freshness check (drives the
- *                                 "rerun relabeler" banner on the dashboard)
- * GET ?action=overview            global tag stats + top opponents
- * GET ?action=opponents           opponent list with tagged-game counts
- * GET ?action=opponent&name=X     scouting profile for one opponent
+ * GET  ?action=status              relabeler freshness check
+ * GET  ?action=overview            global tag stats + top opponents
+ * GET  ?action=opponents           opponent list with tagged-game counts
+ * GET  ?action=opponent&name=X     scouting profile for one opponent
+ * POST ?action=relabel             run full relabel (NDJSON progress stream)
  *
- * All data is served from the derived insight_* tables plus read-only
- * lookups into PatternLearning (key timings) - nothing here writes.
+ * Most actions are read-only from insight_* + PatternLearning.
+ * relabel writes insight_tags / insight_tactics / insight_runs.
  */
 ini_set('display_errors', '0');
-header('Content-Type: application/json; charset=utf-8');
 header('Cache-Control: no-store');
 
 $pathPrefix = '../../../';
 require_once __DIR__ . '/../../../partials/auth-gate.php';
 require_once __DIR__ . '/../../db.php';
 
+$action = $_GET['action'] ?? 'status';
+
+if ($action === 'relabel') {
+    run_relabel_stream();
+    exit;
+}
+
+header('Content-Type: application/json; charset=utf-8');
+
 try {
     $pdo = mathison_pdo();
-    $action = $_GET['action'] ?? 'status';
     $startWorkers = parse_start_workers_param($_GET['startWorkers'] ?? '');
 
     switch ($action) {
@@ -53,6 +60,54 @@ try {
 } catch (Throwable $e) {
     http_response_code(500);
     echo json_encode(['ok' => false, 'error' => $e->getMessage()], JSON_INVALID_UTF8_SUBSTITUTE);
+}
+
+/**
+ * POST-only NDJSON stream: one progress object per line, then a final
+ * {done:true, result:{…}} line. Auth-gated via auth-gate.php above.
+ */
+function run_relabel_stream(): void
+{
+    if (($_SERVER['REQUEST_METHOD'] ?? 'GET') !== 'POST') {
+        http_response_code(405);
+        header('Content-Type: application/json; charset=utf-8');
+        echo json_encode(['ok' => false, 'error' => 'POST required']);
+        return;
+    }
+
+    @ini_set('zlib.output_compression', '0');
+    @ini_set('output_buffering', '0');
+    while (ob_get_level() > 0) {
+        ob_end_flush();
+    }
+    ignore_user_abort(true);
+    set_time_limit(0);
+
+    header('Content-Type: application/x-ndjson; charset=utf-8');
+    header('X-Accel-Buffering: no');
+
+    $emit = static function (array $row): void {
+        echo json_encode($row, JSON_INVALID_UTF8_SUBSTITUTE) . "\n";
+        if (function_exists('ob_flush')) {
+            @ob_flush();
+        }
+        flush();
+    };
+
+    require_once __DIR__ . '/../relabel_lib.php';
+
+    try {
+        $pdo = mathison_pdo();
+        $result = run_relabel($pdo, [
+            'dry_run' => false,
+            'on_progress' => static function (int $pct, string $message, array $extra = []) use ($emit): void {
+                $emit(array_merge(['pct' => $pct, 'message' => $message], $extra));
+            },
+        ]);
+        $emit(['done' => true, 'ok' => !empty($result['ok']), 'result' => $result]);
+    } catch (Throwable $e) {
+        $emit(['done' => true, 'ok' => false, 'error' => $e->getMessage()]);
+    }
 }
 
 /** Accept 6, 8, or 12; empty = no filter. */
@@ -104,12 +159,22 @@ function status(PDO $pdo): array
     $stale = true;
     $newReplays = (int) $current['replay_comment_count'];
     $newPatterns = (int) $current['pattern_count'];
+    $rulesStale = false;
     if ($lastRun) {
         $newReplays = max(0, (int) $current['replay_comment_count'] - (int) $lastRun['watermark_replay_comment_count']);
         $patternsUpdated = $lastRun['watermark_pattern_updated_at'] !== null
             && $current['max_pattern_updated_at'] > $lastRun['watermark_pattern_updated_at'];
         $newPatterns = max(0, (int) $current['pattern_count'] - (int) $lastRun['watermark_pattern_count']);
         $stale = $newReplays > 0 || $newPatterns > 0 || $patternsUpdated;
+
+        // Tagging vocabulary lives in rules.php. If it changed since this
+        // run, charts still look "fresh" on watermarks but labels are wrong.
+        $stored = (string) ($lastRun['notes'] ?? '');
+        if (preg_match('/^rules_md5:([a-f0-9]{32})$/', $stored, $m)) {
+            $rulesPath = __DIR__ . '/../rules.php';
+            $currentHash = is_file($rulesPath) ? (string) md5_file($rulesPath) : '';
+            $rulesStale = ($currentHash !== '' && !hash_equals($m[1], $currentHash));
+        }
     }
 
     $rules = require __DIR__ . '/../rules.php';
@@ -125,6 +190,7 @@ function status(PDO $pdo): array
         'last_run' => $lastRun,
         'current' => $current,
         'stale' => $stale,
+        'rules_stale' => $rulesStale,
         'new_commented_replays' => $newReplays,
         'new_patterns' => $newPatterns,
         'never_run' => $lastRun === null,

@@ -87,11 +87,12 @@ PatternLearning data.
 | `README.md` | This document |
 | `rules.php` | **Edit this** - vocabulary, self accounts, chain rules |
 | `relabel.php` | CLI relabeler (idempotent full rebuild) |
+| `relabel_lib.php` | Shared relabel logic (CLI + web) |
 | `likely_strategy.php` | Timing-match "likely strategy" for unlabeled games |
 | `schema_changes.sql` | DDL for derived tables (auto-applied if missing) |
-| `api/insights.php` | Read-only JSON API |
+| `api/insights.php` | JSON API (incl. POST `?action=relabel`) |
 | `index.php` | Scouting dashboard UI |
-| `js/insights.js` | Charts + staleness banner |
+| `js/insights.js` | Charts + staleness banner + relabel UI |
 
 DB connection is shared with the rest of Mathison via `../db.php` and
 `../config.php` (or `config.local.php`).
@@ -279,6 +280,9 @@ watermarks to live source counts.
 | Yellow "Rerun suggested" | New commented replays and/or new/updated PatternLearning rows since last run |
 | Green "up to date" | Watermarks still match |
 | Yellow "never run" | No finished `insight_runs` row yet |
+
+Use **Run relabel now** / **Force relabel** on the dashboard to rebuild from the browser
+(progress bar + status). Same code path as the CLI.
 
 ### Manual / automation
 

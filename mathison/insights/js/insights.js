@@ -50,6 +50,131 @@
     Chart.defaults.borderColor = 'rgba(42, 53, 69, 0.7)';
     Chart.defaults.font.family = 'Outfit, system-ui, sans-serif';
 
+    var relabelRunning = false;
+
+    function relabelButtonHtml(label) {
+        return '<button type="button" class="btn btn-sm btn-warning ms-2" id="btn-relabel">' +
+            esc(label || 'Run relabel') + '</button>';
+    }
+
+    function bindRelabelButton() {
+        var btn = document.getElementById('btn-relabel');
+        if (btn && !btn._bound) {
+            btn._bound = true;
+            btn.addEventListener('click', startRelabel);
+        }
+    }
+
+    function setRelabelProgress(pct, message, detail) {
+        var panel = document.getElementById('relabel-panel');
+        var bar = document.getElementById('relabel-progress-bar');
+        var wrap = document.getElementById('relabel-progress-wrap');
+        var pctEl = document.getElementById('relabel-pct');
+        var statusEl = document.getElementById('relabel-status-text');
+        var detailEl = document.getElementById('relabel-detail');
+        panel.hidden = false;
+        pct = Math.max(0, Math.min(100, Number(pct) || 0));
+        bar.style.width = pct + '%';
+        wrap.setAttribute('aria-valuenow', String(pct));
+        pctEl.textContent = pct + '%';
+        if (message) statusEl.textContent = message;
+        if (detail != null) detailEl.textContent = detail;
+    }
+
+    function startRelabel() {
+        if (relabelRunning) return;
+        if (!confirm('Rebuild insight tables from all commented replays and patterns? This may take a minute.')) {
+            return;
+        }
+        relabelRunning = true;
+        var btn = document.getElementById('btn-relabel');
+        if (btn) {
+            btn.disabled = true;
+            btn.textContent = 'Running…';
+        }
+        setRelabelProgress(1, 'Starting relabel…', '');
+
+        fetch(API + '?action=relabel', {
+            method: 'POST',
+            credentials: 'same-origin',
+            headers: { 'Accept': 'application/x-ndjson' }
+        }).then(function (r) {
+            if (!r.ok) {
+                return r.text().then(function (t) {
+                    throw new Error('HTTP ' + r.status + ': ' + t.slice(0, 200));
+                });
+            }
+            if (!r.body || !r.body.getReader) {
+                return r.text().then(function (text) {
+                    text.split('\n').forEach(handleRelabelLine);
+                });
+            }
+            var reader = r.body.getReader();
+            var decoder = new TextDecoder();
+            var buf = '';
+            function pump() {
+                return reader.read().then(function (chunk) {
+                    if (chunk.value) buf += decoder.decode(chunk.value, { stream: !chunk.done });
+                    var parts = buf.split('\n');
+                    buf = parts.pop() || '';
+                    parts.forEach(handleRelabelLine);
+                    if (chunk.done) {
+                        if (buf.trim()) handleRelabelLine(buf);
+                        return;
+                    }
+                    return pump();
+                });
+            }
+            return pump();
+        }).catch(function (err) {
+            setRelabelProgress(0, 'Relabel failed', err.message);
+            relabelRunning = false;
+            bindRelabelButton();
+            var b = document.getElementById('btn-relabel');
+            if (b) {
+                b.disabled = false;
+                b.textContent = 'Run relabel';
+            }
+        });
+    }
+
+    function handleRelabelLine(line) {
+        line = String(line || '').trim();
+        if (!line) return;
+        var row;
+        try {
+            row = JSON.parse(line);
+        } catch (e) {
+            return;
+        }
+        if (row.done) {
+            relabelRunning = false;
+            if (row.ok && row.result) {
+                var res = row.result;
+                setRelabelProgress(100, 'Relabel complete',
+                    (res.tags || 0) + ' tags, ' + (res.tactics || 0) + ' tactics' +
+                    (res.run_id ? ' (run #' + res.run_id + ')' : ''));
+                getJSON(apiUrl('status')).then(function (st) {
+                    renderStatus(st);
+                    return loadDashboard();
+                }).catch(function () {});
+            } else {
+                var err = (row.result && row.result.error) || row.error || 'Unknown error';
+                setRelabelProgress(0, 'Relabel failed', err);
+                var b = document.getElementById('btn-relabel');
+                if (b) {
+                    b.disabled = false;
+                    b.textContent = 'Retry relabel';
+                    bindRelabelButton();
+                }
+            }
+            return;
+        }
+        if (row.pct != null) {
+            setRelabelProgress(row.pct, row.message || 'Working…', '');
+        }
+    }
+
     function renderStatus(st) {
         var el = document.getElementById('status-banner');
         el.hidden = false;
@@ -72,7 +197,10 @@
 
         if (st.never_run) {
             el.className = 'stale-banner mb-3';
-            el.innerHTML = 'The relabeler has never run. Run <code>php mathison/insights/relabel.php</code> to build the insight tables.';
+            el.innerHTML = 'The relabeler has never run. ' +
+                'Use the button to build the insight tables.' +
+                relabelButtonHtml('Run relabel');
+            bindRelabelButton();
             return;
         }
         document.getElementById('st-run').textContent = st.last_run.finished_at || '—';
@@ -80,15 +208,23 @@
             (st.last_run.tactics_written || 0) + ' tactics / ' +
             (st.last_run.tags_written || 0) + ' atomic tags';
 
+        var parts = [];
         if (st.stale) {
+            parts.push(st.new_commented_replays + ' new commented replay(s) and ' +
+                st.new_patterns + ' new pattern(s) since the last relabel');
+        }
+        if (st.rules_stale) {
+            parts.push('tagging rules changed since the last relabel — you need to relabel to apply them');
+        }
+
+        if (parts.length) {
             el.className = 'stale-banner mb-3';
-            el.innerHTML = '<strong>Rerun suggested:</strong> ' +
-                st.new_commented_replays + ' new commented replay(s) and ' +
-                st.new_patterns + ' new pattern(s) since the last relabel. ' +
-                'Run <code>php mathison/insights/relabel.php</code> to refresh.';
+            el.innerHTML = '<strong>Relabel needed:</strong> ' + parts.join('. Also: ') + '. ' +
+                relabelButtonHtml('Run relabel now');
+            bindRelabelButton();
         } else {
             el.className = 'fresh-banner mb-3';
-            el.textContent = 'Insight tables are up to date with Replays and PatternLearning.';
+            el.textContent = 'Insight tables are up to date with Replays, PatternLearning, and tagging rules.';
         }
     }
 

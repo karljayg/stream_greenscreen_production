@@ -22,6 +22,8 @@ header('Cache-Control: no-cache, no-store, must-revalidate');
         .stale-banner { border: 1px solid #a37718; background: rgba(201, 162, 39, 0.12); color: #e8c96a; border-radius: 0.6rem; padding: 0.7rem 1rem; font-size: 0.9rem; }
         .fresh-banner { border: 1px solid #2d6a4a; background: rgba(62, 207, 142, 0.08); color: #7bd8ab; border-radius: 0.6rem; padding: 0.7rem 1rem; font-size: 0.9rem; }
         .stale-banner code, .fresh-banner code { color: inherit; background: rgba(0,0,0,0.3); padding: 0.1rem 0.35rem; border-radius: 0.25rem; }
+        .relabel-progress .progress { height: 0.65rem; background: rgba(0,0,0,0.35); }
+        .relabel-progress .progress-bar { background: var(--mx-accent, #3d9cf0); transition: width 0.25s ease; }
         canvas { max-height: 320px; }
         .comment-cell { max-width: 26rem; white-space: normal; }
         .tag-chip { display: inline-block; background: var(--mx-accent-soft); color: var(--mx-accent); border-radius: 0.3rem; padding: 0.05rem 0.4rem; font-size: 0.72rem; margin: 0 0.15rem 0.15rem 0; }
@@ -48,6 +50,16 @@ header('Cache-Control: no-cache, no-store, must-revalidate');
         </header>
 
         <div id="status-banner" class="mb-3" hidden></div>
+        <div id="relabel-panel" class="insight-card mb-3 relabel-progress" hidden>
+            <div class="d-flex flex-wrap align-items-center justify-content-between gap-2 mb-2">
+                <strong id="relabel-status-text">Preparing relabel…</strong>
+                <span class="stat-sub" id="relabel-pct">0%</span>
+            </div>
+            <div class="progress mb-1" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0" id="relabel-progress-wrap">
+                <div class="progress-bar" id="relabel-progress-bar" style="width:0%"></div>
+            </div>
+            <div class="stat-sub" id="relabel-detail"></div>
+        </div>
 
         <div class="insight-card mb-3">
             <div class="d-flex flex-wrap align-items-end gap-3">

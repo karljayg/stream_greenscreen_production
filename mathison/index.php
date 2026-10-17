@@ -59,6 +59,15 @@ header('Cache-Control: no-cache, no-store, must-revalidate');
                 </a>
             </div>
             <div class="col-md-6 col-xl-4">
+                <a class="mathison-card-link" href="open-matchups/index.php">
+                    <article class="mathison-card">
+                        <h2>Open Matchups</h2>
+                        <p>Host queue for offseason casted games — Twitch signup, wait times, clear queue.</p>
+                        <span class="mathison-card-cta">Open queue →</span>
+                    </article>
+                </a>
+            </div>
+            <div class="col-md-6 col-xl-4">
                 <article class="mathison-card is-muted">
                     <h2>Players</h2>
                     <p>Coming next — manage player IDs and SC2 usernames.</p>

@@ -108,16 +108,29 @@ globally monotonic and align with the `since` parameter.
 | `music`  | `{ mood, mood_label, track, playing, random }` |
 | `intro`  | `{ player }` |
 | `gg`     | `{ kind: "gg" \| "match_gg" }` |
-| `score`  | `{ team: "a"\|"b", from, to, team_a: {name,score}, team_b: {name,score} }` |
-| `winner` | `{ team: "a"\|"b", name }` — series decided |
+| `score`  | Team league: `{ team: "a"\|"b", from, to, team_a: {name,score}, team_b: {name,score} }` — never has `mode`. **OR** non-league 1v1: `{ mode: "1v1", a, b, fromA, toA, fromB, toB, winner }` — never has `data.team`. |
+| `winner` | `{ team: "a"\|"b", name }` — series decided (team league / Match GG only) |
+
+### Player 1v1 score (Team league unchecked)
+
+When the Player Scoreboard has **Team league** off and a player score changes, the producer emits a burst (in order):
+
+1. `gg` `{ kind: "gg" }`
+2. `intro` `{ player: <winner> }` (omitted if no clear winner)
+3. `score` with `mode: "1v1"` as above
+
+It also upserts `data/custom_scoreboard.json` for that pair. It does **not** write `2026/scoreboard.csv` and does **not** emit a team `{ team, from, to }` score event.
+
+Suggested chat: `"<winner> takes the game. <a> <toA>-<toB> <b>."`
 
 ## Winner semantics
 
-`series_winner` and the `winner` event come from the **authoritative score**
-(the scoreboard the producer maintains): when a score change occurs while
+`series_winner` and the `winner` event come from the **authoritative team score**
+(the FSL scoreboard CSV): when a score change occurs while
 `gg.state` is `"match_gg"`, the leading team is recorded as the series winner.
-Per-game winners are **not** reported (they can't be reliably inferred). Until a
-series is decided, `series_winner` is `null`.
+Per-game winners for team league are **not** reported on that path. Until a
+series is decided, `series_winner` is `null`. For non-league 1v1, use
+`score.data.winner` on the `mode: "1v1"` event instead.
 
 ## Day log (`/status/log`)
 

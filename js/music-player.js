@@ -213,6 +213,21 @@
     });
     ppBtn.addEventListener('click', mxTogglePlay);
 
+    // Auto-start as soon as transport is wired (before grid/knob init).
+    (function mxAutostartOnLoad() {
+        var pick = window.__MX_AUTOSTART_PICK;
+        var fp = { startOffset: 0, crossfadeDuration: 0.05, fastStart: true };
+        if (pick && pick.mood != null && pick.file != null) {
+            fp.prefetchPick = pick;
+            mxSwitch(pick.mood, pick.songIdx, false, false, fp);
+            return;
+        }
+        var moodKeys = Object.keys(MX_TRACKS);
+        if (!moodKeys.length) return;
+        var firstMood = moodKeys[Math.floor(Math.random() * moodKeys.length)];
+        mxSwitch(firstMood, mxRandIdx(firstMood), false, false, fp);
+    })();
+
     document.getElementById('lpMusicNext').addEventListener('click', function () {
         if (mxCur) mxStats.onSkip();
         if (mxStagedScene) { mxAdvanceStage(1, false); return; } // forward one stage
@@ -313,37 +328,60 @@
         }
     }
 
-    function mxMakeDeck(file) {
+    function mxMakeDeck(file, prefetchPick) {
         var url = mxResolveMusicSrc(file);
         try {
             console.log('[MX music] resolved URL:', url, '| MX_MUSIC_PATH:', (typeof window.MX_MUSIC_PATH !== 'undefined' ? window.MX_MUSIC_PATH : '(unset)'), '| entry:', file);
         } catch (logErr) { /* ignore */ }
-        var audio = new Audio(url);
-        // CORS mode breaks many same-origin static hosts (no ACAO on mp3). Only
-        // set anonymous crossOrigin when the track is actually cross-origin.
-        if (mxMusicNeedsAnonymousCORS(url)) audio.crossOrigin = 'anonymous';
-        audio.loop = false; audio.preload = 'auto';
+        var audio = null;
+        if (prefetchPick && prefetchPick.url === url && prefetchPick.audio) {
+            audio = prefetchPick.audio;
+        }
+        if (!audio) {
+            audio = new Audio(url);
+            // CORS mode breaks many same-origin static hosts (no ACAO on mp3). Only
+            // set anonymous crossOrigin when the track is actually cross-origin.
+            if (mxMusicNeedsAnonymousCORS(url)) audio.crossOrigin = 'anonymous';
+            audio.loop = false;
+            audio.preload = 'auto';
+        }
         var src  = mx.createMediaElementSource(audio);
         var gain = mx.createGain(); gain.gain.value = 0;
         src.connect(gain); gain.connect(mxGain);
         return { audio: audio, gain: gain, file: file };
     }
 
-    function mxWaitReady(audio) {
-        if (audio.readyState >= 3) return Promise.resolve();
+    function mxWaitReady(audio, fastStart) {
+        var minReady = fastStart ? 2 : 3;
+        var evtName = fastStart ? 'loadeddata' : 'canplay';
+        if (audio.readyState >= minReady) return Promise.resolve();
         return new Promise(function (res, rej) {
-            var done = function () { audio.removeEventListener('canplay', ok); audio.removeEventListener('error', er); };
-            var ok = function () { done(); res(); };
+            var settled = false;
+            var done = function () {
+                audio.removeEventListener('loadeddata', onReady);
+                audio.removeEventListener('canplay', onReady);
+                audio.removeEventListener('error', er);
+            };
+            var finish = function () { if (settled) return; settled = true; done(); res(); };
+            var onReady = function () { finish(); };
             var er = function () {
+                if (settled) return;
+                settled = true;
                 done();
                 var err = audio.error;
                 var code = err && err.code ? err.code : 0;
                 var detail = err && err.message ? err.message : 'Load failed';
                 rej(new Error(detail + (code ? ' (' + code + ')' : '')));
             };
-            audio.addEventListener('canplay', ok);
+            audio.addEventListener('loadeddata', onReady);
+            audio.addEventListener('canplay', onReady);
             audio.addEventListener('error', er);
-            audio.load();
+            if (audio.readyState === 0) audio.load();
+            if (fastStart) {
+                setTimeout(function () {
+                    if (!settled && audio.readyState >= 1) finish();
+                }, 12000);
+            }
         });
     }
 
@@ -471,6 +509,36 @@
         }, wait * 1000);
     }
 
+    var mxWasPausedByYt = false;
+    var mxYtHold = false;
+
+    function mxIsYtIframeSceneOpen() {
+        var o = document.getElementById('scene-overlay-yt-iframe');
+        return !!(o && o.style.display === 'block');
+    }
+
+    function mxShouldHoldForYt() {
+        return mxYtHold && mxIsYtIframeSceneOpen();
+    }
+
+    function mxReleaseStaleYtHold() {
+        if (mxYtHold && !mxIsYtIframeSceneOpen()) {
+            mxYtHold = false;
+            mxWasPausedByYt = false;
+        }
+    }
+
+    function mxApplyYtPauseToDeck(deck) {
+        if (!deck) return;
+        mxClearTimer();
+        try { deck.audio.pause(); } catch (e) {}
+        mxEnsure().then(function () {
+            var now = mx.currentTime;
+            deck.gain.gain.cancelScheduledValues(now);
+            deck.gain.gain.setValueAtTime(0, now);
+        });
+    }
+
     // Core deck loader + crossfade. Shared by both the mood engine (mxSwitch)
     // and the staged engine (mxPlayStagedFile). Loads `file`, crossfades it in,
     // and invokes onStarted(deck) once it is actually playing, or onBlocked(deck)
@@ -481,8 +549,8 @@
             var startOffset = fp.startOffset;
             var fade = fp.crossfadeDuration;
             mxSetStatus('Loading\u2026');
-            var deck = mxMakeDeck(file);
-            mxWaitReady(deck.audio).then(function () {
+            var deck = mxMakeDeck(file, fp.prefetchPick);
+            mxWaitReady(deck.audio, !!fp.fastStart).then(function () {
                 if (startOffset > 0 && isFinite(deck.audio.duration) && startOffset < deck.audio.duration) {
                     deck.audio.currentTime = startOffset;
                 }
@@ -503,6 +571,16 @@
                         mxCur = deck;
                     }
                     mxNxt = null;
+                    if (mxShouldHoldForYt()) {
+                        mxWasPausedByYt = true;
+                        mxApplyYtPauseToDeck(deck);
+                        mxPaused = true;
+                        ppBtn.innerHTML = '&#9654;';
+                        ppBtn.classList.add('lp-mx-paused');
+                        mxSetStatus('\u23f8 YT');
+                    } else {
+                        mxReleaseStaleYtHold();
+                    }
                     onStarted(deck);
                 }).catch(function (err) {
                     if (err.name === 'NotAllowedError') { onBlocked(deck); }
@@ -515,7 +593,7 @@
     // Switch to mood at songIdx.
     // keepScene=true:   preserve scene tracking (internal auto-advance calls).
     // autoAdvance=true: song ended naturally — start next song from 0, short fixed crossfade.
-    function mxSwitch(mood, songIdx, keepScene, autoAdvance) {
+    function mxSwitch(mood, songIdx, keepScene, autoAdvance, fadeOverride) {
         if (songIdx === undefined || songIdx === null) songIdx = 0;
         if (!keepScene) {
             mxCurScene = null; mxSceneMoods = null; mxSceneMoodIdx = 0;
@@ -525,11 +603,19 @@
         var file = songs[songIdx] || null;
         if (!file) { mxSetStatus('No tracks: ' + mood, 'err'); return; }
 
-        var fp = autoAdvance ? { startOffset: 0, crossfadeDuration: 0.5 } : mxGetFadeParams();
+        var fp = fadeOverride || (autoAdvance ? { startOffset: 0, crossfadeDuration: 0.5 } : mxGetFadeParams());
         mxStartDeck(file, fp, function () {
             mxMood = mood; mxTrack = file; mxSongIdx = songIdx;
             mxStats.onSongStart(mood, file);
             mxUpdateActive();
+            if (mxShouldHoldForYt()) {
+                mxPaused = true;
+                ppBtn.innerHTML = '&#9654;';
+                ppBtn.classList.add('lp-mx-paused');
+                mxSetStatus('\u23f8 YT');
+                return;
+            }
+            mxReleaseStaleYtHold();
             mxPaused = false;
             ppBtn.innerHTML = '&#x23F8;';
             ppBtn.classList.remove('lp-mx-dim', 'lp-mx-paused');
@@ -631,6 +717,14 @@
             mxMood = null; mxTrack = file; mxSongIdx = 0;
             mxStats.onSongStart(statMood, file);
             mxUpdateActive();
+            if (mxShouldHoldForYt()) {
+                mxPaused = true;
+                ppBtn.innerHTML = '&#9654;';
+                ppBtn.classList.add('lp-mx-paused');
+                mxSetStatus('\u23f8 YT');
+                return;
+            }
+            mxReleaseStaleYtHold();
             mxPaused = false;
             ppBtn.innerHTML = '&#x23F8;';
             ppBtn.classList.remove('lp-mx-dim', 'lp-mx-paused');
@@ -1173,42 +1267,52 @@
         });
     };
 
-    var mxWasPausedByYt = false;
-    window.mxPauseForYt = function() {
+    window.mxPauseForYt = function () {
+        mxClearTimer();
         if (mxCur && !mxPaused) {
+            mxYtHold = true;
             mxWasPausedByYt = true;
-            mxClearTimer();
-            mxCur.audio.pause();
+            mxApplyYtPauseToDeck(mxCur);
             mxPaused = true;
             ppBtn.innerHTML = '&#9654;';
             ppBtn.classList.add('lp-mx-paused');
-            mxSetStatus('\u23f8 ' + mxTrack);
+            mxSetStatus('\u23f8 ' + (mxTrack || 'music'));
         } else if (mxCur && mxPaused && mxWasPausedByYt) {
-            /* Already paused for YT (e.g. closeYtIframeScene(true) then opening another YT clip). */
+            mxYtHold = true;
+        } else if (!mxCur) {
+            mxYtHold = true;
+            mxWasPausedByYt = true;
         } else {
+            mxYtHold = false;
             mxWasPausedByYt = false;
         }
     };
-    window.mxResumeForYt = function() {
+
+    window.mxResumeForYt = function () {
+        mxYtHold = false;
         if (!mxWasPausedByYt) return;
         if (!mxCur || !mxPaused) {
             mxWasPausedByYt = false;
             return;
         }
         mxWasPausedByYt = false;
-        mxEnsure().then(function() {
+        mxEnsure().then(function () {
             var targetVol = Number(volInput.value) / 100;
             var now = mx.currentTime;
             mxGain.gain.cancelScheduledValues(now);
             mxGain.gain.setValueAtTime(0, now);
             mxGain.gain.linearRampToValueAtTime(targetVol, now + 1.0);
-            mxCur.audio.play().then(function() {
+            mxCur.audio.play().then(function () {
                 mxPaused = false;
                 ppBtn.innerHTML = '&#x23F8;';
                 ppBtn.classList.remove('lp-mx-paused');
+                var deckNow = mx.currentTime;
+                mxCur.gain.gain.cancelScheduledValues(deckNow);
+                mxCur.gain.gain.setValueAtTime(0, deckNow);
+                mxCur.gain.gain.linearRampToValueAtTime(1, deckNow + 1.0);
                 if (mxStagedScene) mxScheduleStaged(mxTrack);
                 else mxSchedule(mxMood, mxTrack, mxSongIdx);
-            });
+            }).catch(function () {});
         });
     };
 
@@ -1220,14 +1324,6 @@
         if (e.target === ppBtn) return;
         if (!mxCur) mxTogglePlay();
     }, { once: true, capture: true });
-
-    // Auto-start on page load — random mood and random starting song.
-    (function () {
-        var moodKeys = Object.keys(MX_TRACKS);
-        if (!moodKeys.length) return;
-        var firstMood = moodKeys[Math.floor(Math.random() * moodKeys.length)];
-        mxSwitch(firstMood, mxRandIdx(firstMood));
-    })();
 })();
 
 // ── Scene → Music: wrap toggleSceneOverlay ───────────────────────────

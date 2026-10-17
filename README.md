@@ -20,6 +20,12 @@ See its use in one of our recent broadcasts: https://www.youtube.com/watch?v=gyR
 2. Set up a web server with PHP support and point the root to the cloned directory
 3. Access the tool from a web browser by visiting the server's IP or domain
 
+## Documentation
+
+- [Stream settings design](docs/STREAM_SETTINGS.md) — show defaults vs per-user layout vs tab overrides (multi-caster setup)
+- [Status API](docs/STATUS_API.md) — live `/status` feed for bots and tools
+- [Layer order](docs/LAYERS_ORDER.md) — overlay stacking reference
+
 ## Usage
 
 1. Select a media type from the dropdown list

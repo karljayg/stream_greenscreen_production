@@ -252,11 +252,142 @@
         };
     }
 
+    function isTeamLeague(psb) {
+        /* Default true for back-compat with older saved JSON. */
+        return !psb || psb.teamLeague !== false;
+    }
+
+    function scoreSnapshot(psb) {
+        var p = playersFromPsb(psb);
+        return {
+            nameA: p.nameA,
+            nameB: p.nameB,
+            scoreA: p.scoreA,
+            scoreB: p.scoreB
+        };
+    }
+
+    function samePair(a1, b1, a2, b2) {
+        var x0 = normName(a1);
+        var x1 = normName(b1);
+        var y0 = normName(a2);
+        var y1 = normName(b2);
+        return (x0 === y0 && x1 === y1) || (x0 === y1 && x1 === y0);
+    }
+
+    /**
+     * Non-team-league 1v1 score change: update custom_scoreboard.json and emit
+     * activity burst gg + intro(winner) + score{mode:"1v1"} to save_status.php.
+     * Does NOT touch 2026/scoreboard.csv.
+     */
+    function report1v1Score(psb, prev) {
+        if (isTeamLeague(psb)) {
+            return Promise.resolve({ skipped: true, reason: 'team_league' });
+        }
+        var cur = scoreSnapshot(psb);
+        if (!normName(cur.nameA) || !normName(cur.nameB)) {
+            return Promise.resolve({ skipped: true, reason: 'names' });
+        }
+        prev = prev || {};
+        var fromA = scoreInt(prev.scoreA);
+        var fromB = scoreInt(prev.scoreB);
+        var toA = cur.scoreA;
+        var toB = cur.scoreB;
+        if (fromA === toA && fromB === toB &&
+            normName(prev.nameA) === normName(cur.nameA) &&
+            normName(prev.nameB) === normName(cur.nameB)) {
+            return Promise.resolve({ skipped: true, reason: 'unchanged' });
+        }
+        /* Only emit when a score value changed (not rename-only). */
+        if (fromA === toA && fromB === toB) {
+            return Promise.resolve({ skipped: true, reason: 'names_only' });
+        }
+
+        var winner = null;
+        if (toA > fromA && toB === fromB) winner = cur.nameA;
+        else if (toB > fromB && toA === fromA) winner = cur.nameB;
+        else if (toA > toB) winner = cur.nameA;
+        else if (toB > toA) winner = cur.nameB;
+
+        var scoreData = {
+            mode: '1v1',
+            a: cur.nameA,
+            b: cur.nameB,
+            fromA: fromA,
+            toA: toA,
+            fromB: fromB,
+            toB: toB
+        };
+        if (winner) scoreData.winner = winner;
+
+        var events = [
+            { type: 'gg', data: { kind: 'gg' } }
+        ];
+        if (winner) events.push({ type: 'intro', data: { player: winner } });
+        events.push({ type: 'score', data: scoreData });
+
+        var base = pageBaseUrl();
+        var statusPayload = {
+            user: (typeof window !== 'undefined' && window.CURRENT_USER) ? window.CURRENT_USER : '',
+            events: events
+        };
+
+        var statusPromise = fetch(base + 'save_status.php', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(statusPayload)
+        }).then(function (r) { return r.json(); }).catch(function () {
+            return { ok: false };
+        });
+
+        var customPromise = fetch(base + 'save_custom_scoreboard.php?_t=' + Date.now(), { cache: 'no-store' })
+            .then(function (r) { return r.ok ? r.json() : { matches: [] }; })
+            .catch(function () { return { matches: [] }; })
+            .then(function (data) {
+                if (!data || typeof data !== 'object') data = { matches: [] };
+                if (!Array.isArray(data.matches)) data.matches = [];
+                var entry = { a: cur.nameA, b: cur.nameB, scoreA: toA, scoreB: toB };
+                var found = -1;
+                for (var i = 0; i < data.matches.length; i++) {
+                    var m = data.matches[i];
+                    if (samePair(m.a, m.b, cur.nameA, cur.nameB)) {
+                        found = i;
+                        if (m.desc) entry.desc = m.desc;
+                        break;
+                    }
+                }
+                if (found >= 0) {
+                    data.matches[found] = Object.assign({}, data.matches[found], entry);
+                } else {
+                    data.matches.unshift(entry);
+                }
+                return fetch(base + 'save_custom_scoreboard.php', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(data)
+                }).then(function (r) { return r.json(); });
+            })
+            .catch(function () { return { ok: false }; });
+
+        return Promise.all([statusPromise, customPromise]).then(function (results) {
+            return {
+                skipped: false,
+                scoreData: scoreData,
+                winner: winner,
+                statusOk: !!(results[0] && results[0].ok),
+                customOk: !!(results[1] && results[1].ok)
+            };
+        });
+    }
+
     /**
      * Push PSB scores into the matching TLS CSV row (if any).
      * @returns {Promise<{matched:boolean, changed:boolean, match:object|null}>}
      */
     function syncPsbToCsv(psb) {
+        if (!isTeamLeague(psb)) {
+            return Promise.resolve({ matched: false, changed: false, match: null, skipped: true, reason: 'not_team_league' });
+        }
         var p = playersFromPsb(psb);
         if (!normName(p.nameA) || !normName(p.nameB)) {
             return Promise.resolve({ matched: false, changed: false, match: null });
@@ -305,6 +436,9 @@
             .then(function (psb) {
                 if (!psb || typeof psb !== 'object') {
                     return { matched: false, changed: false, match: null };
+                }
+                if (!isTeamLeague(psb)) {
+                    return { matched: false, changed: false, match: null, skipped: true, reason: 'not_team_league' };
                 }
                 var p = playersFromPsb(psb);
                 var opts = matchOptsFromPsb(psb);
@@ -396,6 +530,9 @@
         parseCSV: parseCSV,
         syncPsbToCsv: syncPsbToCsv,
         syncCsvToPsb: syncCsvToPsb,
+        report1v1Score: report1v1Score,
+        scoreSnapshot: scoreSnapshot,
+        isTeamLeague: isTeamLeague,
         loadPsbNames: loadPsbNames,
         setTlsPinOccurrence: setTlsPinOccurrence,
         playersFromPsb: playersFromPsb,

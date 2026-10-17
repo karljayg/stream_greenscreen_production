@@ -488,7 +488,7 @@ $streamLogoSmallSrc = ($streamSceneAssetsBase !== '') ? ($streamSceneAssetsBase 
                 <button class="collapsible-btn" id="btn-save-load" onclick="toggleSection('save-load-section', this)">Save / Load</button>
                 <div class="collapsible-content" id="save-load-section" style="display: none;">
                     <h2 class="layer-order-heading">Import / Export all settings</h2>
-                    <p class="layer-order-hint"><strong>Show defaults</strong> (event title, video buttons, break timer, intros, etc.) load from the server for every new tab; your edits in this tab are temporary until you <strong>Publish show defaults</strong>. <strong>Save my layout</strong> stores only your layer order, logo/panel positions, volume, and similar — not the shared show copy. <strong>Reset show defaults in this tab</strong> drops your temporary overrides. Export/Import all remains a full backup file.</p>
+                    <p class="layer-order-hint"><strong>Show defaults</strong> (event title, video buttons, break timer, intros, etc.) load from the server for every new tab; your edits in this tab are temporary until you <strong>Publish show defaults</strong>. <strong>Save my layout</strong> stores only your layer order, logo/panel positions, volume, and similar — not the shared show copy. <strong>Reset show defaults in this tab</strong> drops your temporary overrides. Export/Import all remains a full backup file. Design doc: <a href="docs/STREAM_SETTINGS.md" target="_blank" rel="noopener">docs/STREAM_SETTINGS.md</a>.</p>
                     <div class="layer-order-actions" style="flex-wrap: wrap; gap: 6px;">
                         <button type="button" id="stream-publish-broadcast-all-btn">Publish show defaults</button>
                         <span id="stream-publish-broadcast-status" style="font-size: 12px; color: #aaa;"></span>
@@ -533,15 +533,13 @@ $streamLogoSmallSrc = ($streamSceneAssetsBase !== '') ? ($streamSceneAssetsBase 
             <h2 class="collapsible-h2" id="h2-scenes" onclick="toggleH2Section('scenes-section', this)">Scenes</h2>
             <div id="scenes-section">
             <div style="margin-bottom: 0.1rem; margin-top: 0.35rem;">
-                <div style="display: flex; align-items: center; gap: 0.25rem; margin-bottom: 0.2rem;">
-                    <span style="font-size: 0.8rem; font-weight: 600; white-space: nowrap;">Videos:</span>
-                    <button type="button" id="scene-btn-yt-intro" onclick="toggleYtIframeScene('intro')">INTRO</button>
+                <div class="scenes-yt-row" style="margin-bottom: 0.2rem;">
+                    <button type="button" id="scene-btn-yt-intro" class="scene-btn-yt-compact" onclick="toggleYtIframeScene('intro')">INTRO</button>
                     <button type="button" id="scene-btn-yt-feature" class="scene-btn-yt-compact" onclick="toggleYtIframeScene('feature')">FEATURE</button>
-                    <button type="button" id="scene-btn-yt-break" onclick="toggleYtIframeScene('break')">BREAK</button>
-                    <input type="text" inputmode="numeric" id="break-quick-min" maxlength="2" value="05" style="width: 4.5ch; text-align: center; padding: 2px;" title="Break timer minutes">
-                    <span style="font-size: 0.85rem; line-height: 1;">:</span>
-                    <input type="text" inputmode="numeric" id="break-quick-sec" maxlength="2" value="00" style="width: 4.5ch; text-align: center; padding: 2px;" title="Break timer seconds">
-                    <span style="font-size: 0.7rem; color: #aaa; white-space: nowrap;">mm:ss</span>
+                    <button type="button" id="scene-btn-yt-break" class="scene-btn-yt-compact" onclick="toggleYtIframeScene('break')">BREAK</button>
+                    <input type="text" inputmode="numeric" id="break-quick-min" maxlength="2" value="05" style="width: 4ch; text-align: center; padding: 2px;" title="Break timer minutes">
+                    <span class="scenes-yt-timer-sep">:</span>
+                    <input type="text" inputmode="numeric" id="break-quick-sec" maxlength="2" value="00" style="width: 4ch; text-align: center; padding: 2px;" title="Break timer seconds">
                 </div>
             </div>
             <div class="scenes-buttons">
@@ -798,6 +796,45 @@ $streamLogoSmallSrc = ($streamSceneAssetsBase !== '') ? ($streamSceneAssetsBase 
         window.STREAM_FSL_PROXY_MATCHUP_URL = '<?php echo rtrim(dirname($_SERVER['SCRIPT_NAME']), '/'); ?>/fsl_proxy_matchup.php';
     </script>
     <script src="js/production-files.js?v=<?php echo $v; ?>"></script>
+    <script>
+        /* Begin loading the autostart track while the rest of the page parses. */
+        (function () {
+            function mxEarlyResolveMusicSrc(file) {
+                var f = String(file || '').trim();
+                if (!f) return '';
+                if (/^https?:\/\//i.test(f) || f.indexOf('//') === 0) return f;
+                var base = (window.MX_MUSIC_PATH !== undefined && window.MX_MUSIC_PATH !== '') ? String(window.MX_MUSIC_PATH) : 'music/';
+                if (base.indexOf('/') === -1) base = base + '/';
+                if (!/\/$/.test(base)) base = base + '/';
+                try {
+                    if (f.charAt(0) === '/') return new URL(f, window.location.origin).href;
+                    return new URL(f, new URL(base, window.location.href)).href;
+                } catch (e) {
+                    return base + f;
+                }
+            }
+            var tracks = window.MX_TRACKS;
+            if (!tracks || typeof tracks !== 'object') return;
+            var keys = Object.keys(tracks);
+            if (!keys.length) return;
+            var mood = keys[Math.floor(Math.random() * keys.length)];
+            var songs = tracks[mood] || [];
+            if (!songs.length) return;
+            var songIdx = Math.floor(Math.random() * songs.length);
+            var file = songs[songIdx];
+            var url = mxEarlyResolveMusicSrc(file);
+            if (!url) return;
+            window.__MX_AUTOSTART_PICK = { mood: mood, songIdx: songIdx, file: file, url: url };
+            var a = new Audio(url);
+            try {
+                if (new URL(url, window.location.href).origin !== window.location.origin) a.crossOrigin = 'anonymous';
+            } catch (e2) { /* ignore */ }
+            a.preload = 'auto';
+            a.load();
+            window.__MX_AUTOSTART_PICK.audio = a;
+        })();
+    </script>
+    <script src="js/music-player.js?v=<?php echo $v; ?>"></script>
     <script src="js/scoreboard_sync.js?v=<?php echo $v; ?>"></script>
     <script type="module" src="js/stream_production.js?v=<?php echo $v; ?>"></script>
 
@@ -2471,9 +2508,9 @@ $streamLogoSmallSrc = ($streamSceneAssetsBase !== '') ? ($streamSceneAssetsBase 
             if (isActive && currentWhich === which) {
                 closeYtIframeScene(); /* mxResumeForYt called inside */
             } else {
-                /* Skip deck resume when only swapping video buttons so mxPauseForYt / mxResumeForYt stay consistent. */
-                closeYtIframeScene(isActive);
                 if (typeof window.mxPauseForYt === 'function') window.mxPauseForYt();
+                /* Never resume deck while opening/switching YT iframe clips */
+                closeYtIframeScene(true);
                 clearExclusiveScenes();
                 var videos = getYtIframeVideos();
                 var videoIdx = YT_IFRAME_SCENE_INDEX[which];
@@ -2513,6 +2550,7 @@ $streamLogoSmallSrc = ($streamSceneAssetsBase !== '') ? ($streamSceneAssetsBase 
                 }
                 overlay.style.display = 'block';
                 applyYtCropToIframe();
+                if (typeof window.mxPauseForYt === 'function') window.mxPauseForYt();
                 if (introBtn) introBtn.classList.toggle('active', which === 'intro');
                 if (featureBtn) featureBtn.classList.toggle('active', which === 'feature');
                 if (breakBtn) breakBtn.classList.toggle('active', which === 'break');
@@ -6337,7 +6375,6 @@ $streamLogoSmallSrc = ($streamSceneAssetsBase !== '') ? ($streamSceneAssetsBase 
     <script src="https://cdn.socket.io/4.7.5/socket.io.min.js"></script>
     <script src="js/stream-elements.js?v=<?php echo $v; ?>"></script>
 
-    <script src="js/music-player.js?v=<?php echo $v; ?>"></script>
     <!-- Music Admin runs in its own window (music_admin.php), not as an overlay here. -->
 
     <!-- Status reporter: pushes live UI state to save_status.php for /status -->

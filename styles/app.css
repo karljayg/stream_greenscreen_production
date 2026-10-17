@@ -253,11 +253,42 @@
     padding: 10px 12px !important;
     font-weight: 800 !important;
 }
-#scenes-section .scene-btn-yt-compact {
-    font-size: 0.62rem;
-    padding: 3px 5px;
+#scenes-section .scenes-yt-row {
+    display: flex;
+    align-items: center;
+    gap: 0.2rem;
+    flex-wrap: nowrap;
+    min-width: 0;
+}
+#scenes-section .scenes-yt-row .scene-btn-yt-compact {
+    background: #e2e8f0;
+    color: #1e293b;
+    border: 1px solid #b8c4d4;
+    border-radius: 4px;
+    font-size: 0.55rem;
+    padding: 2px 4px;
     letter-spacing: 0.02em;
     white-space: nowrap;
+    font-weight: 700;
+    line-height: 1.2;
+    flex-shrink: 0;
+    cursor: pointer;
+}
+#scenes-section .scenes-yt-row .scene-btn-yt-compact.active {
+    background: #15803d !important;
+    color: #ffffff !important;
+    border-color: #16a34a !important;
+}
+#scenes-section .scenes-yt-timer-sep {
+    font-size: 0.65rem;
+    line-height: 1;
+    flex-shrink: 0;
+}
+#scenes-section .scenes-yt-row #break-quick-min,
+#scenes-section .scenes-yt-row #break-quick-sec {
+    flex-shrink: 0;
+    font-size: 0.65rem !important;
+    padding: 2px !important;
 }
 
 /* VDO / panel utility buttons */
