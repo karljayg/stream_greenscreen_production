@@ -6,9 +6,11 @@
 $jsTime       = file_exists(__DIR__ . '/js/stream_production.js') ? filemtime(__DIR__ . '/js/stream_production.js') : 0;
 $otherTime    = file_exists(__DIR__ . '/js/other_lists.js')       ? filemtime(__DIR__ . '/js/other_lists.js')       : 0;
 $playerTime   = file_exists(__DIR__ . '/js/playerlist.js')        ? filemtime(__DIR__ . '/js/playerlist.js')        : 0;
+$sbSyncTime   = file_exists(__DIR__ . '/js/scoreboard_sync.js')   ? filemtime(__DIR__ . '/js/scoreboard_sync.js')   : 0;
 $cssTime      = file_exists(__DIR__ . '/styles/styles.css')       ? filemtime(__DIR__ . '/styles/styles.css')       : 0;
 $mainTime     = file_exists(__DIR__ . '/styles/main.css')         ? filemtime(__DIR__ . '/styles/main.css')         : 0;
 $mxPlayerTime = file_exists(__DIR__ . '/js/music-player.js')      ? filemtime(__DIR__ . '/js/music-player.js')      : 0;
 $mxAdminTime  = file_exists(__DIR__ . '/js/music-admin.js')       ? filemtime(__DIR__ . '/js/music-admin.js')       : 0;
 $appCssTime   = file_exists(__DIR__ . '/styles/app.css')          ? filemtime(__DIR__ . '/styles/app.css')          : 0;
-$v = max($jsTime, $otherTime, $playerTime, $cssTime, $mainTime, $mxPlayerTime, $mxAdminTime, $appCssTime) ?: time();
+$streamSetTime = file_exists(__DIR__ . '/js/stream_settings.js') ? filemtime(__DIR__ . '/js/stream_settings.js') : 0;
+$v = max($jsTime, $otherTime, $playerTime, $sbSyncTime, $cssTime, $mainTime, $mxPlayerTime, $mxAdminTime, $appCssTime, $streamSetTime) ?: time();

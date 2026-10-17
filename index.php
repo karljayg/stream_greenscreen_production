@@ -153,6 +153,9 @@ $streamLogoSmallSrc = ($streamSceneAssetsBase !== '') ? ($streamSceneAssetsBase 
                         <label style="display:flex; align-items:center; gap:6px; font-size:12px; color:#ccc;">
                             <input type="checkbox" id="psb-show-race"> Show race
                         </label>
+                        <label style="display:flex; align-items:center; gap:6px; font-size:12px; color:#ccc;" title="When checked, sync with Team League scoreboard and show team ACR. Uncheck for custom/show 1v1 matches.">
+                            <input type="checkbox" id="psb-team-league"> Team league
+                        </label>
                         <label style="display:flex; align-items:center; gap:6px; font-size:12px; color:#ccc;">
                             Best of
                             <input type="number" id="psb-best-of" min="1" max="99" value="1" style="width:52px; text-align:center; padding:3px 4px;">
@@ -168,8 +171,8 @@ $streamLogoSmallSrc = ($streamSceneAssetsBase !== '') ? ($streamSceneAssetsBase 
                             <input type="number" class="psb-score" min="0" max="99" value="0" style="width:60px; text-align:center; padding:3px 4px;">
                             <label style="font-size:12px; color:#aaa;">Color:</label>
                             <select class="psb-color" style="background:#fff; color:#111; border:1px solid #888; padding:3px;"></select>
-                            <label style="font-size:12px; color:#aaa;">Team:</label>
-                            <select class="psb-team" style="background:#fff; color:#111; border:1px solid #888; padding:3px;"></select>
+                            <label class="psb-team-field" style="font-size:12px; color:#aaa;">Team:</label>
+                            <select class="psb-team psb-team-field" style="background:#fff; color:#111; border:1px solid #888; padding:3px;"></select>
                             <label style="font-size:12px; color:#aaa;">Race:</label>
                             <select class="psb-race" style="background:#fff; color:#111; border:1px solid #888; padding:3px;">
                                 <option value="">Auto (from rankings)</option>
@@ -189,8 +192,8 @@ $streamLogoSmallSrc = ($streamSceneAssetsBase !== '') ? ($streamSceneAssetsBase 
                             <input type="number" class="psb-score" min="0" max="99" value="0" style="width:60px; text-align:center; padding:3px 4px;">
                             <label style="font-size:12px; color:#aaa;">Color:</label>
                             <select class="psb-color" style="background:#fff; color:#111; border:1px solid #888; padding:3px;"></select>
-                            <label style="font-size:12px; color:#aaa;">Team:</label>
-                            <select class="psb-team" style="background:#fff; color:#111; border:1px solid #888; padding:3px;"></select>
+                            <label class="psb-team-field" style="font-size:12px; color:#aaa;">Team:</label>
+                            <select class="psb-team psb-team-field" style="background:#fff; color:#111; border:1px solid #888; padding:3px;"></select>
                             <label style="font-size:12px; color:#aaa;">Race:</label>
                             <select class="psb-race" style="background:#fff; color:#111; border:1px solid #888; padding:3px;">
                                 <option value="">Auto (from rankings)</option>
@@ -201,7 +204,7 @@ $streamLogoSmallSrc = ($streamSceneAssetsBase !== '') ? ($streamSceneAssetsBase 
                             </select>
                         </div>
                     </div>
-                    <details style="margin-bottom:8px;">
+                    <details id="psb-teams-details" style="margin-bottom:8px;">
                         <summary style="cursor:pointer; font-size:11px; color:#888; user-select:none;">Team list (name &rarr; acronym)</summary>
                         <div id="psb-teams-rows" style="margin-top:6px; display:flex; flex-direction:column; gap:4px;"></div>
                         <button type="button" id="psb-team-add-btn" style="margin-top:6px; font-size:11px;">+ Add team</button>
@@ -292,7 +295,7 @@ $streamLogoSmallSrc = ($streamSceneAssetsBase !== '') ? ($streamSceneAssetsBase 
                 <button class="collapsible-btn" id="btn-yt-videos-settings" onclick="toggleSection('yt-videos-settings-section', this)">Video Buttons</button>
                 <div class="collapsible-content" id="yt-videos-settings-section" style="display: none;">
                     <h2 class="layer-order-heading">Video Buttons</h2>
-                    <p class="layer-order-hint">Paste any YouTube URL (youtube.com/watch, youtu.be, shorts, or embed). It is automatically converted to the embed+autoplay format needed. Changes take effect immediately.</p>
+                    <p class="layer-order-hint">Paste any YouTube URL (youtube.com/watch, youtu.be, shorts, or embed). It is automatically converted to the embed+autoplay format needed. Changes apply on this browser immediately; use <strong>Save video buttons for all users</strong> to publish labels/URLs/volumes for everyone (does not change layer order, logos, music, etc.).</p>
                     <div style="display: grid; grid-template-columns: auto auto 1fr; gap: 0.35rem 0.5rem; align-items: center; margin-top: 6px;">
                         <label style="font-size: 0.85rem; white-space: nowrap;">Button 1 label:</label>
                         <input type="text" id="yt-video-1-label" value="INTRO" style="width: 8ch;">
@@ -324,6 +327,10 @@ $streamLogoSmallSrc = ($streamSceneAssetsBase !== '') ? ($streamSceneAssetsBase 
                         <label style="font-size: 0.85rem; white-space: nowrap;">Button 3 volume:</label>
                         <input type="number" id="yt-video-3-vol" min="5" max="100" value="100" style="width: 5ch; text-align: center;">
                         <span style="font-size: 0.85rem;">%</span>
+                    </div>
+                    <div style="margin-top: 8px; display: flex; align-items: center; gap: 8px; flex-wrap: wrap;">
+                        <button type="button" id="yt-videos-save-global-btn">Save video buttons for all users</button>
+                        <span id="yt-videos-save-global-status" style="font-size: 12px; color: #aaa;"></span>
                     </div>
                 </div>
                 <button class="collapsible-btn" id="btn-scene-videos-settings" onclick="toggleSection('scene-videos-settings-section', this)">Scene Videos</button>
@@ -481,10 +488,16 @@ $streamLogoSmallSrc = ($streamSceneAssetsBase !== '') ? ($streamSceneAssetsBase 
                 <button class="collapsible-btn" id="btn-save-load" onclick="toggleSection('save-load-section', this)">Save / Load</button>
                 <div class="collapsible-content" id="save-load-section" style="display: none;">
                     <h2 class="layer-order-heading">Import / Export all settings</h2>
-                    <p class="layer-order-hint">Export saves: layer order, volume, Status, Player Ratings, Logos (checkboxes + positions), Event Title, VDO full and SC2 panel positions, VDO director URL, Scenes visibility, Player Intros names, SC2 button effects, Chroma key, YT crop, Video button labels/URLs, and Break timer/message. <strong>Save to server</strong> stores the current setup so anyone opening this link gets the same settings. You can still <strong>Export all</strong> / <strong>Import all</strong> to share via file.</p>
-                    <div class="layer-order-actions">
+                    <p class="layer-order-hint"><strong>Show defaults</strong> (event title, video buttons, break timer, intros, etc.) load from the server for every new tab; your edits in this tab are temporary until you <strong>Publish show defaults</strong>. <strong>Save my layout</strong> stores only your layer order, logo/panel positions, volume, and similar — not the shared show copy. <strong>Reset show defaults in this tab</strong> drops your temporary overrides. Export/Import all remains a full backup file.</p>
+                    <div class="layer-order-actions" style="flex-wrap: wrap; gap: 6px;">
+                        <button type="button" id="stream-publish-broadcast-all-btn">Publish show defaults</button>
+                        <span id="stream-publish-broadcast-status" style="font-size: 12px; color: #aaa;"></span>
+                        <button type="button" id="stream-reset-session-broadcast-btn">Reset show defaults in this tab</button>
+                        <span id="stream-reset-session-broadcast-status" style="font-size: 12px; color: #aaa;"></span>
+                    </div>
+                    <div class="layer-order-actions" style="margin-top: 6px;">
                         <button type="button" id="layer-export-btn">Export all</button>
-                        <button type="button" id="layer-save-server-btn">Save to server</button>
+                        <button type="button" id="layer-save-server-btn">Save my layout</button>
                         <input type="file" id="layer-import-file" accept=".json" style="display: none;">
                         <button type="button" id="layer-import-btn">Import all</button>
                     </div>
@@ -539,6 +552,7 @@ $streamLogoSmallSrc = ($streamSceneAssetsBase !== '') ? ($streamSceneAssetsBase 
                 <div style="display:flex; gap:6px; flex-wrap:nowrap; align-items:center;">
                     <button type="button" id="scene-btn-schedule" onclick="toggleSceneOverlay('schedule')">Schedule</button>
                     <button type="button" id="scene-btn-bracket" onclick="toggleSceneOverlay('bracket')">Bracket</button>
+                    <button type="button" id="scene-btn-open-matches" onclick="toggleOpenMatchesManager()" title="Show/hide Open Matchups host dashboard" style="font-size:0.72rem; padding:4px 6px; white-space:nowrap;">Open Matchups</button>
                 </div>
                 <div style="display:flex; gap:8px;">
                     <button type="button" id="tls-score-toggle-btn" class="tls-score-toggle on" onclick="toggleTeamLeagueScoreBanner()" title="Show/hide the team league score banner (top-right)">T<br>&#9650;</button>
@@ -747,6 +761,10 @@ $streamLogoSmallSrc = ($streamSceneAssetsBase !== '') ? ($streamSceneAssetsBase 
             <!-- Fullscreen transition video overlay (fade in/out); used by playTransitionVideo() -->
             <div id="transition-video-overlay" class="transition-video-overlay" style="display: none;">
                 <video id="transition-video-player" class="transition-video-player" muted playsinline></video>
+            </div>
+            <!-- Open Matchups host dashboard: fills right stream panel only -->
+            <div id="open-matches-manager" style="display: none; position: absolute; top: 0; left: 0; width: 100%; height: 100%; z-index: 100010; background: #07101d;">
+                <iframe id="open-matches-manager-iframe" title="Open Matchups Dashboard" style="width: 100%; height: 100%; border: none; background: #07101d;"></iframe>
             </div>
             </div>
         </div>
@@ -1007,15 +1025,19 @@ $streamLogoSmallSrc = ($streamSceneAssetsBase !== '') ? ($streamSceneAssetsBase 
 
             var _quietSettingsSaveTimer = null;
             function saveSettingsToServerQuiet() {
-                if (typeof exportAllSettings !== "function") return;
+                if (window.StreamSettings && typeof window.StreamSettings.saveUserPreferencesQuiet === "function") {
+                    window.StreamSettings.saveUserPreferencesQuiet();
+                    return;
+                }
                 clearTimeout(_quietSettingsSaveTimer);
                 _quietSettingsSaveTimer = setTimeout(function() {
-                    var out = exportAllSettings();
-                    fetch("settings.php", {
-                        method: "POST",
-                        headers: { "Content-Type": "application/json" },
-                        body: JSON.stringify(out)
-                    }).catch(function() {});
+                    if (window.StreamSettings && typeof window.StreamSettings.exportUserPreferences === "function") {
+                        fetch("stream_user_preferences.php", {
+                            method: "POST",
+                            headers: { "Content-Type": "application/json" },
+                            body: JSON.stringify({ preferences: window.StreamSettings.exportUserPreferences() })
+                        }).catch(function() {});
+                    }
                 }, 400);
             }
             window.saveSettingsToServerQuiet = saveSettingsToServerQuiet;
@@ -1109,6 +1131,24 @@ $streamLogoSmallSrc = ($streamSceneAssetsBase !== '') ? ($streamSceneAssetsBase 
                 };
                 return out;
             }
+
+            function exportBroadcastSnapshot() {
+                var intros = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map(function(n) {
+                    var f = document.getElementById("media-form-" + n);
+                    var inp = f ? f.querySelector(".player-name-input") : null;
+                    return inp ? inp.value : "";
+                });
+                return {
+                    eventTitle: typeof getEventTitle === "function" ? getEventTitle() : "",
+                    ytIframeVideos: typeof getYtIframeVideos === "function" ? getYtIframeVideos() : [],
+                    breakSettings: typeof getBreakSettings === "function" ? getBreakSettings() : {},
+                    ytCrop: typeof getYtCrop === "function" ? getYtCrop() : {},
+                    vdoDirectorUrl: typeof getVdoDirectorUrl === "function" ? getVdoDirectorUrl() : "",
+                    sc2ButtonEffects: typeof getSc2ButtonEffects === "function" ? getSc2ButtonEffects() : {},
+                    playerIntros: intros
+                };
+            }
+            window.exportBroadcastSnapshot = exportBroadcastSnapshot;
 
             function importAllSettings(parsed) {
                 var def = DEFAULT_SETTINGS;
@@ -1307,23 +1347,25 @@ $streamLogoSmallSrc = ($streamSceneAssetsBase !== '') ? ($streamSceneAssetsBase 
 
             document.getElementById("layer-save-server-btn").addEventListener("click", function() {
                 var btn = this;
-                var out = exportAllSettings();
                 btn.disabled = true;
-                fetch("settings.php", {
+                var prefs = (window.StreamSettings && typeof window.StreamSettings.exportUserPreferences === "function")
+                    ? window.StreamSettings.exportUserPreferences()
+                    : exportAllSettings();
+                fetch("stream_user_preferences.php", {
                     method: "POST",
                     headers: { "Content-Type": "application/json" },
-                    body: JSON.stringify(out)
+                    body: JSON.stringify({ preferences: prefs })
                 }).then(function(r) { return r.json(); }).then(function(res) {
                     if (res && res.ok) {
                         btn.textContent = "Saved";
-                        setTimeout(function() { btn.textContent = "Save to server"; btn.disabled = false; }, 1500);
+                        setTimeout(function() { btn.textContent = "Save my layout"; btn.disabled = false; }, 1500);
                     } else {
                         btn.textContent = "Error";
-                        setTimeout(function() { btn.textContent = "Save to server"; btn.disabled = false; }, 2000);
+                        setTimeout(function() { btn.textContent = "Save my layout"; btn.disabled = false; }, 2000);
                     }
                 }).catch(function() {
                     btn.textContent = "Error";
-                    setTimeout(function() { btn.textContent = "Save to server"; btn.disabled = false; }, 2000);
+                    setTimeout(function() { btn.textContent = "Save my layout"; btn.disabled = false; }, 2000);
                 });
             });
 
@@ -1602,6 +1644,18 @@ $streamLogoSmallSrc = ($streamSceneAssetsBase !== '') ? ($streamSceneAssetsBase 
             /** Highlight the TLS row that matches the current Player Scoreboard pair. */
             function sbHighlightCurrentMatch() {
                 if (!window.ScoreboardSync || !_sbEditorRows) return;
+                if (typeof psbData !== 'undefined' && psbData && psbData.teamLeague === false) {
+                    document.querySelectorAll('#scoreboard-matchup-rows .sb-matchup-row').forEach(function(el) {
+                        el.classList.remove('sb-current-match', 'sb-match-candidate');
+                        el.style.background = '#111';
+                        el.style.borderColor = 'transparent';
+                        var badge = el.querySelector('.sb-current-badge');
+                        if (badge) badge.style.display = 'none';
+                        var pinBtn = el.querySelector('.sb-pin-btn');
+                        if (pinBtn) pinBtn.style.display = 'none';
+                    });
+                    return;
+                }
                 function apply(state) {
                     var nA = state.nameA || '';
                     var nB = state.nameB || '';
@@ -1790,15 +1844,7 @@ $streamLogoSmallSrc = ($streamSceneAssetsBase !== '') ? ($streamSceneAssetsBase 
                 });
             })();
 
-            fetch("settings.php").then(function(r) { return r.json(); }).then(function(parsed) {
-                if (parsed && (parsed.layerOrder !== undefined || parsed.order !== undefined || parsed.status !== undefined || parsed.version !== undefined || parsed.productionFiles !== undefined)) {
-                    importAllSettings(parsed);
-                }
-                var shouldShowBg = !parsed || !parsed.scenes || parsed.scenes.bg === true;
-                if (shouldShowBg && typeof showBgVideoOverlay === 'function') showBgVideoOverlay();
-            }).catch(function() {
-                if (typeof showBgVideoOverlay === 'function') showBgVideoOverlay();
-            });
+            /* Settings bootstrap runs at end of page after js/stream_settings.js loads. */
         })();
 
         function toggleForms(btn) {
@@ -2188,7 +2234,6 @@ $streamLogoSmallSrc = ($streamSceneAssetsBase !== '') ? ($streamSceneAssetsBase 
         }
 
         (function initYtIframeVideos() {
-            loadYtIframeVideos();
             syncYtIframeButtonLabels();
             updateYtResolvedDisplays();
             ['yt-video-1-label', 'yt-video-1-url', 'yt-video-2-label', 'yt-video-2-url', 'yt-video-3-label', 'yt-video-3-url'].forEach(function(id) {
@@ -2337,7 +2382,6 @@ $streamLogoSmallSrc = ($streamSceneAssetsBase !== '') ? ($streamSceneAssetsBase 
         }
 
         (function initBreakSettings() {
-            loadBreakSettings();
             /* Settings inputs → sync quick + save */
             ['break-timer-min', 'break-timer-sec', 'break-timer-msg'].forEach(function(id) {
                 var el = document.getElementById(id);
@@ -3020,7 +3064,6 @@ $streamLogoSmallSrc = ($streamSceneAssetsBase !== '') ? ($streamSceneAssetsBase 
         window.saveEventTitle = saveEventTitle;
 
         (function initEventTitle() {
-            loadEventTitle();
             var el = document.getElementById('event-title-input');
             if (!el) return;
             el.addEventListener('input', function() {
@@ -4190,6 +4233,7 @@ $streamLogoSmallSrc = ($streamSceneAssetsBase !== '') ? ($streamSceneAssetsBase 
                     show: false,
                     showRace: false,
                     bestOf: 1,
+                    teamLeague: true,
                     tlsPinOccurrence: null,
                     pos: Object.assign({}, PSB_DEFAULT_POS),
                     players: [
@@ -4296,10 +4340,19 @@ $streamLogoSmallSrc = ($streamSceneAssetsBase !== '') ? ($streamSceneAssetsBase 
                 var u = String(acr).trim().toUpperCase();
                 return u !== '' && u !== 'NULL';
             }
+            function psbShowTeamTags() {
+                if (!psbData) return false;
+                if (window.ScoreboardSync && typeof window.ScoreboardSync.isTeamLeague === 'function') {
+                    return window.ScoreboardSync.isTeamLeague(psbData);
+                }
+                return psbData.teamLeague !== false;
+            }
+
             /** Resolve the team ACRONYM to display after the name.
                Priority: explicit override -> rankings.team (team name or FA) -> scoreboard roster.
                Returns '' only when there's no team value, so no empty tag is shown. */
             function psbResolveTeamAcr(player) {
+                if (!psbShowTeamTags()) return '';
                 var acr = '';
                 if (player && player.team) {
                     acr = psbTeamAcr(player.team);
@@ -4324,12 +4377,15 @@ $streamLogoSmallSrc = ($streamSceneAssetsBase !== '') ? ($streamSceneAssetsBase 
                 var race = psbResolveRace(player);
                 var raceIcon = psbRaceIconHtml(race);
                 var hasRaceAsset = !!PSB_RACE_ICON[race];
-                var acr = psbResolveTeamAcr(player);
                 var rk = psbResolveRank(player);
                 var rankNum = (rk && rk.rank != null && String(rk.rank) !== '') ? String(rk.rank) : '';
                 var groupNum = (rk && rk.group != null && String(rk.group) !== '') ? String(rk.group) : '';
                 var nameHtml = escapeHtml(player.name || '');
-                if (acr) nameHtml += ' <span class="psb-team">(' + escapeHtml(acr) + ')</span>';
+                /* Team ACR only when Team league is on — never append for custom/show 1v1. */
+                if (psbShowTeamTags()) {
+                    var acr = psbResolveTeamAcr(player);
+                    if (acr) nameHtml += ' <span class="psb-team">(' + escapeHtml(acr) + ')</span>';
+                }
                 var rgHtml = '';
                 if (rankNum) {
                     rgHtml = '<span class="psb-num">#' + escapeHtml(rankNum) + '</span>';
@@ -4546,9 +4602,15 @@ $streamLogoSmallSrc = ($streamSceneAssetsBase !== '') ? ($streamSceneAssetsBase 
             function psbCollectSettings() {
                 var showEl = document.getElementById('psb-show');
                 var showRaceEl = document.getElementById('psb-show-race');
+                var teamLeagueEl = document.getElementById('psb-team-league');
                 var boEl = document.getElementById('psb-best-of');
                 if (showEl) psbData.show = showEl.checked;
                 if (showRaceEl) psbData.showRace = showRaceEl.checked;
+                /* Only read Team league from the checkbox after we've synced it from psbData
+                   (otherwise the HTML default checked=true overwrites a loaded false). */
+                if (teamLeagueEl && teamLeagueEl.dataset.psbSynced === '1') {
+                    psbData.teamLeague = !!teamLeagueEl.checked;
+                }
                 if (boEl) psbData.bestOf = Math.max(1, parseInt(boEl.value, 10) || 1);
                 document.querySelectorAll('#player-scoreboard-settings-section .psb-player-edit').forEach(function(box) {
                     var idx = parseInt(box.getAttribute('data-idx'), 10) || 0;
@@ -4571,9 +4633,14 @@ $streamLogoSmallSrc = ($streamSceneAssetsBase !== '') ? ($streamSceneAssetsBase 
             function psbFillSettings() {
                 var showEl = document.getElementById('psb-show');
                 var showRaceEl = document.getElementById('psb-show-race');
+                var teamLeagueEl = document.getElementById('psb-team-league');
                 var boEl = document.getElementById('psb-best-of');
                 if (showEl) showEl.checked = !!psbData.show;
                 if (showRaceEl) showRaceEl.checked = !!psbData.showRace;
+                if (teamLeagueEl) {
+                    teamLeagueEl.checked = psbData.teamLeague !== false;
+                    teamLeagueEl.dataset.psbSynced = '1';
+                }
                 if (boEl) boEl.value = parseInt(psbData.bestOf, 10) || 1;
                 psbPopulateColorSelects();
                 psbPopulateTeamSelects();
@@ -4592,6 +4659,16 @@ $streamLogoSmallSrc = ($streamSceneAssetsBase !== '') ? ($streamSceneAssetsBase 
                     if (raceEl) raceEl.value = p.race || '';
                 });
                 psbRenderTeamRows();
+                psbApplyTeamLeagueUi();
+            }
+
+            function psbApplyTeamLeagueUi() {
+                var on = !psbData || psbData.teamLeague !== false;
+                document.querySelectorAll('#player-scoreboard-settings-section .psb-team-field').forEach(function(el) {
+                    el.style.display = on ? '' : 'none';
+                });
+                var details = document.getElementById('psb-teams-details');
+                if (details) details.style.display = on ? '' : 'none';
             }
 
             /* ---- Player-name autocomplete (same player list as Player Intros) ---- */
@@ -4652,14 +4729,24 @@ $streamLogoSmallSrc = ($streamSceneAssetsBase !== '') ? ($streamSceneAssetsBase 
                 section.querySelectorAll('.psb-player-edit .psb-name').forEach(psbAttachAutocomplete);
                 section.addEventListener('input', function(e) {
                     if (e.target.closest('#psb-teams-rows')) return; /* handled per-row */
-                    if (e.target.id === 'psb-show' || e.target.id === 'psb-show-race' || e.target.id === 'psb-best-of' || e.target.closest('.psb-player-edit')) {
+                    if (e.target.id === 'psb-show' || e.target.id === 'psb-show-race' || e.target.id === 'psb-team-league' || e.target.id === 'psb-best-of' || e.target.closest('.psb-player-edit')) {
+                        if (e.target.id === 'psb-team-league') {
+                            var tl = document.getElementById('psb-team-league');
+                            if (tl) tl.dataset.psbSynced = '1';
+                        }
                         psbCollectSettings();
+                        if (e.target.id === 'psb-team-league') psbApplyTeamLeagueUi();
                         psbRenderPanel();
                     }
                 });
                 section.addEventListener('change', function(e) {
-                    if (e.target.classList && (e.target.classList.contains('psb-color') || e.target.classList.contains('psb-team') || e.target.classList.contains('psb-race') || e.target.id === 'psb-show' || e.target.id === 'psb-show-race')) {
+                    if (e.target.classList && (e.target.classList.contains('psb-color') || e.target.classList.contains('psb-team') || e.target.classList.contains('psb-race') || e.target.id === 'psb-show' || e.target.id === 'psb-show-race' || e.target.id === 'psb-team-league')) {
+                        if (e.target.id === 'psb-team-league') {
+                            var tl2 = document.getElementById('psb-team-league');
+                            if (tl2) tl2.dataset.psbSynced = '1';
+                        }
                         psbCollectSettings();
+                        if (e.target.id === 'psb-team-league') psbApplyTeamLeagueUi();
                         psbRenderPanel();
                     }
                 });
@@ -4780,6 +4867,57 @@ $streamLogoSmallSrc = ($streamSceneAssetsBase !== '') ? ($streamSceneAssetsBase 
             };
 
             /* ---- Persistence ---- */
+            var _psbScoreSnap = null;
+            function psbRememberScoreSnap() {
+                if (window.ScoreboardSync && typeof window.ScoreboardSync.scoreSnapshot === 'function' && psbData) {
+                    _psbScoreSnap = window.ScoreboardSync.scoreSnapshot(psbData);
+                }
+            }
+            function psbAfterSaveSideEffects() {
+                if (!window.ScoreboardSync || !psbData) return Promise.resolve();
+                var prev = _psbScoreSnap;
+                var isTl = typeof window.ScoreboardSync.isTeamLeague === 'function'
+                    ? window.ScoreboardSync.isTeamLeague(psbData)
+                    : (psbData.teamLeague !== false);
+                if (!isTl) {
+                    if (typeof window.ScoreboardSync.report1v1Score !== 'function') {
+                        psbRememberScoreSnap();
+                        return Promise.resolve({ skipped: true, reason: 'sync_js_stale' });
+                    }
+                    return window.ScoreboardSync.report1v1Score(psbData, prev).then(function(res) {
+                        psbRememberScoreSnap();
+                        if (res && !res.skipped) {
+                            try { document.dispatchEvent(new CustomEvent('status:score-saved')); } catch (err) {}
+                            if (typeof loadAndRenderCustomScoreboard === 'function') {
+                                var ov = document.getElementById('custom-scoreboard-overlay');
+                                if (ov && ov.style.display === 'block') loadAndRenderCustomScoreboard();
+                            }
+                        }
+                        if (typeof sbHighlightCurrentMatch === 'function') sbHighlightCurrentMatch();
+                        return res;
+                    });
+                }
+                return window.ScoreboardSync.syncPsbToCsv(psbData).then(function(syncRes) {
+                    psbRememberScoreSnap();
+                    if (syncRes && syncRes.changed) {
+                        try { document.dispatchEvent(new CustomEvent('status:score-saved')); } catch (err) {}
+                        if (typeof scoreboardEditorLoad === 'function' && document.getElementById('scoreboard-editor-content') &&
+                            document.getElementById('scoreboard-editor-content').style.display === 'block') {
+                            scoreboardEditorLoad();
+                        } else if (typeof sbHighlightCurrentMatch === 'function') {
+                            sbHighlightCurrentMatch();
+                        }
+                        if (typeof loadAndRenderScoreboard === 'function') {
+                            var overlay = document.getElementById('scoreboard-overlay');
+                            if (overlay && overlay.style.display === 'block') loadAndRenderScoreboard();
+                        }
+                    } else if (typeof sbHighlightCurrentMatch === 'function') {
+                        sbHighlightCurrentMatch();
+                    }
+                    return syncRes;
+                });
+            }
+
             window.psbSave = function() {
                 if (psbEditMode) window.psbToggleEditMode(); /* lock in position first */
                 psbCollectSettings();
@@ -4793,28 +4931,12 @@ $streamLogoSmallSrc = ($streamSceneAssetsBase !== '') ? ($streamSceneAssetsBase 
                     body: JSON.stringify(psbData)
                 }).then(function(r) { return r.json(); }).then(function(res) {
                     if (status) status.textContent = (res && res.ok) ? 'Saved!' : 'Error saving.';
-                    if (res && res.ok && window.ScoreboardSync) {
-                        window.ScoreboardSync.syncPsbToCsv(psbData).then(function(syncRes) {
-                            if (syncRes && syncRes.changed) {
-                                try { document.dispatchEvent(new CustomEvent('status:score-saved')); } catch (err) {}
-                                if (typeof scoreboardEditorLoad === 'function' && document.getElementById('scoreboard-editor-content') &&
-                                    document.getElementById('scoreboard-editor-content').style.display === 'block') {
-                                    scoreboardEditorLoad();
-                                } else if (typeof sbHighlightCurrentMatch === 'function') {
-                                    sbHighlightCurrentMatch();
-                                }
-                                if (typeof loadAndRenderScoreboard === 'function') {
-                                    var overlay = document.getElementById('scoreboard-overlay');
-                                    if (overlay && overlay.style.display === 'block') loadAndRenderScoreboard();
-                                }
-                            } else if (typeof sbHighlightCurrentMatch === 'function') {
-                                sbHighlightCurrentMatch();
-                            }
-                        });
+                    if (res && res.ok) {
+                        return psbAfterSaveSideEffects();
                     }
-                    setTimeout(function() { if (status) status.textContent = ''; if (btn) btn.disabled = false; }, 2500);
                 }).catch(function() {
                     if (status) status.textContent = 'Network error.';
+                }).then(function() {
                     setTimeout(function() { if (status) status.textContent = ''; if (btn) btn.disabled = false; }, 2500);
                 });
             };
@@ -4824,6 +4946,7 @@ $streamLogoSmallSrc = ($streamSceneAssetsBase !== '') ? ($streamSceneAssetsBase 
                 if (data && typeof data === 'object') {
                     if (typeof data.show === 'boolean') d.show = data.show;
                     if (typeof data.showRace === 'boolean') d.showRace = data.showRace;
+                    if (typeof data.teamLeague === 'boolean') d.teamLeague = data.teamLeague;
                     if (data.bestOf != null) d.bestOf = Math.max(1, parseInt(data.bestOf, 10) || 1);
                     if (data.tlsPinOccurrence != null && data.tlsPinOccurrence !== '') {
                         var pin = parseInt(data.tlsPinOccurrence, 10);
@@ -4850,6 +4973,15 @@ $streamLogoSmallSrc = ($streamSceneAssetsBase !== '') ? ($streamSceneAssetsBase 
                     .then(function(data) { psbData = psbNormalize(data); })
                     .catch(function() { psbData = psbDefaultData(); })
                     .then(function() {
+                        /* Keep the Team league checkbox in sync even if settings are closed,
+                           so a later Save cannot clobber teamLeague:false with the HTML default. */
+                        var teamLeagueEl = document.getElementById('psb-team-league');
+                        if (teamLeagueEl) {
+                            teamLeagueEl.checked = psbData.teamLeague !== false;
+                            teamLeagueEl.dataset.psbSynced = '1';
+                        }
+                        psbRememberScoreSnap();
+                        psbRenderPanel();
                         var section = document.getElementById('player-scoreboard-settings-section');
                         if (section && section.style.display === 'block') { psbBindSettings(); psbFillSettings(); }
                     });
@@ -4916,6 +5048,12 @@ $streamLogoSmallSrc = ($streamSceneAssetsBase !== '') ? ($streamSceneAssetsBase 
                     if (typeof loadAndRenderScoreboard === 'function') {
                         var overlay = document.getElementById('scoreboard-overlay');
                         if (overlay && overlay.style.display === 'block') loadAndRenderScoreboard();
+                    }
+                }
+                if (e.data.oneVOne || e.data.customSynced) {
+                    if (typeof loadAndRenderCustomScoreboard === 'function') {
+                        var cov = document.getElementById('custom-scoreboard-overlay');
+                        if (cov && cov.style.display === 'block') loadAndRenderCustomScoreboard();
                     }
                 }
             });
@@ -5418,6 +5556,32 @@ $streamLogoSmallSrc = ($streamSceneAssetsBase !== '') ? ($streamSceneAssetsBase 
 
             showBgVideoOverlay();
             ensureVdoIframesLoadedOnce();
+
+            function toggleOpenMatchesManager() {
+                var panel = document.getElementById('open-matches-manager');
+                var btn = document.getElementById('scene-btn-open-matches');
+                var iframe = document.getElementById('open-matches-manager-iframe');
+                if (!panel || !btn) return;
+                var showing = panel.style.display === 'block';
+                if (showing) {
+                    panel.style.display = 'none';
+                    btn.classList.remove('active');
+                    return;
+                }
+                if (iframe && !iframe.getAttribute('src')) {
+                    iframe.src = 'mathison/open-matchups/index.php';
+                }
+                panel.style.display = 'block';
+                btn.classList.add('active');
+            }
+            window.toggleOpenMatchesManager = toggleOpenMatchesManager;
+
+            document.addEventListener('keydown', function (e) {
+                if (e.key !== 'Escape') return;
+                var panel = document.getElementById('open-matches-manager');
+                if (panel && panel.style.display === 'block') toggleOpenMatchesManager();
+            });
+
             var _sharedPickerWin = null;
             var _sharedPickerWatch = null;
 
@@ -6178,6 +6342,18 @@ $streamLogoSmallSrc = ($streamSceneAssetsBase !== '') ? ($streamSceneAssetsBase 
 
     <!-- Status reporter: pushes live UI state to save_status.php for /status -->
     <script src="js/status-reporter.js?v=<?php echo $v; ?>"></script>
+
+    <script src="js/stream_settings.js?v=<?php echo $v; ?>"></script>
+    <script>
+        (function () {
+            if (!window.StreamSettings) return;
+            StreamSettings.wireSessionBroadcastTracking();
+            StreamSettings.wirePublishUi();
+            StreamSettings.bootstrap(function () {
+                if (typeof showBgVideoOverlay === 'function') showBgVideoOverlay();
+            });
+        })();
+    </script>
 
 </body>
 

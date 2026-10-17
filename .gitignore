@@ -12,6 +12,7 @@ production_files/process_videos.py
 # Local secrets
 config.local.php
 mathison/config.local.php
+mathison/insights/.relabel.lock
 
 # Per-user settings (local/personal, not shared)
 data/settings_*.json
@@ -24,6 +25,11 @@ data/music_stats.json
 data/custom_scoreboard.json
 data/stream_production_settings.json
 data/scene_video_settings.json
+data/yt_iframe_video_settings.json
+data/stream_broadcast.json
+data/stream_user_preferences_*.json
+data/backups/
+data/open_matchups/
 
 # Music files (large binaries, not versioned)
 music/
