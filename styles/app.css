@@ -253,6 +253,12 @@
     padding: 10px 12px !important;
     font-weight: 800 !important;
 }
+#scenes-section .scene-btn-yt-compact {
+    font-size: 0.62rem;
+    padding: 3px 5px;
+    letter-spacing: 0.02em;
+    white-space: nowrap;
+}
 
 /* VDO / panel utility buttons */
 .vdo-controls {

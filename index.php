@@ -305,14 +305,24 @@ $streamLogoSmallSrc = ($streamSceneAssetsBase !== '') ? ($streamSceneAssetsBase 
                         <input type="number" id="yt-video-1-vol" min="5" max="100" value="100" style="width: 5ch; text-align: center;">
                         <span style="font-size: 0.85rem;">%</span>
                         <label style="font-size: 0.85rem; white-space: nowrap;">Button 2 label:</label>
-                        <input type="text" id="yt-video-2-label" value="BREAK" style="width: 8ch;">
+                        <input type="text" id="yt-video-2-label" value="FEATURE" style="width: 8ch;">
                         <span></span>
                         <label style="font-size: 0.85rem; white-space: nowrap;">Button 2 URL:</label>
-                        <input type="text" id="yt-video-2-url" value="https://youtu.be/O9lNetcn9Y8?si=FaqwLX5I9KkoJecK" style="grid-column: 2 / 4;" placeholder="Paste YouTube URL…">
+                        <input type="text" id="yt-video-2-url" value="https://www.youtube.com/watch?v=vt04Xbq57Dk" style="grid-column: 2 / 4;" placeholder="Paste YouTube URL…">
                         <span></span>
                         <div id="yt-video-2-resolved" style="grid-column: 2 / 4; font-size: 0.75rem; font-family: monospace; word-break: break-all; min-height: 1em;"></div>
                         <label style="font-size: 0.85rem; white-space: nowrap;">Button 2 volume:</label>
                         <input type="number" id="yt-video-2-vol" min="5" max="100" value="100" style="width: 5ch; text-align: center;">
+                        <span style="font-size: 0.85rem;">%</span>
+                        <label style="font-size: 0.85rem; white-space: nowrap;">Button 3 label:</label>
+                        <input type="text" id="yt-video-3-label" value="BREAK" style="width: 8ch;">
+                        <span></span>
+                        <label style="font-size: 0.85rem; white-space: nowrap;">Button 3 URL:</label>
+                        <input type="text" id="yt-video-3-url" value="https://youtu.be/O9lNetcn9Y8?si=FaqwLX5I9KkoJecK" style="grid-column: 2 / 4;" placeholder="Paste YouTube URL…">
+                        <span></span>
+                        <div id="yt-video-3-resolved" style="grid-column: 2 / 4; font-size: 0.75rem; font-family: monospace; word-break: break-all; min-height: 1em;"></div>
+                        <label style="font-size: 0.85rem; white-space: nowrap;">Button 3 volume:</label>
+                        <input type="number" id="yt-video-3-vol" min="5" max="100" value="100" style="width: 5ch; text-align: center;">
                         <span style="font-size: 0.85rem;">%</span>
                     </div>
                 </div>
@@ -513,6 +523,7 @@ $streamLogoSmallSrc = ($streamSceneAssetsBase !== '') ? ($streamSceneAssetsBase 
                 <div style="display: flex; align-items: center; gap: 0.25rem; margin-bottom: 0.2rem;">
                     <span style="font-size: 0.8rem; font-weight: 600; white-space: nowrap;">Videos:</span>
                     <button type="button" id="scene-btn-yt-intro" onclick="toggleYtIframeScene('intro')">INTRO</button>
+                    <button type="button" id="scene-btn-yt-feature" class="scene-btn-yt-compact" onclick="toggleYtIframeScene('feature')">FEATURE</button>
                     <button type="button" id="scene-btn-yt-break" onclick="toggleYtIframeScene('break')">BREAK</button>
                     <input type="text" inputmode="numeric" id="break-quick-min" maxlength="2" value="05" style="width: 4.5ch; text-align: center; padding: 2px;" title="Break timer minutes">
                     <span style="font-size: 0.85rem; line-height: 1;">:</span>
@@ -525,7 +536,7 @@ $streamLogoSmallSrc = ($streamSceneAssetsBase !== '') ? ($streamSceneAssetsBase 
                     <button type="button" id="scene-btn-sc2" class="scene-btn-major" onclick="toggleSceneOverlay('sc2')" style="flex:5;">SC2 (animated)</button>
                     <button type="button" id="scene-btn-sc2-quick" class="scene-btn-major" onclick="toggleSceneOverlay('sc2-quick')" style="flex:1;">Quick</button>
                 </div>
-                <div style="display:flex; gap:8px;">
+                <div style="display:flex; gap:6px; flex-wrap:nowrap; align-items:center;">
                     <button type="button" id="scene-btn-schedule" onclick="toggleSceneOverlay('schedule')">Schedule</button>
                     <button type="button" id="scene-btn-bracket" onclick="toggleSceneOverlay('bracket')">Bracket</button>
                 </div>
@@ -541,11 +552,13 @@ $streamLogoSmallSrc = ($streamSceneAssetsBase !== '') ? ($streamSceneAssetsBase 
                     <button type="button" id="scene-btn-ptb" onclick="toggleSceneOverlay('ptb')">PTB</button>
                     <button type="button" id="scene-btn-st" onclick="toggleSceneOverlay('st')">ST</button>
                 </div>
-                <span class="scenes-shared-group" style="display: inline-flex; align-items: center; gap: 0.25rem;">
-                    <button type="button" id="scene-btn-shared-window" onclick="toggleSceneOverlay('shared-window')">Shared Window</button>
+                <span class="scenes-shared-group" style="display: flex; width: 100%; align-items: center; justify-content: space-between; gap: 0.35rem;">
                     <button type="button" id="scene-btn-matchup" onclick="toggleMatchup()">Matchup</button>
-                    <button type="button" id="scene-btn-full-shared" onclick="toggleSceneOverlay('full-shared')" style="display: none;">Shared (Partial)</button>
-                    <button type="button" id="scene-btn-yt" onclick="toggleSceneOverlay('yt')" style="display: none;">YT</button>
+                    <span style="display: inline-flex; align-items: center; gap: 0.25rem; flex-wrap: nowrap;">
+                        <button type="button" id="scene-btn-shared-window" onclick="toggleSceneOverlay('shared-window')" title="Share a window or tab. The chooser opens in its own popup, off the stream.">Shared Window</button>
+                        <button type="button" id="scene-btn-full-shared" onclick="toggleSceneOverlay('full-shared')" style="display: none;">Shared (Partial)</button>
+                        <button type="button" id="scene-btn-yt" onclick="toggleSceneOverlay('yt')" style="display: none;">YT</button>
+                    </span>
                 </span>
             </div>
             <div id="scene-video-error" class="scene-video-error" style="display: none; font-size: 0.8rem; color: #c00; margin-top: 4px;"></div>
@@ -742,21 +755,6 @@ $streamLogoSmallSrc = ($streamSceneAssetsBase !== '') ? ($streamSceneAssetsBase 
     <audio id="audio-player" style="display:none;">
         Your browser does not support the audio element.
     </audio>
-
-    <!-- Modal for Shared Window: choose window/tab to share and display mode -->
-    <div id="shared-window-dialog" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); z-index: 100000; flex-direction: column; justify-content: center; align-items: center;">
-        <div style="background: #fff; padding: 1.5rem; border-radius: 8px; max-width: 380px; box-shadow: 0 4px 20px rgba(0,0,0,0.3);">
-            <p style="margin: 0 0 0.75rem;">Select the window or browser tab you want to share.</p>
-            <p style="margin: 0 0 1rem; font-size: 0.9rem; color: #555;">Then choose how to display it:</p>
-            <div style="display: flex; flex-direction: column; gap: 0.5rem; margin-bottom: 1rem;">
-                <button type="button" class="shared-dialog-mode-btn" data-mode="full">Full screen – shared content fills the frame</button>
-                <button type="button" class="shared-dialog-mode-btn" data-mode="partial">With overlays – shared panel + BG + logos + mini VDO</button>
-            </div>
-            <div style="display: flex; gap: 0.5rem; justify-content: flex-end;">
-                <button type="button" id="shared-window-dialog-cancel">Cancel</button>
-            </div>
-        </div>
-    </div>
 
     <script>
         // PHP → JS config globals — all PHP-injected values in one place
@@ -989,6 +987,7 @@ $streamLogoSmallSrc = ($streamSceneAssetsBase !== '') ? ($streamSceneAssetsBase 
                 ytCrop: { top: 150, left: 10, right: 20, bottom: 100 },
                 ytIframeVideos: [
                     { label: "INTRO", url: "https://www.youtube.com/watch?v=vt04Xbq57Dk", vol: 100 },
+                    { label: "FEATURE", url: "https://www.youtube.com/watch?v=vt04Xbq57Dk", vol: 100 },
                     { label: "BREAK", url: "https://youtu.be/O9lNetcn9Y8?si=FaqwLX5I9KkoJecK", vol: 100 }
                 ],
                 sceneVideos: {
@@ -2049,8 +2048,45 @@ $streamLogoSmallSrc = ($streamSceneAssetsBase !== '') ? ($streamSceneAssetsBase 
         var YT_IFRAME_VIDEOS_KEY = 'stream_production_yt_iframe_videos';
         var YT_IFRAME_VIDEOS_DEFAULTS = [
             { label: 'INTRO', url: 'https://www.youtube.com/watch?v=vt04Xbq57Dk', vol: 100 },
+            { label: 'FEATURE', url: 'https://www.youtube.com/watch?v=vt04Xbq57Dk', vol: 100 },
             { label: 'BREAK', url: 'https://youtu.be/O9lNetcn9Y8?si=FaqwLX5I9KkoJecK', vol: 100 }
         ];
+        var YT_IFRAME_SCENE_INDEX = { intro: 0, feature: 1, break: 2 };
+
+        function migrateYtIframeVideosArray(arr) {
+            if (!arr || !Array.isArray(arr)) return YT_IFRAME_VIDEOS_DEFAULTS.slice();
+            if (arr.length === 2) {
+                return [
+                    arr[0] || YT_IFRAME_VIDEOS_DEFAULTS[0],
+                    { label: 'FEATURE', url: (arr[0] && arr[0].url) || YT_IFRAME_VIDEOS_DEFAULTS[1].url, vol: (arr[0] && arr[0].vol != null) ? arr[0].vol : 100 },
+                    arr[1] || YT_IFRAME_VIDEOS_DEFAULTS[2]
+                ];
+            }
+            return arr;
+        }
+
+        var YT_IFRAME_POST_ORIGINS = ['https://www.youtube.com', 'https://www.youtube-nocookie.com'];
+
+        function ytEmbedForcedQuery() {
+            /* cc_load_policy=3 / iv_load_policy=3 force off (0 only means “default”, not off on yt:cc=on videos). */
+            return 'autoplay=1&enablejsapi=1&controls=0&cc_load_policy=3&iv_load_policy=3';
+        }
+
+        function applyYtEmbedForcedParams(url) {
+            if (!url || !/youtube\.com|youtu\.be/.test(url)) return url;
+            try {
+                var parsed = new URL(url, 'https://www.youtube.com');
+                parsed.searchParams.set('autoplay', '1');
+                parsed.searchParams.set('enablejsapi', '1');
+                parsed.searchParams.set('controls', '0');
+                parsed.searchParams.set('cc_load_policy', '3');
+                parsed.searchParams.set('iv_load_policy', '3');
+                parsed.searchParams.delete('cc_lang_pref');
+                return parsed.toString();
+            } catch (e) {
+                return url;
+            }
+        }
 
         function normalizeYtUrl(url) {
             if (!url || !url.trim()) return '';
@@ -2066,12 +2102,12 @@ $streamLogoSmallSrc = ($streamSceneAssetsBase !== '') ? ($streamSceneAssetsBase 
             if (!videoId) { m = url.match(/\/embed\/([a-zA-Z0-9_-]{11})/); if (m) videoId = m[1]; }
             /* youtube.com/shorts/ID */
             if (!videoId) { m = url.match(/\/shorts\/([a-zA-Z0-9_-]{11})/); if (m) videoId = m[1]; }
-            if (videoId) return 'https://www.youtube.com/embed/' + videoId + '?autoplay=1&enablejsapi=1&controls=0';
-            return url; /* unrecognised – pass through */
+            if (videoId) return 'https://www.youtube-nocookie.com/embed/' + videoId + '?' + ytEmbedForcedQuery();
+            return applyYtEmbedForcedParams(url);
         }
 
         function updateYtResolvedDisplays() {
-            [1, 2].forEach(function(n) {
+            [1, 2, 3].forEach(function(n) {
                 var u = document.getElementById('yt-video-' + n + '-url');
                 var d = document.getElementById('yt-video-' + n + '-resolved');
                 if (!u || !d) return;
@@ -2090,24 +2126,29 @@ $streamLogoSmallSrc = ($streamSceneAssetsBase !== '') ? ($streamSceneAssetsBase 
         }
 
         function getYtIframeVideos() {
-            var l1 = document.getElementById('yt-video-1-label');
-            var u1 = document.getElementById('yt-video-1-url');
-            var v1 = document.getElementById('yt-video-1-vol');
-            var l2 = document.getElementById('yt-video-2-label');
-            var u2 = document.getElementById('yt-video-2-url');
-            var v2 = document.getElementById('yt-video-2-vol');
-            return [
-                { label: (l1 && l1.value.trim()) || YT_IFRAME_VIDEOS_DEFAULTS[0].label, url: normalizeYtUrl((u1 && u1.value.trim()) || YT_IFRAME_VIDEOS_DEFAULTS[0].url), vol: v1 ? Math.max(5, Math.min(100, parseInt(v1.value, 10) || 100)) : 100 },
-                { label: (l2 && l2.value.trim()) || YT_IFRAME_VIDEOS_DEFAULTS[1].label, url: normalizeYtUrl((u2 && u2.value.trim()) || YT_IFRAME_VIDEOS_DEFAULTS[1].url), vol: v2 ? Math.max(5, Math.min(100, parseInt(v2.value, 10) || 100)) : 100 }
-            ];
+            var out = [];
+            [1, 2, 3].forEach(function(n, i) {
+                var l = document.getElementById('yt-video-' + n + '-label');
+                var u = document.getElementById('yt-video-' + n + '-url');
+                var v = document.getElementById('yt-video-' + n + '-vol');
+                var def = YT_IFRAME_VIDEOS_DEFAULTS[i] || YT_IFRAME_VIDEOS_DEFAULTS[0];
+                out.push({
+                    label: (l && l.value.trim()) || def.label,
+                    url: normalizeYtUrl((u && u.value.trim()) || def.url),
+                    vol: v ? Math.max(5, Math.min(100, parseInt(v.value, 10) || def.vol)) : def.vol
+                });
+            });
+            return out;
         }
 
         function syncYtIframeButtonLabels() {
             var videos = getYtIframeVideos();
             var introBtn = document.getElementById('scene-btn-yt-intro');
+            var featureBtn = document.getElementById('scene-btn-yt-feature');
             var breakBtn = document.getElementById('scene-btn-yt-break');
             if (introBtn) introBtn.textContent = videos[0].label;
-            if (breakBtn) breakBtn.textContent = videos[1].label;
+            if (featureBtn) featureBtn.textContent = videos[1].label;
+            if (breakBtn) breakBtn.textContent = videos[2].label;
         }
 
         function saveYtIframeVideos() {
@@ -2120,26 +2161,28 @@ $streamLogoSmallSrc = ($streamSceneAssetsBase !== '') ? ($streamSceneAssetsBase 
                 var raw = localStorage.getItem(YT_IFRAME_VIDEOS_KEY);
                 if (raw) {
                     var parsed = JSON.parse(raw);
-                    if (Array.isArray(parsed)) { setYtIframeVideos(parsed); return; }
+                    if (Array.isArray(parsed)) {
+                        var migrated = migrateYtIframeVideosArray(parsed);
+                        setYtIframeVideos(migrated);
+                        if (parsed.length === 2) saveYtIframeVideos();
+                        return;
+                    }
                 }
             } catch (e) {}
         }
 
         function setYtIframeVideos(arr) {
-            var l1 = document.getElementById('yt-video-1-label');
-            var u1 = document.getElementById('yt-video-1-url');
-            var vol1 = document.getElementById('yt-video-1-vol');
-            var l2 = document.getElementById('yt-video-2-label');
-            var u2 = document.getElementById('yt-video-2-url');
-            var vol2 = document.getElementById('yt-video-2-vol');
-            var v0 = arr[0] || {};
-            var v1 = arr[1] || {};
-            if (l1) l1.value = v0.label != null ? v0.label : YT_IFRAME_VIDEOS_DEFAULTS[0].label;
-            if (u1) u1.value = v0.url != null ? v0.url : YT_IFRAME_VIDEOS_DEFAULTS[0].url;
-            if (vol1) vol1.value = v0.vol != null ? v0.vol : YT_IFRAME_VIDEOS_DEFAULTS[0].vol;
-            if (l2) l2.value = v1.label != null ? v1.label : YT_IFRAME_VIDEOS_DEFAULTS[1].label;
-            if (u2) u2.value = v1.url != null ? v1.url : YT_IFRAME_VIDEOS_DEFAULTS[1].url;
-            if (vol2) vol2.value = v1.vol != null ? v1.vol : YT_IFRAME_VIDEOS_DEFAULTS[1].vol;
+            arr = migrateYtIframeVideosArray(arr);
+            [1, 2, 3].forEach(function(n, i) {
+                var v = arr[i] || {};
+                var def = YT_IFRAME_VIDEOS_DEFAULTS[i] || YT_IFRAME_VIDEOS_DEFAULTS[0];
+                var l = document.getElementById('yt-video-' + n + '-label');
+                var u = document.getElementById('yt-video-' + n + '-url');
+                var vol = document.getElementById('yt-video-' + n + '-vol');
+                if (l) l.value = v.label != null ? v.label : def.label;
+                if (u) u.value = v.url != null ? v.url : def.url;
+                if (vol) vol.value = v.vol != null ? v.vol : def.vol;
+            });
             syncYtIframeButtonLabels();
             updateYtResolvedDisplays();
         }
@@ -2148,7 +2191,7 @@ $streamLogoSmallSrc = ($streamSceneAssetsBase !== '') ? ($streamSceneAssetsBase 
             loadYtIframeVideos();
             syncYtIframeButtonLabels();
             updateYtResolvedDisplays();
-            ['yt-video-1-label', 'yt-video-1-url', 'yt-video-2-label', 'yt-video-2-url'].forEach(function(id) {
+            ['yt-video-1-label', 'yt-video-1-url', 'yt-video-2-label', 'yt-video-2-url', 'yt-video-3-label', 'yt-video-3-url'].forEach(function(id) {
                 var el = document.getElementById(id);
                 if (el) el.addEventListener('input', function() {
                     syncYtIframeButtonLabels();
@@ -2156,7 +2199,7 @@ $streamLogoSmallSrc = ($streamSceneAssetsBase !== '') ? ($streamSceneAssetsBase 
                     saveYtIframeVideos();
                 });
             });
-            ['yt-video-1-vol', 'yt-video-2-vol'].forEach(function(id) {
+            ['yt-video-1-vol', 'yt-video-2-vol', 'yt-video-3-vol'].forEach(function(id) {
                 var el = document.getElementById(id);
                 if (el) el.addEventListener('input', function() { saveYtIframeVideos(); });
             });
@@ -2281,11 +2324,13 @@ $streamLogoSmallSrc = ($streamSceneAssetsBase !== '') ? ($streamSceneAssetsBase 
             var overlay = document.getElementById('scene-overlay-yt-iframe');
             var iframe = document.getElementById('yt-iframe-player');
             var introBtn = document.getElementById('scene-btn-yt-intro');
+            var featureBtn = document.getElementById('scene-btn-yt-feature');
             var breakBtn = document.getElementById('scene-btn-yt-break');
             stopBreakCountdown();
             if (overlay) { overlay.style.display = 'none'; overlay.removeAttribute('data-yt-which'); }
             if (iframe) iframe.src = '';
             if (introBtn) introBtn.classList.remove('active');
+            if (featureBtn) featureBtn.classList.remove('active');
             if (breakBtn) breakBtn.classList.remove('active');
             applyLayoutFromSc2Button();
             if (!skipMusicResume && typeof window.mxResumeForYt === 'function') window.mxResumeForYt();
@@ -2325,13 +2370,23 @@ $streamLogoSmallSrc = ($streamSceneAssetsBase !== '') ? ($streamSceneAssetsBase 
 
         var ytIframeVolumeApplyGen = 0;
 
-        function ytIframePostSetVolume(iframe, vol) {
+        function ytIframePostCommand(iframe, func, args) {
             if (!iframe || !iframe.contentWindow) return;
+            var payload = JSON.stringify({ event: 'command', func: func, args: args || [] });
+            YT_IFRAME_POST_ORIGINS.forEach(function(origin) {
+                try { iframe.contentWindow.postMessage(payload, origin); } catch (e) {}
+            });
+        }
+
+        function ytIframePostSetVolume(iframe, vol) {
             var v = Math.max(0, Math.min(100, vol != null ? Number(vol) : 100));
             if (!isFinite(v)) v = 100;
-            try {
-                iframe.contentWindow.postMessage(JSON.stringify({ event: 'command', func: 'setVolume', args: [v] }), 'https://www.youtube.com');
-            } catch (e) {}
+            ytIframePostCommand(iframe, 'setVolume', [v]);
+        }
+
+        function ytIframeDisableCaptions(iframe) {
+            ytIframePostCommand(iframe, 'unloadModule', ['captions']);
+            ytIframePostCommand(iframe, 'unloadModule', ['cc']);
         }
 
         function subscribeYtIframe(iframe, vol) {
@@ -2339,15 +2394,19 @@ $streamLogoSmallSrc = ($streamSceneAssetsBase !== '') ? ($streamSceneAssetsBase 
             var v = vol != null ? Math.max(0, Math.min(100, Number(vol))) : 100;
             if (!isFinite(v)) v = 100;
             var gen = ++ytIframeVolumeApplyGen;
-            try {
-                iframe.contentWindow.postMessage(JSON.stringify({ event: 'listening', id: 1 }), 'https://www.youtube.com');
-            } catch (e) {}
+            YT_IFRAME_POST_ORIGINS.forEach(function(origin) {
+                try {
+                    iframe.contentWindow.postMessage(JSON.stringify({ event: 'listening', id: 1 }), origin);
+                } catch (e) {}
+            });
             ytIframePostSetVolume(iframe, v);
+            ytIframeDisableCaptions(iframe);
             /* YouTube often ignores the first command until the player is ready — fire now then retry. */
-            [16, 50, 120, 300, 600].forEach(function (ms) {
+            [16, 50, 120, 300, 600, 1200].forEach(function (ms) {
                 setTimeout(function () {
                     if (gen !== ytIframeVolumeApplyGen) return;
                     ytIframePostSetVolume(iframe, v);
+                    ytIframeDisableCaptions(iframe);
                 }, ms);
             });
         }
@@ -2360,6 +2419,7 @@ $streamLogoSmallSrc = ($streamSceneAssetsBase !== '') ? ($streamSceneAssetsBase 
             var overlay = document.getElementById('scene-overlay-yt-iframe');
             var iframe = document.getElementById('yt-iframe-player');
             var introBtn = document.getElementById('scene-btn-yt-intro');
+            var featureBtn = document.getElementById('scene-btn-yt-feature');
             var breakBtn = document.getElementById('scene-btn-yt-break');
             var isActive = overlay && overlay.style.display === 'block';
             var currentWhich = overlay ? overlay.getAttribute('data-yt-which') : '';
@@ -2367,12 +2427,13 @@ $streamLogoSmallSrc = ($streamSceneAssetsBase !== '') ? ($streamSceneAssetsBase 
             if (isActive && currentWhich === which) {
                 closeYtIframeScene(); /* mxResumeForYt called inside */
             } else {
-                /* Skip deck resume when only swapping Intro↔Break so mxPauseForYt / mxResumeForYt stay consistent. */
+                /* Skip deck resume when only swapping video buttons so mxPauseForYt / mxResumeForYt stay consistent. */
                 closeYtIframeScene(isActive);
                 if (typeof window.mxPauseForYt === 'function') window.mxPauseForYt();
                 clearExclusiveScenes();
                 var videos = getYtIframeVideos();
-                var videoIdx = which === 'intro' ? 0 : 1;
+                var videoIdx = YT_IFRAME_SCENE_INDEX[which];
+                if (videoIdx == null) return;
                 var url = videos[videoIdx].url;
                 /* Hide other overlays */
                 var bgOverlay = document.getElementById('scene-overlay-all-vdo');
@@ -2409,6 +2470,7 @@ $streamLogoSmallSrc = ($streamSceneAssetsBase !== '') ? ($streamSceneAssetsBase 
                 overlay.style.display = 'block';
                 applyYtCropToIframe();
                 if (introBtn) introBtn.classList.toggle('active', which === 'intro');
+                if (featureBtn) featureBtn.classList.toggle('active', which === 'feature');
                 if (breakBtn) breakBtn.classList.toggle('active', which === 'break');
                 /* Start countdown only for BREAK */
                 if (which === 'break') startBreakCountdown();
@@ -4788,7 +4850,6 @@ $streamLogoSmallSrc = ($streamSceneAssetsBase !== '') ? ($streamSceneAssetsBase 
                     .then(function(data) { psbData = psbNormalize(data); })
                     .catch(function() { psbData = psbDefaultData(); })
                     .then(function() {
-                        psbRenderPanel();
                         var section = document.getElementById('player-scoreboard-settings-section');
                         if (section && section.style.display === 'block') { psbBindSettings(); psbFillSettings(); }
                     });
@@ -5071,6 +5132,7 @@ $streamLogoSmallSrc = ($streamSceneAssetsBase !== '') ? ($streamSceneAssetsBase 
                 var ytBtn = document.getElementById('scene-btn-yt');
                 var ytIframeOverlay = document.getElementById('scene-overlay-yt-iframe');
                 var ytIframeIntroBtn = document.getElementById('scene-btn-yt-intro');
+                var ytIframeFeatureBtn = document.getElementById('scene-btn-yt-feature');
                 var ytIframeBreakBtn = document.getElementById('scene-btn-yt-break');
                 var ytIframePlayer = document.getElementById('yt-iframe-player');
                 if (sharedOverlay) sharedOverlay.style.display = 'none';
@@ -5083,6 +5145,7 @@ $streamLogoSmallSrc = ($streamSceneAssetsBase !== '') ? ($streamSceneAssetsBase 
                 if (ytIframeOverlay) ytIframeOverlay.style.display = 'none';
                 if (ytIframePlayer) ytIframePlayer.src = '';
                 if (ytIframeIntroBtn) ytIframeIntroBtn.classList.remove('active');
+                if (ytIframeFeatureBtn) ytIframeFeatureBtn.classList.remove('active');
                 if (ytIframeBreakBtn) ytIframeBreakBtn.classList.remove('active');
                 clearExclusiveScenes();
                 if (sc2Overlay) sc2Overlay.style.display = 'block';
@@ -5126,6 +5189,7 @@ $streamLogoSmallSrc = ($streamSceneAssetsBase !== '') ? ($streamSceneAssetsBase 
                 var ytIframeOverlay = document.getElementById('scene-overlay-yt-iframe');
                 var ytIframePlayer = document.getElementById('yt-iframe-player');
                 var ytIframeIntroBtn = document.getElementById('scene-btn-yt-intro');
+                var ytIframeFeatureBtn = document.getElementById('scene-btn-yt-feature');
                 var ytIframeBreakBtn = document.getElementById('scene-btn-yt-break');
                 if (sharedOverlay) sharedOverlay.style.display = 'none';
                 if (sharedBtn) sharedBtn.classList.remove('active');
@@ -5137,6 +5201,7 @@ $streamLogoSmallSrc = ($streamSceneAssetsBase !== '') ? ($streamSceneAssetsBase 
                 if (ytIframeOverlay) ytIframeOverlay.style.display = 'none';
                 if (ytIframePlayer) ytIframePlayer.src = '';
                 if (ytIframeIntroBtn) ytIframeIntroBtn.classList.remove('active');
+                if (ytIframeFeatureBtn) ytIframeFeatureBtn.classList.remove('active');
                 if (ytIframeBreakBtn) ytIframeBreakBtn.classList.remove('active');
                 if (bgBtn) bgBtn.classList.add('active');
                 if (vdoFullOverlay) vdoFullOverlay.style.display = 'block';
@@ -5200,11 +5265,13 @@ $streamLogoSmallSrc = ($streamSceneAssetsBase !== '') ? ($streamSceneAssetsBase 
                     var ytIframeOverlayAl = document.getElementById('scene-overlay-yt-iframe');
                     var ytIframePlayerAl = document.getElementById('yt-iframe-player');
                     var ytIframeIntroBtnAl = document.getElementById('scene-btn-yt-intro');
+                    var ytIframeFeatureBtnAl = document.getElementById('scene-btn-yt-feature');
                     var ytIframeBreakBtnAl = document.getElementById('scene-btn-yt-break');
                     stopBreakCountdown();
                     if (ytIframeOverlayAl) ytIframeOverlayAl.style.display = 'none';
                     if (ytIframePlayerAl) ytIframePlayerAl.src = '';
                     if (ytIframeIntroBtnAl) ytIframeIntroBtnAl.classList.remove('active');
+                    if (ytIframeFeatureBtnAl) ytIframeFeatureBtnAl.classList.remove('active');
                     if (ytIframeBreakBtnAl) ytIframeBreakBtnAl.classList.remove('active');
                     if (sc2Overlay) sc2Overlay.style.display = 'block';
                     if (sc2Panel) {
@@ -5351,6 +5418,159 @@ $streamLogoSmallSrc = ($streamSceneAssetsBase !== '') ? ($streamSceneAssetsBase 
 
             showBgVideoOverlay();
             ensureVdoIframesLoadedOnce();
+            var _sharedPickerWin = null;
+            var _sharedPickerWatch = null;
+
+            function watchSharedPickerClosed() {
+                clearInterval(_sharedPickerWatch);
+                _sharedPickerWatch = setInterval(function() {
+                    if (_sharedPickerWin && !_sharedPickerWin.closed) return;
+                    _sharedPickerWin = null;
+                    clearInterval(_sharedPickerWatch);
+                    _sharedPickerWatch = null;
+                    var sharedVideo = document.getElementById('shared-window-video');
+                    var sharedBtn = document.getElementById('scene-btn-shared-window');
+                    var fullSharedBtn = document.getElementById('scene-btn-full-shared');
+                    var hasLive = sharedVideo && sharedVideo.srcObject && sharedVideo.srcObject.getTracks().some(function(t) { return t.readyState === 'live'; });
+                    var stuckUi = (sharedBtn && sharedBtn.classList.contains('active')) || (fullSharedBtn && fullSharedBtn.classList.contains('active'));
+                    if (hasLive || stuckUi) endSharedWindowCapture({ fromPickerClose: true });
+                }, 400);
+            }
+
+            function endSharedWindowCapture(opts) {
+                opts = opts || {};
+                var sharedOverlay = document.getElementById('scene-overlay-shared-window');
+                var sharedVideo = document.getElementById('shared-window-video');
+                var sharedBtn = document.getElementById('scene-btn-shared-window');
+                var fullSharedVideo = document.getElementById('full-shared-panel-video');
+                var fullSharedOverlay = document.getElementById('scene-overlay-full-shared-panel');
+                var fullSharedBtn = document.getElementById('scene-btn-full-shared');
+                var ytVideo = document.getElementById('yt-video');
+                var ytOverlay = document.getElementById('scene-overlay-yt');
+                var ytBtn = document.getElementById('scene-btn-yt');
+                var bgOverlay = document.getElementById('scene-overlay-all-vdo');
+                var bgBtn = document.getElementById('scene-btn-all-vdo');
+                var logosOverlay = document.getElementById('logos-overlay');
+                var logosBtn = document.getElementById('scene-btn-logos');
+                var sc2Overlay = document.getElementById('sc2-overlay');
+                var sc2Panel = document.getElementById('sc2-panel-wrap');
+                var stream = sharedVideo && sharedVideo.srcObject;
+                if (stream && stream.getTracks) {
+                    stream.getTracks().forEach(function(t) {
+                        if (t.readyState === 'live') t.stop();
+                    });
+                }
+                if (sharedVideo) sharedVideo.srcObject = null;
+                if (fullSharedVideo) fullSharedVideo.srcObject = null;
+                if (ytVideo) ytVideo.srcObject = null;
+                if (sharedOverlay) sharedOverlay.style.display = 'none';
+                if (sharedBtn) sharedBtn.classList.remove('active');
+                if (fullSharedOverlay) fullSharedOverlay.style.display = 'none';
+                if (fullSharedBtn) { fullSharedBtn.style.display = 'none'; fullSharedBtn.classList.remove('active'); }
+                if (ytOverlay) ytOverlay.style.display = 'none';
+                if (ytBtn) { ytBtn.style.display = 'none'; ytBtn.classList.remove('active'); }
+                if (bgOverlay) bgOverlay.style.display = 'none';
+                if (bgBtn) bgBtn.classList.remove('active');
+                if (logosOverlay) logosOverlay.style.display = 'none';
+                if (logosBtn) logosBtn.classList.remove('active');
+                if (sc2Overlay) { sc2Overlay.style.display = 'none'; sc2Overlay.style.zIndex = ''; }
+                if (sc2Panel) sc2Panel.style.display = 'none';
+                applyLayoutFromSc2Button();
+                setSceneVideoError('');
+                if (!opts.fromPickerClose && _sharedPickerWin && !_sharedPickerWin.closed) {
+                    try { _sharedPickerWin.close(); } catch (e) {}
+                }
+                if (opts.fromPickerClose) _sharedPickerWin = null;
+            }
+            window.endSharedWindowCapture = endSharedWindowCapture;
+
+            function openSharedWindowPicker() {
+                if (_sharedPickerWin && !_sharedPickerWin.closed) {
+                    _sharedPickerWin.focus();
+                    return;
+                }
+                var w = 660;
+                var h = 510;
+                var left = (window.screen.availLeft || 0) + 20;
+                var top = (window.screen.availTop || 0) + 40;
+                var frame = document.querySelector('.stream-frame');
+                if (frame) {
+                    var r = frame.getBoundingClientRect();
+                    left = Math.round(window.screenX + r.left) - w - 12;
+                    top = Math.round(window.screenY + r.top + 24);
+                }
+                var features = 'width=' + w + ',height=' + h + ',left=' + left + ',top=' + top + ',resizable=yes,scrollbars=yes';
+                var base = window.location.pathname.replace(/\/[^/]*$/, '') || '';
+                var url = (base ? base + '/' : './') + 'shared_window_picker.php';
+                _sharedPickerWin = window.open(url, 'sharedWindowPicker', features);
+                if (!_sharedPickerWin) {
+                    setSceneVideoError('Popup blocked. Allow popups for this site to share a window.');
+                } else {
+                    setSceneVideoError('');
+                    watchSharedPickerClosed();
+                }
+            }
+
+            function applySharedWindowStream(stream, showPartial) {
+                var sharedOverlay = document.getElementById('scene-overlay-shared-window');
+                var sharedVideo = document.getElementById('shared-window-video');
+                var sharedBtn = document.getElementById('scene-btn-shared-window');
+                var bgOverlay = document.getElementById('scene-overlay-all-vdo');
+                var bgBtn = document.getElementById('scene-btn-all-vdo');
+                if (!stream || !sharedVideo || !sharedOverlay || !sharedBtn) {
+                    throw new Error('Shared window scene is missing.');
+                }
+                sharedVideo.srcObject = stream;
+                sharedVideo.play();
+                var fullSharedVideo = document.getElementById('full-shared-panel-video');
+                var fullSharedOverlay = document.getElementById('scene-overlay-full-shared-panel');
+                var fullSharedBtn = document.getElementById('scene-btn-full-shared');
+                var ytVideo = document.getElementById('yt-video');
+                var ytOverlay = document.getElementById('scene-overlay-yt');
+                var ytBtn = document.getElementById('scene-btn-yt');
+                if (fullSharedVideo) { fullSharedVideo.srcObject = stream; fullSharedVideo.play(); }
+                if (fullSharedBtn) fullSharedBtn.style.display = '';
+                if (ytVideo) { ytVideo.srcObject = stream; ytVideo.play(); }
+                if (ytBtn) ytBtn.style.display = '';
+                var track = stream.getVideoTracks()[0];
+                if (track) {
+                    track.addEventListener('ended', function onEnded() {
+                        track.removeEventListener('ended', onEnded);
+                        endSharedWindowCapture();
+                    });
+                }
+                watchSharedPickerClosed();
+                VIDEO_OVERLAY_KEYS.forEach(function(k) { var b = document.getElementById('scene-btn-' + k); if (b) b.classList.remove('active'); });
+                if (showPartial) {
+                    if (bgOverlay) { bgOverlay.style.display = 'block'; bgOverlay.style.zIndex = typeof getVideoOverlayDefaultZIndex === 'function' ? getVideoOverlayDefaultZIndex() : '1'; }
+                    var videoIframe = document.getElementById('scene-overlay-all-vdo-iframe');
+                    if (videoIframe) videoIframe.src = '2026/video_player.php?v=' + encodeURIComponent(videoPlayerMediaPath(VIDEO_OVERLAY_FILES['all-vdo'])) + '&_t=' + Date.now();
+                    if (bgBtn) bgBtn.classList.add('active');
+                    fullSharedOverlay.style.zIndex = '25000'; /* above BG, below logos when in layer order */
+                    fullSharedOverlay.style.display = 'block';
+                    fullSharedBtn.classList.add('active');
+                    var logosOverlay = document.getElementById('logos-overlay');
+                    var logosBtn = document.getElementById('scene-btn-logos');
+                    var sc2Overlay = document.getElementById('sc2-overlay');
+                    var sc2Panel = document.getElementById('sc2-panel-wrap');
+                    if (logosOverlay) { logosOverlay.style.display = 'block'; if (logosBtn) logosBtn.classList.add('active'); }
+                    updateLogosOverlay();
+                    if (sc2Overlay) { sc2Overlay.style.display = 'block'; sc2Overlay.style.zIndex = '60000'; }
+                    if (sc2Panel) {
+                        sc2Panel.style.display = 'block';
+                        var pos = getSavedSc2Panel() || getDefaultSc2PanelPosition(sc2Overlay.getBoundingClientRect());
+                        applyPositionToSc2Panel(sc2Panel, pos);
+                        var sc2Iframe = sc2Panel.querySelector('iframe');
+                        ensureVdoIframeLoaded(sc2Iframe);
+                    }
+                } else {
+                    if (bgOverlay) bgOverlay.style.display = 'none';
+                    sharedOverlay.style.display = 'block';
+                    sharedBtn.classList.add('active');
+                }
+                setSceneVideoError('');
+            }
+            window.applySharedWindowStream = applySharedWindowStream;
 
             function toggleSceneOverlay(sceneId) {
             if (VIDEO_OVERLAY_KEYS.indexOf(sceneId) !== -1) {
@@ -5576,81 +5796,7 @@ $streamLogoSmallSrc = ($streamSceneAssetsBase !== '') ? ($streamSceneAssetsBase 
                     sharedOverlay.style.display = 'block';
                     sharedBtn.classList.add('active');
                 } else {
-                    var dialog = document.getElementById('shared-window-dialog');
-                    if (dialog) {
-                        dialog.style.display = 'flex';
-                        var cancelBtn = document.getElementById('shared-window-dialog-cancel');
-                        var doSelect = function(showPartial) {
-                            dialog.style.display = 'none';
-                            if (!navigator.mediaDevices || !navigator.mediaDevices.getDisplayMedia) {
-                                setSceneVideoError('getDisplayMedia not supported');
-                                return;
-                            }
-                            navigator.mediaDevices.getDisplayMedia({ video: true, audio: false }).then(function(stream) {
-                                sharedVideo.srcObject = stream;
-                                sharedVideo.play();
-                                var fullSharedVideo = document.getElementById('full-shared-panel-video');
-                                var fullSharedOverlay = document.getElementById('scene-overlay-full-shared-panel');
-                                var fullSharedBtn = document.getElementById('scene-btn-full-shared');
-                                var ytVideo = document.getElementById('yt-video');
-                                var ytOverlay = document.getElementById('scene-overlay-yt');
-                                var ytBtn = document.getElementById('scene-btn-yt');
-                                if (fullSharedVideo) { fullSharedVideo.srcObject = stream; fullSharedVideo.play(); }
-                                if (fullSharedBtn) fullSharedBtn.style.display = '';
-                                if (ytVideo) { ytVideo.srcObject = stream; ytVideo.play(); }
-                                if (ytBtn) ytBtn.style.display = '';
-                                stream.getVideoTracks()[0].addEventListener('ended', function onEnded() {
-                                    stream.getVideoTracks()[0].removeEventListener('ended', onEnded);
-                                    sharedVideo.srcObject = null;
-                                    if (fullSharedVideo) fullSharedVideo.srcObject = null;
-                                    if (ytVideo) ytVideo.srcObject = null;
-                                    sharedOverlay.style.display = 'none';
-                                    sharedBtn.classList.remove('active');
-                                    if (fullSharedOverlay) fullSharedOverlay.style.display = 'none';
-                                    if (fullSharedBtn) { fullSharedBtn.style.display = 'none'; fullSharedBtn.classList.remove('active'); }
-                                    if (ytOverlay) ytOverlay.style.display = 'none';
-                                    if (ytBtn) { ytBtn.style.display = 'none'; ytBtn.classList.remove('active'); }
-                                    var sc2OverlayEl = document.getElementById('sc2-overlay');
-                                    if (sc2OverlayEl) sc2OverlayEl.style.zIndex = '';
-                                    applyLayoutFromSc2Button();
-                                });
-                                VIDEO_OVERLAY_KEYS.forEach(function(k) { var b = document.getElementById('scene-btn-' + k); if (b) b.classList.remove('active'); });
-                                if (showPartial) {
-                                    if (bgOverlay) { bgOverlay.style.display = 'block'; bgOverlay.style.zIndex = typeof getVideoOverlayDefaultZIndex === 'function' ? getVideoOverlayDefaultZIndex() : '1'; }
-                                    var videoIframe = document.getElementById('scene-overlay-all-vdo-iframe');
-                                    if (videoIframe) videoIframe.src = '2026/video_player.php?v=' + encodeURIComponent(videoPlayerMediaPath(VIDEO_OVERLAY_FILES['all-vdo'])) + '&_t=' + Date.now();
-                                    if (bgBtn) bgBtn.classList.add('active');
-                                    fullSharedOverlay.style.zIndex = '25000'; /* above BG, below logos when in layer order */
-                                    fullSharedOverlay.style.display = 'block';
-                                    fullSharedBtn.classList.add('active');
-                                    var logosOverlay = document.getElementById('logos-overlay');
-                                    var logosBtn = document.getElementById('scene-btn-logos');
-                                    var sc2Overlay = document.getElementById('sc2-overlay');
-                                    var sc2Panel = document.getElementById('sc2-panel-wrap');
-                                    if (logosOverlay) { logosOverlay.style.display = 'block'; if (logosBtn) logosBtn.classList.add('active'); }
-                                    updateLogosOverlay();
-                                    if (sc2Overlay) { sc2Overlay.style.display = 'block'; sc2Overlay.style.zIndex = '60000'; }
-                                    if (sc2Panel) {
-                                        sc2Panel.style.display = 'block';
-                                        var pos = getSavedSc2Panel() || getDefaultSc2PanelPosition(sc2Overlay.getBoundingClientRect());
-                                        applyPositionToSc2Panel(sc2Panel, pos);
-                                        var sc2Iframe = sc2Panel.querySelector('iframe');
-                                        ensureVdoIframeLoaded(sc2Iframe);
-                                    }
-                                } else {
-                                    if (bgOverlay) bgOverlay.style.display = 'none';
-                                    sharedOverlay.style.display = 'block';
-                                    sharedBtn.classList.add('active');
-                                }
-                            }).catch(function(err) {
-                                if (err.name !== 'NotAllowedError') setSceneVideoError(err.message || 'Share failed');
-                            });
-                        };
-                        dialog.querySelectorAll('.shared-dialog-mode-btn').forEach(function(btn) {
-                            btn.onclick = function() { doSelect(btn.getAttribute('data-mode') === 'partial'); };
-                        });
-                        cancelBtn.onclick = function() { dialog.style.display = 'none'; };
-                    }
+                    openSharedWindowPicker();
                 }
             } else if (sceneId === 'full-shared') {
                 var sharedVideo = document.getElementById('shared-window-video');
