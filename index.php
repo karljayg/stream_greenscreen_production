@@ -371,32 +371,48 @@ $streamLogoSmallSrc = ($streamSceneAssetsBase !== '') ? ($streamSceneAssetsBase 
                         <select id="scene-team-video-folder" style="min-width: 0; background:#fff; color:#111; border:1px solid #888;"></select>
                         <button type="button" id="scene-team-video-refresh-btn">Refresh</button>
 
-                        <label style="font-size: 0.85rem; white-space: nowrap;">ASH:</label>
+                        <label id="scene-video-team-ash-rowlabel" style="font-size: 0.85rem; white-space: nowrap;">ASH:</label>
                         <div style="position: relative;">
                             <input type="text" id="scene-video-team-ash-file" style="min-width: 0; width: 100%; background:#fff; color:#111; border:1px solid #888;" placeholder="Type 3+ letters...">
                             <div id="scene-video-team-ash-suggestions" style="display:none; position:absolute; left:0; right:0; top:100%; z-index:1001; max-height:220px; overflow-y:auto; background:#fff; color:#111; border:1px solid #888;"></div>
                         </div>
+                        <input type="text" id="scene-video-team-ash-label" maxlength="24" title="Button text" placeholder="Button text" style="width: 6.5rem; background:#fff; color:#111; border:1px solid #888;">
+
+                        <label style="font-size: 0.78rem; white-space: nowrap; padding-left: 0.8rem; opacity: 0.8;">&#9835; sound:</label>
+                        <input type="text" id="scene-video-team-ash-audio" style="min-width: 0; width: 100%; background:#fff; color:#111; border:1px solid #888;" placeholder="production_files/audio/file.wav (blank = no sound)">
                         <span></span>
 
-                        <label style="font-size: 0.85rem; white-space: nowrap;">POG:</label>
+                        <label id="scene-video-team-pog-rowlabel" style="font-size: 0.85rem; white-space: nowrap;">POG:</label>
                         <div style="position: relative;">
                             <input type="text" id="scene-video-team-pog-file" style="min-width: 0; width: 100%; background:#fff; color:#111; border:1px solid #888;" placeholder="Type 3+ letters...">
                             <div id="scene-video-team-pog-suggestions" style="display:none; position:absolute; left:0; right:0; top:100%; z-index:1001; max-height:220px; overflow-y:auto; background:#fff; color:#111; border:1px solid #888;"></div>
                         </div>
+                        <input type="text" id="scene-video-team-pog-label" maxlength="24" title="Button text" placeholder="Button text" style="width: 6.5rem; background:#fff; color:#111; border:1px solid #888;">
+
+                        <label style="font-size: 0.78rem; white-space: nowrap; padding-left: 0.8rem; opacity: 0.8;">&#9835; sound:</label>
+                        <input type="text" id="scene-video-team-pog-audio" style="min-width: 0; width: 100%; background:#fff; color:#111; border:1px solid #888;" placeholder="production_files/audio/file.wav (blank = no sound)">
                         <span></span>
 
-                        <label style="font-size: 0.85rem; white-space: nowrap;">PTB:</label>
+                        <label id="scene-video-team-ptb-rowlabel" style="font-size: 0.85rem; white-space: nowrap;">PTB:</label>
                         <div style="position: relative;">
                             <input type="text" id="scene-video-team-ptb-file" style="min-width: 0; width: 100%; background:#fff; color:#111; border:1px solid #888;" placeholder="Type 3+ letters...">
                             <div id="scene-video-team-ptb-suggestions" style="display:none; position:absolute; left:0; right:0; top:100%; z-index:1001; max-height:220px; overflow-y:auto; background:#fff; color:#111; border:1px solid #888;"></div>
                         </div>
+                        <input type="text" id="scene-video-team-ptb-label" maxlength="24" title="Button text" placeholder="Button text" style="width: 6.5rem; background:#fff; color:#111; border:1px solid #888;">
+
+                        <label style="font-size: 0.78rem; white-space: nowrap; padding-left: 0.8rem; opacity: 0.8;">&#9835; sound:</label>
+                        <input type="text" id="scene-video-team-ptb-audio" style="min-width: 0; width: 100%; background:#fff; color:#111; border:1px solid #888;" placeholder="production_files/audio/file.wav (blank = no sound)">
                         <span></span>
 
-                        <label style="font-size: 0.85rem; white-space: nowrap;">ST:</label>
+                        <label id="scene-video-team-st-rowlabel" style="font-size: 0.85rem; white-space: nowrap;">ST:</label>
                         <div style="position: relative;">
                             <input type="text" id="scene-video-team-st-file" style="min-width: 0; width: 100%; background:#fff; color:#111; border:1px solid #888;" placeholder="Type 3+ letters...">
                             <div id="scene-video-team-st-suggestions" style="display:none; position:absolute; left:0; right:0; top:100%; z-index:1001; max-height:220px; overflow-y:auto; background:#fff; color:#111; border:1px solid #888;"></div>
                         </div>
+                        <input type="text" id="scene-video-team-st-label" maxlength="24" title="Button text" placeholder="Button text" style="width: 6.5rem; background:#fff; color:#111; border:1px solid #888;">
+
+                        <label style="font-size: 0.78rem; white-space: nowrap; padding-left: 0.8rem; opacity: 0.8;">&#9835; sound:</label>
+                        <input type="text" id="scene-video-team-st-audio" style="min-width: 0; width: 100%; background:#fff; color:#111; border:1px solid #888;" placeholder="production_files/audio/file.wav (blank = no sound)">
                         <span></span>
                     </div>
                     <div style="margin-top: 8px; font-size: 0.78rem; color: #ccc;">
@@ -728,7 +744,7 @@ $streamLogoSmallSrc = ($streamSceneAssetsBase !== '') ? ($streamSceneAssetsBase 
             <!-- SC2: smaller VDO panel; when SC2 scene is on, BG is hidden and this overlay is shown. Panel is draggable/resizable like logos. -->
             <div id="sc2-overlay" data-layer-id="sc2-overlay" class="sc2-overlay" style="display: none; position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none;">
                 <div id="sc2-panel-wrap" class="sc2-panel-wrap logo-wrap" style="display: none; position: absolute; overflow: hidden; background: #000;">
-                    <iframe data-src="https://vdo.ninja/?scene=1&room=KJNinjaRoom123&password=FSL&sl&cover&channels" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; border: none;" allow="autoplay; fullscreen"></iframe>
+                    <iframe data-src="https://vdo.ninja/?scene=1&room=KJNinjaRoom123&password=FSL&sl&cover&channels&rows=1" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; border: none;" allow="autoplay; fullscreen"></iframe>
                 </div>
             </div>
             <!-- Shared Window: shows getDisplayMedia() stream (browser tab/window). Works like other non-SC2 scenes. -->
@@ -1048,7 +1064,9 @@ $streamLogoSmallSrc = ($streamSceneAssetsBase !== '') ? ($streamSceneAssetsBase 
                 sceneVideos: {
                     schedule: "production_files/2026_FSL_schedule_now.mp4",
                     bracket: "production_files/2026_FSL_schedule_now.mp4",
-                    teams: { ash: "2026/ASH.mp4", pog: "2026/POG.mp4", ptb: "2026/PTB.mp4", st: "2026/ST.mp4" }
+                    teams: { ash: "2026/ASH.mp4", pog: "2026/POG.mp4", ptb: "2026/PTB.mp4", st: "2026/ST.mp4" },
+                    teamLabels: { ash: "ASH", pog: "POG", ptb: "PTB", st: "ST" },
+                    teamAudio: { ash: "production_files/audio/angry_space_hares.wav", pog: "production_files/audio/FSL_PSISOP_Gaming.wav", ptb: "production_files/audio/pulled_the_boys.wav", st: "production_files/audio/FSL_SpecialTactics2.wav" }
                 },
                 breakSettings: { min: 5, sec: 0, msg: "be right back..." },
                 vdoDirectorUrl: "https://vdo.ninja/?director=KJNinjaRoom123&password=FSL&showdirector&push=cBnXZEM",
@@ -3203,7 +3221,27 @@ $streamLogoSmallSrc = ($streamSceneAssetsBase !== '') ? ($streamSceneAssetsBase 
                 'st': '2026/ST.mp4'
             };
             var VIDEO_OVERLAY_FRONT = ['schedule', 'bracket', 'ash', 'pog', 'ptb', 'st'];
-            var VIDEO_OVERLAY_AUDIO = { 'ash': 'angry_space_hares.wav', 'pog': 'FSL_PSISOP_Gaming.wav', 'ptb': 'pulled_the_boys.wav', 'st': 'FSL_SpecialTactics2.wav' };
+            var TEAM_BUTTON_KEYS = ['ash', 'pog', 'ptb', 'st'];
+            var TEAM_BUTTON_LABELS = { 'ash': 'ASH', 'pog': 'POG', 'ptb': 'PTB', 'st': 'ST' };
+
+            function applyTeamButtonLabels() {
+                TEAM_BUTTON_KEYS.forEach(function(k) {
+                    var txt = TEAM_BUTTON_LABELS[k] || k.toUpperCase();
+                    var btn = document.getElementById('scene-btn-' + k);
+                    if (btn) btn.textContent = txt;
+                    var rl = document.getElementById('scene-video-team-' + k + '-rowlabel');
+                    if (rl) rl.textContent = txt + ':';
+                    var li = document.getElementById('scene-video-team-' + k + '-label');
+                    if (li && document.activeElement !== li) li.value = txt;
+                });
+            }
+            var VIDEO_OVERLAY_AUDIO = { 'ash': 'production_files/audio/angry_space_hares.wav', 'pog': 'production_files/audio/FSL_PSISOP_Gaming.wav', 'ptb': 'production_files/audio/pulled_the_boys.wav', 'st': 'production_files/audio/FSL_SpecialTactics2.wav' };
+            function normalizeTeamAudioPath(p) {
+                p = String(p == null ? '' : p).trim().replace(/\\/g, '/');
+                if (!p) return '';
+                if (p.indexOf('production_files/') !== 0 && p.indexOf('2026/') !== 0 && p.indexOf('music/') !== 0) p = 'production_files/audio/' + p;
+                return p;
+            }
 
             function getSceneVideoSettings() {
                 return {
@@ -3214,6 +3252,14 @@ $streamLogoSmallSrc = ($streamSceneAssetsBase !== '') ? ($streamSceneAssetsBase 
                         pog: VIDEO_OVERLAY_FILES.pog || '2026/POG.mp4',
                         ptb: VIDEO_OVERLAY_FILES.ptb || '2026/PTB.mp4',
                         st: VIDEO_OVERLAY_FILES.st || '2026/ST.mp4'
+                    },
+                    teamLabels: {
+                        ash: TEAM_BUTTON_LABELS.ash, pog: TEAM_BUTTON_LABELS.pog,
+                        ptb: TEAM_BUTTON_LABELS.ptb, st: TEAM_BUTTON_LABELS.st
+                    },
+                    teamAudio: {
+                        ash: VIDEO_OVERLAY_AUDIO.ash || '', pog: VIDEO_OVERLAY_AUDIO.pog || '',
+                        ptb: VIDEO_OVERLAY_AUDIO.ptb || '', st: VIDEO_OVERLAY_AUDIO.st || ''
                     }
                 };
             }
@@ -3240,6 +3286,23 @@ $streamLogoSmallSrc = ($streamSceneAssetsBase !== '') ? ($streamSceneAssetsBase 
                 syncSceneVideoInputValue('scene-video-team-pog-file', VIDEO_OVERLAY_FILES.pog);
                 syncSceneVideoInputValue('scene-video-team-ptb-file', VIDEO_OVERLAY_FILES.ptb);
                 syncSceneVideoInputValue('scene-video-team-st-file', VIDEO_OVERLAY_FILES.st);
+                var labels = sceneVideos.teamLabels;
+                if (labels && typeof labels === 'object') {
+                    TEAM_BUTTON_KEYS.forEach(function(k) {
+                        if (typeof labels[k] === 'string' && labels[k].trim()) TEAM_BUTTON_LABELS[k] = labels[k].trim().slice(0, 24);
+                    });
+                }
+                var audios = sceneVideos.teamAudio;
+                if (audios && typeof audios === 'object') {
+                    TEAM_BUTTON_KEYS.forEach(function(k) {
+                        if (typeof audios[k] === 'string') VIDEO_OVERLAY_AUDIO[k] = normalizeTeamAudioPath(audios[k]);
+                    });
+                }
+                TEAM_BUTTON_KEYS.forEach(function(k) {
+                    var ai = document.getElementById('scene-video-team-' + k + '-audio');
+                    if (ai && document.activeElement !== ai) ai.value = VIDEO_OVERLAY_AUDIO[k] || '';
+                });
+                applyTeamButtonLabels();
             }
 
             window.getSceneVideoSettings = getSceneVideoSettings;
@@ -3505,6 +3568,46 @@ $streamLogoSmallSrc = ($streamSceneAssetsBase !== '') ? ($streamSceneAssetsBase 
                 wireAutocomplete(pogInput, pogSuggestions, 'pog', function() { return availableTeamFiles; }, commitTeamValue);
                 wireAutocomplete(ptbInput, ptbSuggestions, 'ptb', function() { return availableTeamFiles; }, commitTeamValue);
                 wireAutocomplete(stInput, stSuggestions, 'st', function() { return availableTeamFiles; }, commitTeamValue);
+
+                TEAM_BUTTON_KEYS.forEach(function(k) {
+                    var li = document.getElementById('scene-video-team-' + k + '-label');
+                    if (!li) return;
+                    function commitLabel() {
+                        var v = String(li.value || '').trim().slice(0, 24);
+                        if (!v) { li.value = TEAM_BUTTON_LABELS[k]; return; }
+                        if (v === TEAM_BUTTON_LABELS[k]) return;
+                        TEAM_BUTTON_LABELS[k] = v;
+                        applyTeamButtonLabels();
+                        saveGlobalSceneVideoSettings().then(function() {
+                            setStatus('Saved button text "' + v + '".', false);
+                        }).catch(function() { setStatus('Failed to save button text', true); });
+                    }
+                    li.addEventListener('keydown', function(e) { if (e.key === 'Enter') { e.preventDefault(); li.blur(); } });
+                    li.addEventListener('blur', commitLabel);
+                });
+
+                TEAM_BUTTON_KEYS.forEach(function(k) {
+                    var ai = document.getElementById('scene-video-team-' + k + '-audio');
+                    if (!ai) return;
+                    ai.value = VIDEO_OVERLAY_AUDIO[k] || '';
+                    function commitAudio() {
+                        var v = normalizeTeamAudioPath(ai.value);
+                        if (v.indexOf('..') !== -1 || (v && !/\.(wav|mp3|ogg|m4a)$/i.test(v))) {
+                            setStatus('Sound must be a .wav, .mp3, .ogg or .m4a path.', true);
+                            ai.value = VIDEO_OVERLAY_AUDIO[k] || '';
+                            return;
+                        }
+                        ai.value = v;
+                        if (v === (VIDEO_OVERLAY_AUDIO[k] || '')) return;
+                        VIDEO_OVERLAY_AUDIO[k] = v;
+                        saveGlobalSceneVideoSettings().then(function() {
+                            setStatus(v ? ('Saved ' + (TEAM_BUTTON_LABELS[k] || k) + ' sound.') : ('Removed ' + (TEAM_BUTTON_LABELS[k] || k) + ' sound.'), false);
+                        }).catch(function() { setStatus('Failed to save sound', true); });
+                    }
+                    ai.addEventListener('keydown', function(e) { if (e.key === 'Enter') { e.preventDefault(); ai.blur(); } });
+                    ai.addEventListener('blur', commitAudio);
+                });
+                applyTeamButtonLabels();
 
                 folderSelect.addEventListener('change', loadSceneVideoList);
                 refreshBtn.addEventListener('click', loadSceneVideoList);
@@ -5553,7 +5656,7 @@ $streamLogoSmallSrc = ($streamSceneAssetsBase !== '') ? ($streamSceneAssetsBase 
                     if (teamAudio) {
                         var ap = document.querySelector('#audio-player');
                         if (ap) {
-                            var teamSrc = typeof window.resolveProductionUrl === 'function' ? window.resolveProductionUrl('production_files/audio/' + teamAudio) : ('production_files/audio/' + teamAudio);
+                            var teamSrc = typeof window.resolveProductionUrl === 'function' ? window.resolveProductionUrl(normalizeTeamAudioPath(teamAudio)) : normalizeTeamAudioPath(teamAudio);
                             if (typeof window.applyAnonymousCORSIfNeeded === 'function') {
                                 window.applyAnonymousCORSIfNeeded(ap, teamSrc);
                             }

@@ -29,7 +29,40 @@ $defaults = [
         'ptb' => '2026/PTB.mp4',
         'st' => '2026/ST.mp4',
     ],
+    'teamLabels' => [
+        'ash' => 'ASH',
+        'pog' => 'POG',
+        'ptb' => 'PTB',
+        'st' => 'ST',
+    ],
+    'teamAudio' => [
+        'ash' => 'production_files/audio/angry_space_hares.wav',
+        'pog' => 'production_files/audio/FSL_PSISOP_Gaming.wav',
+        'ptb' => 'production_files/audio/pulled_the_boys.wav',
+        'st' => 'production_files/audio/FSL_SpecialTactics2.wav',
+    ],
 ];
+
+/** Returns normalized audio path, '' for "no sound", or null if invalid. */
+function normalize_audio_path($p) {
+    if (!is_string($p)) {
+        return null;
+    }
+    $p = trim(str_replace('\\', '/', $p));
+    if ($p === '') {
+        return '';
+    }
+    if (strpos($p, '..') !== false || strpos($p, "\0") !== false) {
+        return null;
+    }
+    if (strpos($p, 'production_files/') !== 0 && strpos($p, '2026/') !== 0 && strpos($p, 'music/') !== 0) {
+        $p = 'production_files/audio/' . ltrim($p, '/');
+    }
+    if (!preg_match('/\.(wav|mp3|ogg|m4a)$/i', $p)) {
+        return null;
+    }
+    return $p;
+}
 
 function normalize_media_path($p): string {
     if (!is_string($p)) {
@@ -76,6 +109,40 @@ function normalize_scene_settings($in, array $defaults): array {
             }
         }
         $out['teams'] = $teamOut;
+    }
+
+    if (isset($in['teamLabels']) && is_array($in['teamLabels'])) {
+        $labelOut = isset($out['teamLabels']) && is_array($out['teamLabels']) ? $out['teamLabels'] : $defaults['teamLabels'];
+        foreach (['ash', 'pog', 'ptb', 'st'] as $tk) {
+            if (!isset($in['teamLabels'][$tk]) || !is_string($in['teamLabels'][$tk])) {
+                continue;
+            }
+            $lv = trim(strip_tags($in['teamLabels'][$tk]));
+            $lv = preg_replace('/[\x00-\x1F\x7F]/u', '', $lv);
+            if (function_exists('mb_substr')) {
+                $lv = mb_substr($lv, 0, 24);
+            } else {
+                $lv = substr($lv, 0, 24);
+            }
+            if ($lv !== '') {
+                $labelOut[$tk] = $lv;
+            }
+        }
+        $out['teamLabels'] = $labelOut;
+    }
+
+    if (isset($in['teamAudio']) && is_array($in['teamAudio'])) {
+        $audioOut = isset($out['teamAudio']) && is_array($out['teamAudio']) ? $out['teamAudio'] : $defaults['teamAudio'];
+        foreach (['ash', 'pog', 'ptb', 'st'] as $tk) {
+            if (!array_key_exists($tk, $in['teamAudio'])) {
+                continue;
+            }
+            $av = normalize_audio_path($in['teamAudio'][$tk]);
+            if ($av !== null) {
+                $audioOut[$tk] = $av;
+            }
+        }
+        $out['teamAudio'] = $audioOut;
     }
 
     return $out;
